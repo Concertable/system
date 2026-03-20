@@ -1,3 +1,5 @@
+using Aspire.Hosting.Azure;
+
 internal static class DistributedApplicationBuilderExtensions
 {
     public static IResourceBuilder<SqlServerDatabaseResource> AddSqlServer(this IDistributedApplicationBuilder builder)
