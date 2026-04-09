@@ -26,7 +26,7 @@ internal static class DistributedApplicationBuilderExtensions
     public static IResourceBuilder<NodeAppResource> AddFrontend(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api)
     {
         return builder.AddNpmApp("frontend", "../../app", "dev")
-                      .WithHttpEndpoint(port: 5173, isProxied: false)
+                      .WithHttpsEndpoint(port: 5173, isProxied: false)
                       .WithReference(api)
                       .WaitFor(api);
     }
