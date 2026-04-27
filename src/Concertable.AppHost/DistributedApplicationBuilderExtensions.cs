@@ -13,7 +13,8 @@ internal static class DistributedApplicationBuilderExtensions
     {
         return builder.AddProject<Projects.Concertable_Web>("api")
                       .WithReference(sql)
-                      .WaitFor(sql);
+                      .WaitFor(sql)
+                      .AddSecrets(builder, "Stripe:WebhookSecret");
     }
 
     public static IResourceBuilder<AzureFunctionsProjectResource> AddWorkers(this IDistributedApplicationBuilder builder, IResourceBuilder<SqlServerDatabaseResource> sql)
@@ -29,5 +30,30 @@ internal static class DistributedApplicationBuilderExtensions
                       .WithHttpsEndpoint(port: 5173, isProxied: false)
                       .WithReference(api)
                       .WaitFor(api);
+    }
+
+    public static void AddStripeCli(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api)
+    {
+        var secretKey = builder.Configuration["Stripe:SecretKey"];
+        if (string.IsNullOrEmpty(secretKey))
+            return;
+
+        builder.AddContainer("stripe-cli", "stripe/stripe-cli")
+               .WithArgs("listen",
+                   "--api-key", secretKey,
+                   "--forward-to", "http://host.docker.internal:5161/api/webhook")
+               .WithVolume("stripe-cli-config", "/root/.config/stripe")
+               .WaitFor(api);
+    }
+
+    private static IResourceBuilder<ProjectResource> AddSecrets(this IResourceBuilder<ProjectResource> resource, IDistributedApplicationBuilder builder, params string[] keys)
+    {
+        foreach (var key in keys)
+        {
+            var value = builder.Configuration[key];
+            if (!string.IsNullOrEmpty(value))
+                resource = resource.WithEnvironment(key.Replace(":", "__"), value);
+        }
+        return resource;
     }
 }

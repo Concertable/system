@@ -6,5 +6,6 @@ var api = builder.AddApi(sql);
 
 builder.AddWorkers(sql);
 builder.AddFrontend(api);
+builder.AddStripeCli(api);
 
 builder.Build().Run();
