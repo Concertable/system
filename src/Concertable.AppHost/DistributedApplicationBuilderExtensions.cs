@@ -9,12 +9,25 @@ internal static class DistributedApplicationBuilderExtensions
                       .AddDatabase("DefaultConnection");
     }
 
-    public static IResourceBuilder<ProjectResource> AddApi(this IDistributedApplicationBuilder builder, IResourceBuilder<SqlServerDatabaseResource> sql)
+    public static IResourceBuilder<ProjectResource> AddApi(
+        this IDistributedApplicationBuilder builder,
+        IResourceBuilder<SqlServerDatabaseResource> sql,
+        IResourceBuilder<ProjectResource> auth)
     {
         return builder.AddProject<Projects.Concertable_Web>("api")
                       .WithReference(sql)
                       .WaitFor(sql)
+                      .WithReference(auth)
+                      .WaitFor(auth)
+                      .WithEnvironment("Auth__Authority", auth.GetEndpoint("https"))
                       .AddSecrets(builder, "Stripe:WebhookSecret");
+    }
+
+    public static IResourceBuilder<ProjectResource> AddAuth(this IDistributedApplicationBuilder builder, IResourceBuilder<SqlServerDatabaseResource> sql)
+    {
+        return builder.AddProject<Projects.Concertable_Auth>("auth")
+                      .WithReference(sql)
+                      .WaitFor(sql);
     }
 
     public static IResourceBuilder<AzureFunctionsProjectResource> AddWorkers(this IDistributedApplicationBuilder builder, IResourceBuilder<SqlServerDatabaseResource> sql)
