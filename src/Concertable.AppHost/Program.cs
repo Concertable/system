@@ -2,7 +2,9 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 var sql = builder.AddSqlServer();
 
-var api = builder.AddApi(sql);
+var auth = builder.AddAuth(sql);
+
+var api = builder.AddApi(sql, auth);
 
 builder.AddWorkers(sql);
 builder.AddFrontend(api);
