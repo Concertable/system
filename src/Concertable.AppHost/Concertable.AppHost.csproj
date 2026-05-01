@@ -20,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Concertable.Web\Concertable.Web.csproj" />
     <ProjectReference Include="..\Concertable.Workers\Concertable.Workers.csproj" />
+    <ProjectReference Include="..\Concertable.Auth\Concertable.Auth.csproj" />
   </ItemGroup>
 
 </Project>
