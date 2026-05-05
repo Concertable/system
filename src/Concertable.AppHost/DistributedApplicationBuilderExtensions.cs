@@ -41,6 +41,7 @@ internal static class DistributedApplicationBuilderExtensions
     {
         return builder.AddNpmApp("frontend", "../../app", "dev")
                       .WithHttpsEndpoint(port: 5173, isProxied: false)
+                      .WithHttpHealthCheck(endpointName: "https", path: "/")
                       .WithReference(api)
                       .WaitFor(api);
     }
