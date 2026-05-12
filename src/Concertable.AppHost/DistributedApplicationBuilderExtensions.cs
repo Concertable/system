@@ -1,4 +1,8 @@
+using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Azure;
+using Microsoft.Extensions.DependencyInjection;
+using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 
 internal static class DistributedApplicationBuilderExtensions
 {
@@ -20,7 +24,7 @@ internal static class DistributedApplicationBuilderExtensions
                       .WithReference(auth)
                       .WaitFor(auth)
                       .WithEnvironment("Auth__Authority", auth.GetEndpoint("https"))
-                      .AddSecrets(builder, "Stripe:WebhookSecret");
+                      .AddSecrets(builder, "Stripe:SecretKey");
     }
 
     public static IResourceBuilder<ProjectResource> AddAuth(this IDistributedApplicationBuilder builder, IResourceBuilder<SqlServerDatabaseResource> sql)
@@ -52,12 +56,55 @@ internal static class DistributedApplicationBuilderExtensions
         if (string.IsNullOrEmpty(secretKey))
             return;
 
-        builder.AddContainer("stripe-cli", "stripe/stripe-cli")
+        var webhookSecret = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var stripeCli = builder.AddContainer("stripe-cli", "stripe/stripe-cli")
                .WithArgs("listen",
                    "--api-key", secretKey,
                    "--forward-to", "http://host.docker.internal:5161/api/webhook")
-               .WithVolume("stripe-cli-config", "/root/.config/stripe")
-               .WaitFor(api);
+               .WithVolume("stripe-cli-config", "/root/.config/stripe");
+
+        builder.Eventing.Subscribe<BeforeStartEvent>((evt, ct) =>
+        {
+            var logs = evt.Services.GetRequiredService<ResourceLoggerService>();
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await foreach (var line in logs.WatchLinesAsync(stripeCli.Resource, ct))
+                    {
+                        var match = Regex.Match(line.Content, @"whsec_\w+");
+                        if (match.Success)
+                        {
+                            webhookSecret.TrySetResult(match.Value);
+                            return;
+                        }
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    webhookSecret.TrySetCanceled(ct);
+                }
+            }, ct);
+            return Task.CompletedTask;
+        });
+
+        api.WaitFor(stripeCli)
+           .WithEnvironment(async ctx =>
+           {
+               ctx.EnvironmentVariables["Stripe__WebhookSecret"] =
+                   await webhookSecret.Task.WaitAsync(TimeSpan.FromSeconds(60));
+           });
+    }
+
+    private static async IAsyncEnumerable<LogLine> WatchLinesAsync(
+        this ResourceLoggerService logs,
+        IResource resource,
+        [EnumeratorCancellation] CancellationToken ct = default)
+    {
+        await foreach (var batch in logs.WatchAsync(resource).WithCancellation(ct))
+            foreach (var line in batch)
+                yield return line;
     }
 
     private static IResourceBuilder<ProjectResource> AddSecrets(this IResourceBuilder<ProjectResource> resource, IDistributedApplicationBuilder builder, params string[] keys)
