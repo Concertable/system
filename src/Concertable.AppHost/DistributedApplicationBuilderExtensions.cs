@@ -43,7 +43,7 @@ internal static class DistributedApplicationBuilderExtensions
 
     public static IResourceBuilder<NodeAppResource> AddFrontend(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api)
     {
-        return builder.AddNpmApp("frontend", "../../app", "dev")
+        return builder.AddNpmApp("frontend", "../../app/web", "dev")
                       .WithHttpsEndpoint(port: 5173, isProxied: false)
                       .WithHttpHealthCheck(endpointName: "https", path: "/")
                       .WithReference(api)
