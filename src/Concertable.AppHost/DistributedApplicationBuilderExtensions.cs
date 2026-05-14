@@ -13,16 +13,28 @@ internal static class DistributedApplicationBuilderExtensions
                       .AddDatabase("DefaultConnection");
     }
 
+    public static (IResourceBuilder<AzureStorageResource> storage, IResourceBuilder<AzureBlobStorageResource> blobs) AddAzureStorage(this IDistributedApplicationBuilder builder)
+    {
+        var storage = builder.AddAzureStorage("storage")
+                             .RunAsEmulator(c => c.WithDataVolume("concertable-azurite-data"));
+        var blobs = storage.AddBlobs("blobs");
+        return (storage, blobs);
+    }
+
     public static IResourceBuilder<ProjectResource> AddApi(
         this IDistributedApplicationBuilder builder,
         IResourceBuilder<SqlServerDatabaseResource> sql,
-        IResourceBuilder<ProjectResource> auth)
+        IResourceBuilder<ProjectResource> auth,
+        IResourceBuilder<AzureStorageResource> storage,
+        IResourceBuilder<AzureBlobStorageResource> blobs)
     {
         return builder.AddProject<Projects.Concertable_Web>("api")
                       .WithReference(sql)
                       .WaitFor(sql)
                       .WithReference(auth)
                       .WaitFor(auth)
+                      .WithReference(blobs)
+                      .WaitFor(storage)
                       .WithEnvironment("Auth__Authority", auth.GetEndpoint("https"))
                       .AddSecrets(builder, "Stripe:SecretKey");
     }
