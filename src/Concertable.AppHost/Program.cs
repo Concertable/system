@@ -4,11 +4,11 @@ var sql = builder.AddSqlServer();
 var (storage, blobs) = builder.AddAzureStorage();
 
 var auth = builder.AddAuth(sql);
-
 var api = builder.AddApi(sql, auth, storage, blobs);
 
 builder.AddWorkers(sql);
-builder.AddFrontend(api);
+builder.AddFrontend(api, auth);
+builder.AddMobile(api, auth);
 builder.AddStripeCli(api);
 
 builder.Build().Run();
