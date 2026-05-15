@@ -98,7 +98,36 @@ internal static class DistributedApplicationBuilderExtensions
                        ctx.EnvironmentVariables["EXPO_PUBLIC_API_URL"] = apiUrl;
                    if (ctx.EnvironmentVariables.TryGetValue("services__auth__https__0", out var authUrl))
                        ctx.EnvironmentVariables["EXPO_PUBLIC_AUTH_AUTHORITY"] = authUrl;
-               });
+               })
+               .WithCommand(
+                   name: "clear-metro-cache",
+                   displayName: "Clear Metro Cache",
+                   executeCommand: async ctx =>
+                   {
+                       var mobileDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "app", "mobile"));
+                       File.WriteAllText(Path.Combine(mobileDir, ".metro-clear"), "");
+
+                       using var kill = new System.Diagnostics.Process();
+                       kill.StartInfo = new System.Diagnostics.ProcessStartInfo
+                       {
+                           FileName = "powershell",
+                           Arguments = "-c \"(Get-NetTCPConnection -LocalPort 8082 -ErrorAction SilentlyContinue).OwningProcess | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }\"",
+                           UseShellExecute = false,
+                           CreateNoWindow = true,
+                       };
+                       kill.Start();
+                       await kill.WaitForExitAsync(ctx.CancellationToken);
+
+                       var pidFile = Path.Combine(mobileDir, ".metro-pid");
+                       if (File.Exists(pidFile) && int.TryParse(File.ReadAllText(pidFile).Trim(), out var pid))
+                       {
+                           try { System.Diagnostics.Process.GetProcessById(pid).Kill(entireProcessTree: true); }
+                           catch { }
+                       }
+
+                       return new ExecuteCommandResult { Success = true };
+                   },
+                   iconName: "ArrowCounterclockwise");
     }
 
     public static void AddStripeCli(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api)
