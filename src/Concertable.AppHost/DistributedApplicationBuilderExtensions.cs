@@ -62,14 +62,21 @@ internal static class DistributedApplicationBuilderExtensions
                       .WaitFor(sql);
     }
 
-    public static IResourceBuilder<NodeAppResource> AddCustomerWeb(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api)
-    {
-        return builder.AddNpmApp("customer", "../../app/web/customer", "dev")
-                      .WithHttpsEndpoint(port: 5174, isProxied: false)
-                      .WithHttpHealthCheck(endpointName: "https", path: "/")
-                      .WithReference(api)
-                      .WaitFor(api);
-    }
+    public static IResourceBuilder<NodeAppResource> AddCustomerWeb(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api) =>
+        AddWebSurface(builder, api, "customer", 5174);
+
+    public static IResourceBuilder<NodeAppResource> AddVenueWeb(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api) =>
+        AddWebSurface(builder, api, "venue", 5175);
+
+    public static IResourceBuilder<NodeAppResource> AddArtistWeb(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api) =>
+        AddWebSurface(builder, api, "artist", 5176);
+
+    private static IResourceBuilder<NodeAppResource> AddWebSurface(IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, string surface, int port) =>
+        builder.AddNpmApp(surface, $"../../app/web/{surface}", "dev")
+               .WithHttpsEndpoint(port: port, isProxied: false)
+               .WithHttpHealthCheck(endpointName: "https", path: "/")
+               .WithReference(api)
+               .WaitFor(api);
 
     public static void AddMobile(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth)
     {
