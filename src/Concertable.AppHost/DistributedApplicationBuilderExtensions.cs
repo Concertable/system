@@ -1,6 +1,9 @@
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Azure;
+using Aspire.Hosting.DevTunnels;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
@@ -21,6 +24,19 @@ internal static class DistributedApplicationBuilderExtensions
         return (storage, blobs);
     }
 
+    public static IResourceBuilder<ProjectResource> AddAuth(this IDistributedApplicationBuilder builder, IResourceBuilder<SqlServerDatabaseResource> sql)
+    {
+        var auth = builder.AddProject<Projects.Concertable_Auth>("auth")
+                          .WithReference(sql)
+                          .WaitFor(sql);
+
+        var lanIp = builder.Configuration["MobileLanIp"];
+        if (!string.IsNullOrEmpty(lanIp))
+            auth.WithEnvironment("Auth__ExpoGoRedirectUri", $"exp://{lanIp}:8082");
+
+        return auth;
+    }
+
     public static IResourceBuilder<ProjectResource> AddApi(
         this IDistributedApplicationBuilder builder,
         IResourceBuilder<SqlServerDatabaseResource> sql,
@@ -39,13 +55,6 @@ internal static class DistributedApplicationBuilderExtensions
                       .AddSecrets(builder, "Stripe:SecretKey");
     }
 
-    public static IResourceBuilder<ProjectResource> AddAuth(this IDistributedApplicationBuilder builder, IResourceBuilder<SqlServerDatabaseResource> sql)
-    {
-        return builder.AddProject<Projects.Concertable_Auth>("auth")
-                      .WithReference(sql)
-                      .WaitFor(sql);
-    }
-
     public static IResourceBuilder<AzureFunctionsProjectResource> AddWorkers(this IDistributedApplicationBuilder builder, IResourceBuilder<SqlServerDatabaseResource> sql)
     {
         return builder.AddAzureFunctionsProject<Projects.Concertable_Workers>("workers")
@@ -53,7 +62,7 @@ internal static class DistributedApplicationBuilderExtensions
                       .WaitFor(sql);
     }
 
-    public static IResourceBuilder<NodeAppResource> AddFrontend(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api)
+    public static IResourceBuilder<NodeAppResource> AddFrontend(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth)
     {
         return builder.AddNpmApp("frontend", "../../app/web", "dev")
                       .WithHttpsEndpoint(port: 5173, isProxied: false)
@@ -62,19 +71,76 @@ internal static class DistributedApplicationBuilderExtensions
                       .WaitFor(api);
     }
 
+    public static void AddMobile(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth)
+    {
+        if (!builder.Configuration.GetValue<bool>("RunMobile"))
+            return;
+
+        var tunnel = builder.AddDevTunnel("concertable-dev").WithAnonymousAccess();
+        var lanIp = builder.Configuration["MobileLanIp"] ?? "localhost";
+
+        tunnel.WithReference(auth, allowAnonymous: true);
+        auth.WithEnvironment(ctx =>
+        {
+            if (ctx.EnvironmentVariables.TryGetValue("services__auth__https__0", out var authUrl))
+                ctx.EnvironmentVariables["Auth__PublicUrl"] = authUrl;
+        });
+
+        tunnel.WithReference(api, allowAnonymous: true);
+
+        var mobile = builder.AddNpmApp("mobile", "../../app/mobile", "start:ci")
+               .WithEnvironment("REACT_NATIVE_PACKAGER_HOSTNAME", lanIp)
+               .WithReference(api, tunnel)
+               .WithReference(auth, tunnel)
+               .WaitFor(api)
+               .WaitFor(tunnel)
+               .WithEnvironment(ctx =>
+               {
+                   if (ctx.EnvironmentVariables.TryGetValue("services__api__https__0", out var apiUrl))
+                       ctx.EnvironmentVariables["EXPO_PUBLIC_API_URL"] = apiUrl;
+                   if (ctx.EnvironmentVariables.TryGetValue("services__auth__https__0", out var authUrl))
+                       ctx.EnvironmentVariables["EXPO_PUBLIC_AUTH_AUTHORITY"] = authUrl;
+               });
+
+        mobile.WithCommand(
+            name: "clear-metro-cache",
+            displayName: "Clear Metro Cache",
+            executeCommand: async ctx =>
+            {
+                var mobileDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "app", "mobile"));
+                File.WriteAllText(Path.Combine(mobileDir, ".metro-clear"), "");
+
+                var commands = ctx.ServiceProvider.GetRequiredService<ResourceCommandService>();
+                await commands.ExecuteCommandAsync(mobile.Resource, KnownResourceCommands.RestartCommand, ctx.CancellationToken);
+                return new ExecuteCommandResult { Success = true };
+            },
+            commandOptions: new CommandOptions { IconName = "ArrowCounterclockwise" });
+    }
+
     public static void AddStripeCli(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api)
     {
         var secretKey = builder.Configuration["Stripe:SecretKey"];
         if (string.IsNullOrEmpty(secretKey))
             return;
 
+        if (builder.ExecutionContext.IsRunMode)
+        {
+            builder.AddExecutable(
+                name: "stripe-cli",
+                command: "stripe",
+                workingDirectory: ".",
+                "listen", "--api-key", secretKey,
+                "--forward-to", "https://localhost:7086/api/webhook",
+                "--skip-verify");
+            return;
+        }
+
         var webhookSecret = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         var stripeCli = builder.AddContainer("stripe-cli", "stripe/stripe-cli")
-               .WithArgs("listen",
-                   "--api-key", secretKey,
-                   "--forward-to", "http://host.docker.internal:5161/api/webhook")
-               .WithVolume("stripe-cli-config", "/root/.config/stripe");
+               .WithVolume("stripe-cli-config", "/root/.config/stripe")
+               .WithArgs("listen", "--api-key", secretKey, "--forward-to",
+                   ReferenceExpression.Create($"{api.GetEndpoint("http")}/api/webhook"));
 
         builder.Eventing.Subscribe<BeforeStartEvent>((evt, ct) =>
         {
@@ -101,12 +167,11 @@ internal static class DistributedApplicationBuilderExtensions
             return Task.CompletedTask;
         });
 
-        api.WaitFor(stripeCli)
-           .WithEnvironment(async ctx =>
-           {
-               ctx.EnvironmentVariables["Stripe__WebhookSecret"] =
-                   await webhookSecret.Task.WaitAsync(TimeSpan.FromSeconds(60));
-           });
+        api.WithEnvironment(async ctx =>
+        {
+            ctx.EnvironmentVariables["Stripe__WebhookSecret"] =
+                await webhookSecret.Task.WaitAsync(TimeSpan.FromSeconds(60));
+        });
     }
 
     private static async IAsyncEnumerable<LogLine> WatchLinesAsync(
@@ -119,7 +184,10 @@ internal static class DistributedApplicationBuilderExtensions
                 yield return line;
     }
 
-    private static IResourceBuilder<ProjectResource> AddSecrets(this IResourceBuilder<ProjectResource> resource, IDistributedApplicationBuilder builder, params string[] keys)
+    private static IResourceBuilder<ProjectResource> AddSecrets(
+        this IResourceBuilder<ProjectResource> resource, 
+        IDistributedApplicationBuilder builder, 
+        params string[] keys)
     {
         foreach (var key in keys)
         {
