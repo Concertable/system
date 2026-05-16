@@ -8,6 +8,8 @@ var api = builder.AddApi(sql, auth, storage, blobs);
 
 builder.AddWorkers(sql);
 builder.AddCustomerWeb(api);
+builder.AddVenueWeb(api);
+builder.AddArtistWeb(api);
 builder.AddMobile(api, auth);
 builder.AddStripeCli(api);
 
