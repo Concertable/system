@@ -71,6 +71,11 @@ internal static class DistributedApplicationBuilderExtensions
     public static IResourceBuilder<NodeAppResource> AddArtistWeb(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api) =>
         AddWebSurface(builder, api, "artist", 5176);
 
+    public static IResourceBuilder<NodeAppResource> AddBusinessWeb(this IDistributedApplicationBuilder builder) =>
+        builder.AddNpmApp("business", "../../app/web/business", "dev")
+               .WithHttpsEndpoint(port: 5177, isProxied: false)
+               .WithHttpHealthCheck(endpointName: "https", path: "/");
+
     private static IResourceBuilder<NodeAppResource> AddWebSurface(IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, string surface, int port) =>
         builder.AddNpmApp(surface, $"../../app/web/{surface}", "dev")
                .WithHttpsEndpoint(port: port, isProxied: false)
