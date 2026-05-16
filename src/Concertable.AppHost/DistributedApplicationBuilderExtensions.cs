@@ -62,10 +62,10 @@ internal static class DistributedApplicationBuilderExtensions
                       .WaitFor(sql);
     }
 
-    public static IResourceBuilder<NodeAppResource> AddFrontend(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth)
+    public static IResourceBuilder<NodeAppResource> AddCustomerWeb(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api)
     {
-        return builder.AddNpmApp("frontend", "../../app/web", "dev")
-                      .WithHttpsEndpoint(port: 5173, isProxied: false)
+        return builder.AddNpmApp("customer", "../../app/web/customer", "dev")
+                      .WithHttpsEndpoint(port: 5174, isProxied: false)
                       .WithHttpHealthCheck(endpointName: "https", path: "/")
                       .WithReference(api)
                       .WaitFor(api);
