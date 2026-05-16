@@ -88,47 +88,33 @@ internal static class DistributedApplicationBuilderExtensions
 
         tunnel.WithReference(api, allowAnonymous: true);
 
-        builder.AddNpmApp("mobile", "../../app/mobile", "start:ci")
+        var mobile = builder.AddNpmApp("mobile", "../../app/mobile", "start:ci")
                .WithEnvironment("REACT_NATIVE_PACKAGER_HOSTNAME", lanIp)
                .WithReference(api, tunnel)
                .WithReference(auth, tunnel)
                .WaitFor(api)
+               .WaitFor(tunnel)
                .WithEnvironment(ctx =>
                {
                    if (ctx.EnvironmentVariables.TryGetValue("services__api__https__0", out var apiUrl))
                        ctx.EnvironmentVariables["EXPO_PUBLIC_API_URL"] = apiUrl;
                    if (ctx.EnvironmentVariables.TryGetValue("services__auth__https__0", out var authUrl))
                        ctx.EnvironmentVariables["EXPO_PUBLIC_AUTH_AUTHORITY"] = authUrl;
-               })
-               .WithCommand(
-                   name: "clear-metro-cache",
-                   displayName: "Clear Metro Cache",
-                   executeCommand: async ctx =>
-                   {
-                       var mobileDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "app", "mobile"));
-                       File.WriteAllText(Path.Combine(mobileDir, ".metro-clear"), "");
+               });
 
-                       using var kill = new Process();
-                       kill.StartInfo = new ProcessStartInfo
-                       {
-                           FileName = "powershell",
-                           Arguments = "-c \"(Get-NetTCPConnection -LocalPort 8082 -ErrorAction SilentlyContinue).OwningProcess | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }\"",
-                           UseShellExecute = false,
-                           CreateNoWindow = true,
-                       };
-                       kill.Start();
-                       await kill.WaitForExitAsync(ctx.CancellationToken);
+        mobile.WithCommand(
+            name: "clear-metro-cache",
+            displayName: "Clear Metro Cache",
+            executeCommand: async ctx =>
+            {
+                var mobileDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "app", "mobile"));
+                File.WriteAllText(Path.Combine(mobileDir, ".metro-clear"), "");
 
-                       var pidFile = Path.Combine(mobileDir, ".metro-pid");
-                       if (File.Exists(pidFile) && int.TryParse(File.ReadAllText(pidFile).Trim(), out var pid))
-                       {
-                           try { Process.GetProcessById(pid).Kill(entireProcessTree: true); }
-                           catch { }
-                       }
-
-                       return new ExecuteCommandResult { Success = true };
-                   },
-                   commandOptions: new CommandOptions { IconName = "ArrowCounterclockwise" });
+                var commands = ctx.ServiceProvider.GetRequiredService<ResourceCommandService>();
+                await commands.ExecuteCommandAsync(mobile.Resource, KnownResourceCommands.RestartCommand, ctx.CancellationToken);
+                return new ExecuteCommandResult { Success = true };
+            },
+            commandOptions: new CommandOptions { IconName = "ArrowCounterclockwise" });
     }
 
     public static void AddStripeCli(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api)
@@ -198,7 +184,10 @@ internal static class DistributedApplicationBuilderExtensions
                 yield return line;
     }
 
-    private static IResourceBuilder<ProjectResource> AddSecrets(this IResourceBuilder<ProjectResource> resource, IDistributedApplicationBuilder builder, params string[] keys)
+    private static IResourceBuilder<ProjectResource> AddSecrets(
+        this IResourceBuilder<ProjectResource> resource, 
+        IDistributedApplicationBuilder builder, 
+        params string[] keys)
     {
         foreach (var key in keys)
         {
