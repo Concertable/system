@@ -3,6 +3,7 @@ using Aspire.Hosting.Azure;
 using Aspire.Hosting.DevTunnels;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
@@ -107,8 +108,8 @@ internal static class DistributedApplicationBuilderExtensions
                        var mobileDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "app", "mobile"));
                        File.WriteAllText(Path.Combine(mobileDir, ".metro-clear"), "");
 
-                       using var kill = new System.Diagnostics.Process();
-                       kill.StartInfo = new System.Diagnostics.ProcessStartInfo
+                       using var kill = new Process();
+                       kill.StartInfo = new ProcessStartInfo
                        {
                            FileName = "powershell",
                            Arguments = "-c \"(Get-NetTCPConnection -LocalPort 8082 -ErrorAction SilentlyContinue).OwningProcess | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }\"",
@@ -121,13 +122,13 @@ internal static class DistributedApplicationBuilderExtensions
                        var pidFile = Path.Combine(mobileDir, ".metro-pid");
                        if (File.Exists(pidFile) && int.TryParse(File.ReadAllText(pidFile).Trim(), out var pid))
                        {
-                           try { System.Diagnostics.Process.GetProcessById(pid).Kill(entireProcessTree: true); }
+                           try { Process.GetProcessById(pid).Kill(entireProcessTree: true); }
                            catch { }
                        }
 
                        return new ExecuteCommandResult { Success = true };
                    },
-                   iconName: "ArrowCounterclockwise");
+                   commandOptions: new CommandOptions { IconName = "ArrowCounterclockwise" });
     }
 
     public static void AddStripeCli(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api)
@@ -136,13 +137,24 @@ internal static class DistributedApplicationBuilderExtensions
         if (string.IsNullOrEmpty(secretKey))
             return;
 
+        if (builder.ExecutionContext.IsRunMode)
+        {
+            builder.AddExecutable(
+                name: "stripe-cli",
+                command: "stripe",
+                workingDirectory: ".",
+                "listen", "--api-key", secretKey,
+                "--forward-to", "https://localhost:7086/api/webhook",
+                "--skip-verify");
+            return;
+        }
+
         var webhookSecret = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         var stripeCli = builder.AddContainer("stripe-cli", "stripe/stripe-cli")
-               .WithArgs("listen",
-                   "--api-key", secretKey,
-                   "--forward-to", "http://host.docker.internal:5161/api/webhook")
-               .WithVolume("stripe-cli-config", "/root/.config/stripe");
+               .WithVolume("stripe-cli-config", "/root/.config/stripe")
+               .WithArgs("listen", "--api-key", secretKey, "--forward-to",
+                   ReferenceExpression.Create($"{api.GetEndpoint("http")}/api/webhook"));
 
         builder.Eventing.Subscribe<BeforeStartEvent>((evt, ct) =>
         {
@@ -169,12 +181,11 @@ internal static class DistributedApplicationBuilderExtensions
             return Task.CompletedTask;
         });
 
-        api.WaitFor(stripeCli)
-           .WithEnvironment(async ctx =>
-           {
-               ctx.EnvironmentVariables["Stripe__WebhookSecret"] =
-                   await webhookSecret.Task.WaitAsync(TimeSpan.FromSeconds(60));
-           });
+        api.WithEnvironment(async ctx =>
+        {
+            ctx.EnvironmentVariables["Stripe__WebhookSecret"] =
+                await webhookSecret.Task.WaitAsync(TimeSpan.FromSeconds(60));
+        });
     }
 
     private static async IAsyncEnumerable<LogLine> WatchLinesAsync(
