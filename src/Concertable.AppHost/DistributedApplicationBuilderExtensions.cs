@@ -116,7 +116,7 @@ internal static class DistributedApplicationBuilderExtensions
         string lanIp,
         string surface)
     {
-        var mobile = builder.AddNpmApp(surface, $"../../app/mobile/{surface}", "start:ci")
+        var mobile = builder.AddNpmApp($"mobile-{surface}", $"../../app/mobile/{surface}", "start:ci")
                .WithEnvironment("REACT_NATIVE_PACKAGER_HOSTNAME", lanIp)
                .WithReference(api, tunnel)
                .WithReference(auth, tunnel)
