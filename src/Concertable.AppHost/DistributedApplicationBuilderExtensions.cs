@@ -34,8 +34,7 @@ internal static class DistributedApplicationBuilderExtensions
         if (!string.IsNullOrEmpty(lanIp))
         {
             auth.WithEnvironment("Auth__ExpoGoRedirectUri__Customer", $"exp://{lanIp}:8082");
-            auth.WithEnvironment("Auth__ExpoGoRedirectUri__Venue", $"exp://{lanIp}:8083");
-            auth.WithEnvironment("Auth__ExpoGoRedirectUri__Artist", $"exp://{lanIp}:8084");
+            auth.WithEnvironment("Auth__ExpoGoRedirectUri__Business", $"exp://{lanIp}:8083");
         }
 
         return auth;
@@ -66,25 +65,24 @@ internal static class DistributedApplicationBuilderExtensions
                       .WaitFor(sql);
     }
 
-    public static IResourceBuilder<NodeAppResource> AddCustomerWeb(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api) =>
-        AddWebSurface(builder, api, "customer", 5174);
+    public static IResourceBuilder<NodeAppResource> AddCustomerWeb(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth) =>
+        AddWebSurface(builder, api, auth, "customer", 5174);
 
-    public static IResourceBuilder<NodeAppResource> AddVenueWeb(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api) =>
-        AddWebSurface(builder, api, "venue", 5175);
+    public static IResourceBuilder<NodeAppResource> AddVenueWeb(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth) =>
+        AddWebSurface(builder, api, auth, "venue", 5175);
 
-    public static IResourceBuilder<NodeAppResource> AddArtistWeb(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api) =>
-        AddWebSurface(builder, api, "artist", 5176);
+    public static IResourceBuilder<NodeAppResource> AddArtistWeb(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth) =>
+        AddWebSurface(builder, api, auth, "artist", 5176);
 
-    public static IResourceBuilder<NodeAppResource> AddBusinessWeb(this IDistributedApplicationBuilder builder) =>
-        builder.AddNpmApp("business", "../../app/web/business", "dev")
-               .WithHttpsEndpoint(port: 5177, isProxied: false)
-               .WithHttpHealthCheck(endpointName: "https", path: "/");
+    public static IResourceBuilder<NodeAppResource> AddBusinessWeb(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth) =>
+        AddWebSurface(builder, api, auth, "business", 5177);
 
-    private static IResourceBuilder<NodeAppResource> AddWebSurface(IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, string surface, int port) =>
+    private static IResourceBuilder<NodeAppResource> AddWebSurface(IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth, string surface, int port) =>
         builder.AddNpmApp(surface, $"../../app/web/{surface}", "dev")
                .WithHttpsEndpoint(port: port, isProxied: false)
                .WithHttpHealthCheck(endpointName: "https", path: "/")
                .WithReference(api)
+               .WithReference(auth)
                .WaitFor(api);
 
     public static void AddMobile(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth)
@@ -104,8 +102,7 @@ internal static class DistributedApplicationBuilderExtensions
         });
 
         AddMobileSurface(builder, api, auth, tunnel, lanIp, "customer");
-        AddMobileSurface(builder, api, auth, tunnel, lanIp, "venue");
-        AddMobileSurface(builder, api, auth, tunnel, lanIp, "artist");
+        AddMobileSurface(builder, api, auth, tunnel, lanIp, "business");
     }
 
     private static IResourceBuilder<NodeAppResource> AddMobileSurface(
@@ -116,7 +113,7 @@ internal static class DistributedApplicationBuilderExtensions
         string lanIp,
         string surface)
     {
-        var mobile = builder.AddNpmApp(surface, $"../../app/mobile/{surface}", "start:ci")
+        var mobile = builder.AddNpmApp($"mobile-{surface}", $"../../app/mobile/{surface}", "start:ci")
                .WithEnvironment("REACT_NATIVE_PACKAGER_HOSTNAME", lanIp)
                .WithReference(api, tunnel)
                .WithReference(auth, tunnel)
