@@ -10,7 +10,7 @@ builder.AddWorkers(sql);
 builder.AddCustomerWeb(api, auth);
 builder.AddVenueWeb(api, auth);
 builder.AddArtistWeb(api, auth);
-builder.AddBusinessWeb();
+builder.AddBusinessWeb(api, auth);
 builder.AddMobile(api, auth);
 builder.AddStripeCli(api);
 
