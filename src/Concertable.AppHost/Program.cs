@@ -7,9 +7,9 @@ var auth = builder.AddAuth(sql);
 var api = builder.AddApi(sql, auth, storage, blobs);
 
 builder.AddWorkers(sql);
-builder.AddCustomerWeb(api);
-builder.AddVenueWeb(api);
-builder.AddArtistWeb(api);
+builder.AddCustomerWeb(api, auth);
+builder.AddVenueWeb(api, auth);
+builder.AddArtistWeb(api, auth);
 builder.AddBusinessWeb();
 builder.AddMobile(api, auth);
 builder.AddStripeCli(api);

@@ -66,26 +66,34 @@ internal static class DistributedApplicationBuilderExtensions
                       .WaitFor(sql);
     }
 
-    public static IResourceBuilder<NodeAppResource> AddCustomerWeb(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api) =>
-        AddWebSurface(builder, api, "customer", 5174);
+    public static IResourceBuilder<NodeAppResource> AddCustomerWeb(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth) =>
+        AddWebSurface(builder, api, auth, "customer", 5174);
 
-    public static IResourceBuilder<NodeAppResource> AddVenueWeb(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api) =>
-        AddWebSurface(builder, api, "venue", 5175);
+    public static IResourceBuilder<NodeAppResource> AddVenueWeb(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth) =>
+        AddWebSurface(builder, api, auth, "venue", 5175);
 
-    public static IResourceBuilder<NodeAppResource> AddArtistWeb(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api) =>
-        AddWebSurface(builder, api, "artist", 5176);
+    public static IResourceBuilder<NodeAppResource> AddArtistWeb(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth) =>
+        AddWebSurface(builder, api, auth, "artist", 5176);
 
     public static IResourceBuilder<NodeAppResource> AddBusinessWeb(this IDistributedApplicationBuilder builder) =>
         builder.AddNpmApp("business", "../../app/web/business", "dev")
                .WithHttpsEndpoint(port: 5177, isProxied: false)
                .WithHttpHealthCheck(endpointName: "https", path: "/");
 
-    private static IResourceBuilder<NodeAppResource> AddWebSurface(IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, string surface, int port) =>
+    private static IResourceBuilder<NodeAppResource> AddWebSurface(IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth, string surface, int port) =>
         builder.AddNpmApp(surface, $"../../app/web/{surface}", "dev")
                .WithHttpsEndpoint(port: port, isProxied: false)
                .WithHttpHealthCheck(endpointName: "https", path: "/")
                .WithReference(api)
-               .WaitFor(api);
+               .WithReference(auth)
+               .WaitFor(api)
+               .WithEnvironment(ctx =>
+               {
+                   if (ctx.EnvironmentVariables.TryGetValue("services__api__https__0", out var apiUrl))
+                       ctx.EnvironmentVariables["VITE_API_URL"] = $"{apiUrl}/api";
+                   if (ctx.EnvironmentVariables.TryGetValue("services__auth__https__0", out var authUrl))
+                       ctx.EnvironmentVariables["VITE_AUTH_AUTHORITY"] = authUrl;
+               });
 
     public static void AddMobile(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth)
     {
