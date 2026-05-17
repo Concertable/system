@@ -86,14 +86,7 @@ internal static class DistributedApplicationBuilderExtensions
                .WithHttpHealthCheck(endpointName: "https", path: "/")
                .WithReference(api)
                .WithReference(auth)
-               .WaitFor(api)
-               .WithEnvironment(ctx =>
-               {
-                   if (ctx.EnvironmentVariables.TryGetValue("services__api__https__0", out var apiUrl))
-                       ctx.EnvironmentVariables["VITE_API_URL"] = $"{apiUrl}/api";
-                   if (ctx.EnvironmentVariables.TryGetValue("services__auth__https__0", out var authUrl))
-                       ctx.EnvironmentVariables["VITE_AUTH_AUTHORITY"] = authUrl;
-               });
+               .WaitFor(api);
 
     public static void AddMobile(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth)
     {
