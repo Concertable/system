@@ -80,7 +80,6 @@ internal static class DistributedApplicationBuilderExtensions
     private static IResourceBuilder<NodeAppResource> AddWebSurface(IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth, string surface, int port) =>
         builder.AddNpmApp(surface, $"../../app/web/{surface}", "dev")
                .WithHttpsEndpoint(port: port, isProxied: false)
-               .WithHttpHealthCheck(endpointName: "https", path: "/")
                .WithReference(api)
                .WithReference(auth)
                .WaitFor(api);
