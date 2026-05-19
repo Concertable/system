@@ -65,19 +65,26 @@ internal static class DistributedApplicationBuilderExtensions
                       .WaitFor(sql);
     }
 
-    public static IResourceBuilder<NodeAppResource> AddCustomerWeb(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth) =>
-        AddWebSurface(builder, api, auth, "customer", 5174);
+    public static IResourceBuilder<ProjectResource> AddCustomerWeb(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> auth)
+    {
+        return builder.AddProject<Projects.Concertable_Customer_Web>("customer-web")
+                      .WithReference(auth)
+                      .WaitFor(auth);
+    }
 
-    public static IResourceBuilder<NodeAppResource> AddVenueWeb(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth) =>
-        AddWebSurface(builder, api, auth, "venue", 5175);
+    public static IResourceBuilder<NodeAppResource> AddCustomerSpa(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth) =>
+        AddSpaSurface(builder, api, auth, "customer", 5174);
 
-    public static IResourceBuilder<NodeAppResource> AddArtistWeb(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth) =>
-        AddWebSurface(builder, api, auth, "artist", 5176);
+    public static IResourceBuilder<NodeAppResource> AddVenueSpa(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth) =>
+        AddSpaSurface(builder, api, auth, "venue", 5175);
 
-    public static IResourceBuilder<NodeAppResource> AddBusinessWeb(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth) =>
-        AddWebSurface(builder, api, auth, "business", 5177);
+    public static IResourceBuilder<NodeAppResource> AddArtistSpa(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth) =>
+        AddSpaSurface(builder, api, auth, "artist", 5176);
 
-    private static IResourceBuilder<NodeAppResource> AddWebSurface(IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth, string surface, int port) =>
+    public static IResourceBuilder<NodeAppResource> AddBusinessSpa(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth) =>
+        AddSpaSurface(builder, api, auth, "business", 5177);
+
+    private static IResourceBuilder<NodeAppResource> AddSpaSurface(IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth, string surface, int port) =>
         builder.AddNpmApp(surface, $"../../app/web/{surface}", "dev")
                .WithHttpsEndpoint(port: port, isProxied: false)
                .WithReference(api)
