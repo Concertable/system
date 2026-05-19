@@ -9,11 +9,12 @@ using System.Text.RegularExpressions;
 
 internal static class DistributedApplicationBuilderExtensions
 {
-    public static IResourceBuilder<SqlServerDatabaseResource> AddSqlServer(this IDistributedApplicationBuilder builder)
+    public static (IResourceBuilder<SqlServerDatabaseResource> defaultDb, IResourceBuilder<SqlServerDatabaseResource> customerDb) AddSqlServer(this IDistributedApplicationBuilder builder)
     {
-        return builder.AddSqlServer("sql")
-                      .WithDataVolume("concertable-sql-data")
-                      .AddDatabase("DefaultConnection");
+        var sql = builder.AddSqlServer("sql").WithDataVolume("concertable-sql-data");
+        var defaultDb = sql.AddDatabase("DefaultConnection");
+        var customerDb = sql.AddDatabase("CustomerDb");
+        return (defaultDb, customerDb);
     }
 
     public static (IResourceBuilder<AzureStorageResource> storage, IResourceBuilder<AzureBlobStorageResource> blobs) AddAzureStorage(this IDistributedApplicationBuilder builder)
@@ -65,11 +66,16 @@ internal static class DistributedApplicationBuilderExtensions
                       .WaitFor(sql);
     }
 
-    public static IResourceBuilder<ProjectResource> AddCustomerWeb(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> auth)
+    public static IResourceBuilder<ProjectResource> AddCustomerWeb(
+        this IDistributedApplicationBuilder builder,
+        IResourceBuilder<ProjectResource> auth,
+        IResourceBuilder<SqlServerDatabaseResource> customerDb)
     {
         return builder.AddProject<Projects.Concertable_Customer_Web>("customer-web")
                       .WithReference(auth)
-                      .WaitFor(auth);
+                      .WaitFor(auth)
+                      .WithReference(customerDb)
+                      .WaitFor(customerDb);
     }
 
     public static IResourceBuilder<NodeAppResource> AddCustomerSpa(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth) =>
