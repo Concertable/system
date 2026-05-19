@@ -1,13 +1,13 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var sql = builder.AddSqlServer();
+var (sql, customerDb) = builder.AddSqlServer();
 var (storage, blobs) = builder.AddAzureStorage();
 
 var auth = builder.AddAuth(sql);
 var api = builder.AddApi(sql, auth, storage, blobs);
 
 builder.AddWorkers(sql);
-builder.AddCustomerWeb(auth);
+builder.AddCustomerWeb(auth, customerDb);
 builder.AddCustomerSpa(api, auth);
 builder.AddVenueSpa(api, auth);
 builder.AddArtistSpa(api, auth);
