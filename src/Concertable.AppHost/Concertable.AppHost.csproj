@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.Azure.Functions" Version="13.3.2" />
+    <PackageReference Include="Aspire.Hosting.Azure.ServiceBus" Version="13.3.2" />
     <PackageReference Include="Aspire.Hosting.Azure.Storage" Version="13.3.2" />
     <PackageReference Include="Aspire.Hosting.DevTunnels" Version="13.3.2" />
     <PackageReference Include="Aspire.Hosting.NodeJs" Version="9.5.2" />
@@ -24,6 +25,8 @@
     <ProjectReference Include="..\Concertable.Workers\Concertable.Workers.csproj" />
     <ProjectReference Include="..\Concertable.Auth\Concertable.Auth.csproj" />
     <ProjectReference Include="..\Concertable.Customer\Concertable.Customer.Web\Concertable.Customer.Web.csproj" />
+    <ProjectReference Include="..\Concertable.Search\Concertable.Search.Web\Concertable.Search.Web.csproj" />
+    <ProjectReference Include="..\Concertable.Search\Concertable.Search.Workers\Concertable.Search.Workers.csproj" />
   </ItemGroup>
 
 </Project>

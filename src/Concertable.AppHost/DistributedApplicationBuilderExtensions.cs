@@ -9,12 +9,23 @@ using System.Text.RegularExpressions;
 
 internal static class DistributedApplicationBuilderExtensions
 {
-    public static (IResourceBuilder<SqlServerDatabaseResource> defaultDb, IResourceBuilder<SqlServerDatabaseResource> customerDb) AddSqlServer(this IDistributedApplicationBuilder builder)
+    public static (IResourceBuilder<SqlServerDatabaseResource> defaultDb, IResourceBuilder<SqlServerDatabaseResource> customerDb, IResourceBuilder<SqlServerDatabaseResource> searchDb) AddSqlServer(this IDistributedApplicationBuilder builder)
     {
         var sql = builder.AddSqlServer("sql").WithDataVolume("concertable-sql-data");
         var defaultDb = sql.AddDatabase("DefaultConnection");
         var customerDb = sql.AddDatabase("CustomerDb");
-        return (defaultDb, customerDb);
+        var searchDb = sql.AddDatabase("SearchDb");
+        return (defaultDb, customerDb, searchDb);
+    }
+
+    public static IResourceBuilder<AzureServiceBusResource> AddServiceBus(this IDistributedApplicationBuilder builder)
+    {
+        return builder.AddAzureServiceBus("asb")
+            .AddTopic("event-artistchangedevent", ["concertable-search"])
+            .AddTopic("event-venuechangedevent", ["concertable-search"])
+            .AddTopic("event-concertchangedevent", ["concertable-search"])
+            .AddTopic("event-reviewsubmittedevent", ["concertable-search", "concertable-customer"])
+            .RunAsEmulator();
     }
 
     public static (IResourceBuilder<AzureStorageResource> storage, IResourceBuilder<AzureBlobStorageResource> blobs) AddAzureStorage(this IDistributedApplicationBuilder builder)
@@ -29,7 +40,8 @@ internal static class DistributedApplicationBuilderExtensions
     {
         var auth = builder.AddProject<Projects.Concertable_Auth>("auth")
                           .WithReference(sql)
-                          .WaitFor(sql);
+                          .WaitFor(sql)
+                          .AddSecrets(builder, "ServiceAuth:B2BClientSecret", "ServiceAuth:CustomerClientSecret");
 
         var lanIp = builder.Configuration["MobileLanIp"];
         if (!string.IsNullOrEmpty(lanIp))
@@ -46,8 +58,10 @@ internal static class DistributedApplicationBuilderExtensions
         IResourceBuilder<SqlServerDatabaseResource> sql,
         IResourceBuilder<ProjectResource> auth,
         IResourceBuilder<AzureStorageResource> storage,
-        IResourceBuilder<AzureBlobStorageResource> blobs)
+        IResourceBuilder<AzureBlobStorageResource> blobs,
+        IResourceBuilder<AzureServiceBusResource> asb)
     {
+        var b2bSecret = builder.Configuration["ServiceAuth:B2BClientSecret"];
         return builder.AddProject<Projects.Concertable_Web>("api")
                       .WithReference(sql)
                       .WaitFor(sql)
@@ -55,7 +69,11 @@ internal static class DistributedApplicationBuilderExtensions
                       .WaitFor(auth)
                       .WithReference(blobs)
                       .WaitFor(storage)
+                      .WithReference(asb)
+                      .WaitFor(asb)
                       .WithEnvironment("Auth__Authority", auth.GetEndpoint("https"))
+                      .WithEnvironment("ServiceAuth__ClientId", "concertable-b2b")
+                      .WithEnvironment("ServiceAuth__ClientSecret", b2bSecret ?? "")
                       .AddSecrets(builder, "Stripe:SecretKey");
     }
 
@@ -69,13 +87,45 @@ internal static class DistributedApplicationBuilderExtensions
     public static IResourceBuilder<ProjectResource> AddCustomerWeb(
         this IDistributedApplicationBuilder builder,
         IResourceBuilder<ProjectResource> auth,
-        IResourceBuilder<SqlServerDatabaseResource> customerDb)
+        IResourceBuilder<SqlServerDatabaseResource> customerDb,
+        IResourceBuilder<AzureServiceBusResource> asb)
     {
+        var customerSecret = builder.Configuration["ServiceAuth:CustomerClientSecret"];
         return builder.AddProject<Projects.Concertable_Customer_Web>("customer-web")
                       .WithReference(auth)
                       .WaitFor(auth)
                       .WithReference(customerDb)
-                      .WaitFor(customerDb);
+                      .WaitFor(customerDb)
+                      .WithReference(asb)
+                      .WaitFor(asb)
+                      .WithEnvironment("Auth__Authority", auth.GetEndpoint("https"))
+                      .WithEnvironment("ServiceAuth__ClientId", "concertable-customer")
+                      .WithEnvironment("ServiceAuth__ClientSecret", customerSecret ?? "");
+    }
+
+    public static IResourceBuilder<ProjectResource> AddSearchWeb(
+        this IDistributedApplicationBuilder builder,
+        IResourceBuilder<ProjectResource> auth,
+        IResourceBuilder<SqlServerDatabaseResource> searchDb)
+    {
+        return builder.AddProject<Projects.Concertable_Search_Web>("search-web")
+                      .WithReference(auth)
+                      .WaitFor(auth)
+                      .WithReference(searchDb)
+                      .WaitFor(searchDb)
+                      .WithEnvironment("Auth__Authority", auth.GetEndpoint("https"));
+    }
+
+    public static IResourceBuilder<ProjectResource> AddSearchWorkers(
+        this IDistributedApplicationBuilder builder,
+        IResourceBuilder<SqlServerDatabaseResource> searchDb,
+        IResourceBuilder<AzureServiceBusResource> asb)
+    {
+        return builder.AddProject<Projects.Concertable_Search_Workers>("search-workers")
+                      .WithReference(searchDb)
+                      .WaitFor(searchDb)
+                      .WithReference(asb)
+                      .WaitFor(asb);
     }
 
     public static IResourceBuilder<NodeAppResource> AddCustomerSpa(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth) =>
