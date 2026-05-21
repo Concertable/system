@@ -31,11 +31,9 @@ internal static class DistributedApplicationBuilderExtensions
 
         var artistChanged = asb.AddServiceBusTopic("event-artistchangedevent");
         artistChanged.AddServiceBusSubscription("search-artist-changed", "concertable-search");
-        artistChanged.AddServiceBusSubscription("b2b-artist-changed", "concertable-b2b");
 
         var venueChanged = asb.AddServiceBusTopic("event-venuechangedevent");
         venueChanged.AddServiceBusSubscription("search-venue-changed", "concertable-search");
-        venueChanged.AddServiceBusSubscription("b2b-venue-changed", "concertable-b2b");
 
         var concertChanged = asb.AddServiceBusTopic("event-concertchangedevent");
         concertChanged.AddServiceBusSubscription("search-concert-changed", "concertable-search");
