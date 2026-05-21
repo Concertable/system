@@ -9,13 +9,14 @@ using System.Text.RegularExpressions;
 
 internal static class DistributedApplicationBuilderExtensions
 {
-    public static (IResourceBuilder<SqlServerDatabaseResource> defaultDb, IResourceBuilder<SqlServerDatabaseResource> customerDb, IResourceBuilder<SqlServerDatabaseResource> searchDb) AddSqlServer(this IDistributedApplicationBuilder builder)
+    public static (IResourceBuilder<SqlServerDatabaseResource> defaultDb, IResourceBuilder<SqlServerDatabaseResource> customerDb, IResourceBuilder<SqlServerDatabaseResource> searchDb, IResourceBuilder<SqlServerDatabaseResource> paymentDb) AddSqlServer(this IDistributedApplicationBuilder builder)
     {
         var sql = builder.AddSqlServer("sql").WithDataVolume("concertable-sql-data");
         var defaultDb = sql.AddDatabase("DefaultConnection");
         var customerDb = sql.AddDatabase("CustomerDb");
         var searchDb = sql.AddDatabase("SearchDb");
-        return (defaultDb, customerDb, searchDb);
+        var paymentDb = sql.AddDatabase("PaymentDb");
+        return (defaultDb, customerDb, searchDb, paymentDb);
     }
 
     public static IResourceBuilder<AzureServiceBusResource> AddServiceBus(this IDistributedApplicationBuilder builder)
@@ -25,6 +26,11 @@ internal static class DistributedApplicationBuilderExtensions
             .AddTopic("event-venuechangedevent", ["concertable-search"])
             .AddTopic("event-concertchangedevent", ["concertable-search"])
             .AddTopic("event-reviewsubmittedevent", ["concertable-search", "concertable-customer"])
+            .AddTopic("event-customerregisteredevent", ["concertable-payment"])
+            .AddTopic("event-venuemanagerregisteredevent", ["concertable-payment"])
+            .AddTopic("event-artistmanagerregisteredevent", ["concertable-payment"])
+            .AddTopic("event-paymentsucceededevent", ["concertable-b2b", "concertable-customer", "concertable-payment"])
+            .AddTopic("event-paymentfailedevent", ["concertable-payment"])
             .RunAsEmulator();
     }
 
@@ -59,7 +65,8 @@ internal static class DistributedApplicationBuilderExtensions
         IResourceBuilder<ProjectResource> auth,
         IResourceBuilder<AzureStorageResource> storage,
         IResourceBuilder<AzureBlobStorageResource> blobs,
-        IResourceBuilder<AzureServiceBusResource> asb)
+        IResourceBuilder<AzureServiceBusResource> asb,
+        IResourceBuilder<ProjectResource> paymentWeb)
     {
         var b2bSecret = builder.Configuration["ServiceAuth:B2BClientSecret"];
         return builder.AddProject<Projects.Concertable_Web>("api")
@@ -71,6 +78,8 @@ internal static class DistributedApplicationBuilderExtensions
                       .WaitFor(storage)
                       .WithReference(asb)
                       .WaitFor(asb)
+                      .WithReference(paymentWeb)
+                      .WaitFor(paymentWeb)
                       .WithEnvironment("Auth__Authority", auth.GetEndpoint("https"))
                       .WithEnvironment("ServiceAuth__ClientId", "concertable-b2b")
                       .WithEnvironment("ServiceAuth__ClientSecret", b2bSecret ?? "")
@@ -88,7 +97,8 @@ internal static class DistributedApplicationBuilderExtensions
         this IDistributedApplicationBuilder builder,
         IResourceBuilder<ProjectResource> auth,
         IResourceBuilder<SqlServerDatabaseResource> customerDb,
-        IResourceBuilder<AzureServiceBusResource> asb)
+        IResourceBuilder<AzureServiceBusResource> asb,
+        IResourceBuilder<ProjectResource> paymentWeb)
     {
         var customerSecret = builder.Configuration["ServiceAuth:CustomerClientSecret"];
         return builder.AddProject<Projects.Concertable_Customer_Web>("customer-web")
@@ -98,6 +108,8 @@ internal static class DistributedApplicationBuilderExtensions
                       .WaitFor(customerDb)
                       .WithReference(asb)
                       .WaitFor(asb)
+                      .WithReference(paymentWeb)
+                      .WaitFor(paymentWeb)
                       .WithEnvironment("Auth__Authority", auth.GetEndpoint("https"))
                       .WithEnvironment("ServiceAuth__ClientId", "concertable-customer")
                       .WithEnvironment("ServiceAuth__ClientSecret", customerSecret ?? "");
@@ -126,6 +138,36 @@ internal static class DistributedApplicationBuilderExtensions
                       .WaitFor(searchDb)
                       .WithReference(asb)
                       .WaitFor(asb);
+    }
+
+    public static IResourceBuilder<ProjectResource> AddPaymentWeb(
+        this IDistributedApplicationBuilder builder,
+        IResourceBuilder<ProjectResource> auth,
+        IResourceBuilder<SqlServerDatabaseResource> paymentDb,
+        IResourceBuilder<AzureServiceBusResource> asb)
+    {
+        return builder.AddProject<Projects.Concertable_Payment_Web>("payment-web")
+                      .WithReference(paymentDb)
+                      .WaitFor(paymentDb)
+                      .WithReference(auth)
+                      .WaitFor(auth)
+                      .WithReference(asb)
+                      .WaitFor(asb)
+                      .WithEnvironment("Auth__Authority", auth.GetEndpoint("https"))
+                      .AddSecrets(builder, "Stripe:SecretKey", "Stripe:WebhookSecret", "ExternalServices:UseRealStripe");
+    }
+
+    public static IResourceBuilder<ProjectResource> AddPaymentWorkers(
+        this IDistributedApplicationBuilder builder,
+        IResourceBuilder<SqlServerDatabaseResource> paymentDb,
+        IResourceBuilder<AzureServiceBusResource> asb)
+    {
+        return builder.AddProject<Projects.Concertable_Payment_Workers>("payment-workers")
+                      .WithReference(paymentDb)
+                      .WaitFor(paymentDb)
+                      .WithReference(asb)
+                      .WaitFor(asb)
+                      .AddSecrets(builder, "Stripe:SecretKey", "ExternalServices:UseRealStripe");
     }
 
     public static IResourceBuilder<NodeAppResource> AddCustomerSpa(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> auth) =>
