@@ -7,16 +7,22 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
+internal record SqlResources(
+    IResourceBuilder<SqlServerDatabaseResource> B2BDb,
+    IResourceBuilder<SqlServerDatabaseResource> CustomerDb,
+    IResourceBuilder<SqlServerDatabaseResource> SearchDb,
+    IResourceBuilder<SqlServerDatabaseResource> PaymentDb);
+
 internal static class DistributedApplicationBuilderExtensions
 {
-    public static (IResourceBuilder<SqlServerDatabaseResource> defaultDb, IResourceBuilder<SqlServerDatabaseResource> customerDb, IResourceBuilder<SqlServerDatabaseResource> searchDb, IResourceBuilder<SqlServerDatabaseResource> paymentDb) AddSqlServer(this IDistributedApplicationBuilder builder)
+    public static SqlResources AddSqlServer(this IDistributedApplicationBuilder builder)
     {
         var sql = builder.AddSqlServer("sql").WithDataVolume("concertable-sql-data");
-        var defaultDb = sql.AddDatabase("DefaultConnection");
-        var customerDb = sql.AddDatabase("CustomerDb");
-        var searchDb = sql.AddDatabase("SearchDb");
-        var paymentDb = sql.AddDatabase("PaymentDb");
-        return (defaultDb, customerDb, searchDb, paymentDb);
+        return new SqlResources(
+            sql.AddDatabase("B2BDb"),
+            sql.AddDatabase("CustomerDb"),
+            sql.AddDatabase("SearchDb"),
+            sql.AddDatabase("PaymentDb"));
     }
 
     public static IResourceBuilder<AzureServiceBusResource> AddServiceBus(this IDistributedApplicationBuilder builder)
