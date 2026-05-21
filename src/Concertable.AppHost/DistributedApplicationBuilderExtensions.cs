@@ -27,20 +27,41 @@ internal static class DistributedApplicationBuilderExtensions
 
     public static IResourceBuilder<AzureServiceBusResource> AddServiceBus(this IDistributedApplicationBuilder builder)
     {
-        return builder.AddAzureServiceBus("asb")
-            .AddTopic("event-artistchangedevent", ["concertable-search"])
-            .AddTopic("event-venuechangedevent", ["concertable-search"])
-            .AddTopic("event-concertchangedevent", ["concertable-search"])
-            .AddTopic("event-reviewsubmittedevent", ["concertable-customer"])
-            .AddTopic("event-artistratingupdatedevent", ["concertable-search"])
-            .AddTopic("event-venueratingupdatedevent", ["concertable-search"])
-            .AddTopic("event-concertratingupdatedevent", ["concertable-search"])
-            .AddTopic("event-customerregisteredevent", ["concertable-payment"])
-            .AddTopic("event-venuemanagerregisteredevent", ["concertable-payment"])
-            .AddTopic("event-artistmanagerregisteredevent", ["concertable-payment"])
-            .AddTopic("event-paymentsucceededevent", ["concertable-b2b", "concertable-customer", "concertable-payment"])
-            .AddTopic("event-paymentfailedevent", ["concertable-b2b", "concertable-customer", "concertable-payment"])
-            .RunAsEmulator();
+        var asb = builder.AddAzureServiceBus("asb");
+
+        var artistChanged = asb.AddServiceBusTopic("event-artistchangedevent");
+        artistChanged.AddServiceBusSubscription("search-artist-changed", "concertable-search");
+        artistChanged.AddServiceBusSubscription("b2b-artist-changed", "concertable-b2b");
+
+        var venueChanged = asb.AddServiceBusTopic("event-venuechangedevent");
+        venueChanged.AddServiceBusSubscription("search-venue-changed", "concertable-search");
+        venueChanged.AddServiceBusSubscription("b2b-venue-changed", "concertable-b2b");
+
+        var concertChanged = asb.AddServiceBusTopic("event-concertchangedevent");
+        concertChanged.AddServiceBusSubscription("search-concert-changed", "concertable-search");
+        concertChanged.AddServiceBusSubscription("customer-concert-changed", "concertable-customer");
+
+        asb.AddServiceBusTopic("event-reviewsubmittedevent").AddServiceBusSubscription("b2b-review-submitted", "concertable-b2b");
+        asb.AddServiceBusTopic("event-artistratingupdatedevent").AddServiceBusSubscription("search-artist-rating-updated", "concertable-search");
+        asb.AddServiceBusTopic("event-venueratingupdatedevent").AddServiceBusSubscription("search-venue-rating-updated", "concertable-search");
+        asb.AddServiceBusTopic("event-concertratingupdatedevent").AddServiceBusSubscription("search-concert-rating-updated", "concertable-search");
+        var customerRegistered = asb.AddServiceBusTopic("event-customerregisteredevent");
+        customerRegistered.AddServiceBusSubscription("payment-customer-registered", "concertable-payment");
+        customerRegistered.AddServiceBusSubscription("customer-customer-registered", "concertable-customer");
+        asb.AddServiceBusTopic("event-venuemanagerregisteredevent").AddServiceBusSubscription("payment-venue-manager-registered", "concertable-payment");
+        asb.AddServiceBusTopic("event-artistmanagerregisteredevent").AddServiceBusSubscription("payment-artist-manager-registered", "concertable-payment");
+
+        var paymentSucceeded = asb.AddServiceBusTopic("event-paymentsucceededevent");
+        paymentSucceeded.AddServiceBusSubscription("b2b-payment-succeeded", "concertable-b2b");
+        paymentSucceeded.AddServiceBusSubscription("customer-payment-succeeded", "concertable-customer");
+        paymentSucceeded.AddServiceBusSubscription("payment-payment-succeeded", "concertable-payment");
+
+        var paymentFailed = asb.AddServiceBusTopic("event-paymentfailedevent");
+        paymentFailed.AddServiceBusSubscription("b2b-payment-failed", "concertable-b2b");
+        paymentFailed.AddServiceBusSubscription("customer-payment-failed", "concertable-customer");
+        paymentFailed.AddServiceBusSubscription("payment-payment-failed", "concertable-payment");
+
+        return asb.RunAsEmulator();
     }
 
     public static (IResourceBuilder<AzureStorageResource> storage, IResourceBuilder<AzureBlobStorageResource> blobs) AddAzureStorage(this IDistributedApplicationBuilder builder)
