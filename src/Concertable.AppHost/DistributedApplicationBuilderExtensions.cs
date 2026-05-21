@@ -69,7 +69,7 @@ internal static class DistributedApplicationBuilderExtensions
         IResourceBuilder<ProjectResource> paymentWeb)
     {
         var b2bSecret = builder.Configuration["ServiceAuth:B2BClientSecret"];
-        return builder.AddProject<Projects.Concertable_Web>("api")
+        return builder.AddProject<Projects.Concertable_B2B_Web>("api")
                       .WithReference(sql)
                       .WaitFor(sql)
                       .WithReference(auth)
@@ -88,7 +88,7 @@ internal static class DistributedApplicationBuilderExtensions
 
     public static IResourceBuilder<AzureFunctionsProjectResource> AddWorkers(this IDistributedApplicationBuilder builder, IResourceBuilder<SqlServerDatabaseResource> sql)
     {
-        return builder.AddAzureFunctionsProject<Projects.Concertable_Workers>("workers")
+        return builder.AddAzureFunctionsProject<Projects.Concertable_B2B_Workers>("workers")
                       .WithReference(sql)
                       .WaitFor(sql);
     }
