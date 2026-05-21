@@ -30,7 +30,7 @@ internal static class DistributedApplicationBuilderExtensions
             .AddTopic("event-venuemanagerregisteredevent", ["concertable-payment"])
             .AddTopic("event-artistmanagerregisteredevent", ["concertable-payment"])
             .AddTopic("event-paymentsucceededevent", ["concertable-b2b", "concertable-customer", "concertable-payment"])
-            .AddTopic("event-paymentfailedevent", ["concertable-payment"])
+            .AddTopic("event-paymentfailedevent", ["concertable-b2b", "concertable-customer", "concertable-payment"])
             .RunAsEmulator();
     }
 
