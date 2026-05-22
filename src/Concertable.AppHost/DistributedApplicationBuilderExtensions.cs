@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 
 internal record SqlResources(
     IResourceBuilder<SqlServerDatabaseResource> B2BDb,
+    IResourceBuilder<SqlServerDatabaseResource> AuthDb,
     IResourceBuilder<SqlServerDatabaseResource> CustomerDb,
     IResourceBuilder<SqlServerDatabaseResource> SearchDb,
     IResourceBuilder<SqlServerDatabaseResource> PaymentDb);
@@ -20,6 +21,7 @@ internal static class DistributedApplicationBuilderExtensions
         var sql = builder.AddSqlServer("sql").WithDataVolume("concertable-sql-data");
         return new SqlResources(
             sql.AddDatabase("B2BDb"),
+            sql.AddDatabase("AuthDb"),
             sql.AddDatabase("CustomerDb"),
             sql.AddDatabase("SearchDb"),
             sql.AddDatabase("PaymentDb"));
@@ -43,11 +45,10 @@ internal static class DistributedApplicationBuilderExtensions
         asb.AddServiceBusTopic("event-artistratingupdatedevent").AddServiceBusSubscription("search-artist-rating-updated", "concertable-search");
         asb.AddServiceBusTopic("event-venueratingupdatedevent").AddServiceBusSubscription("search-venue-rating-updated", "concertable-search");
         asb.AddServiceBusTopic("event-concertratingupdatedevent").AddServiceBusSubscription("search-concert-rating-updated", "concertable-search");
-        var customerRegistered = asb.AddServiceBusTopic("event-customerregisteredevent");
-        customerRegistered.AddServiceBusSubscription("payment-customer-registered", "concertable-payment");
-        customerRegistered.AddServiceBusSubscription("customer-customer-registered", "concertable-customer");
-        asb.AddServiceBusTopic("event-venuemanagerregisteredevent").AddServiceBusSubscription("payment-venue-manager-registered", "concertable-payment");
-        asb.AddServiceBusTopic("event-artistmanagerregisteredevent").AddServiceBusSubscription("payment-artist-manager-registered", "concertable-payment");
+        var credentialRegistered = asb.AddServiceBusTopic("event-credentialregisteredevent");
+        credentialRegistered.AddServiceBusSubscription("b2b-credential-registered", "concertable-b2b");
+        credentialRegistered.AddServiceBusSubscription("customer-credential-registered", "concertable-customer");
+        credentialRegistered.AddServiceBusSubscription("payment-credential-registered", "concertable-payment");
 
         var paymentSucceeded = asb.AddServiceBusTopic("event-paymentsucceededevent");
         paymentSucceeded.AddServiceBusSubscription("b2b-payment-succeeded", "concertable-b2b");
@@ -70,12 +71,24 @@ internal static class DistributedApplicationBuilderExtensions
         return (storage, blobs);
     }
 
-    public static IResourceBuilder<ProjectResource> AddAuth(this IDistributedApplicationBuilder builder, IResourceBuilder<SqlServerDatabaseResource> sql)
+    public static IResourceBuilder<ProjectResource> AddAuth(
+        this IDistributedApplicationBuilder builder,
+        IResourceBuilder<SqlServerDatabaseResource> authDb,
+        IResourceBuilder<SqlServerDatabaseResource> b2bDb,
+        IResourceBuilder<AzureServiceBusResource> asb)
     {
         var auth = builder.AddProject<Projects.Concertable_Auth>("auth")
-                          .WithReference(sql)
-                          .WaitFor(sql)
-                          .AddSecrets(builder, "ServiceAuth:B2BClientSecret", "ServiceAuth:CustomerClientSecret");
+                          .WithReference(authDb)
+                          .WaitFor(authDb)
+                          .WithReference(b2bDb)
+                          .WithReference(asb)
+                          .WaitFor(asb)
+                          .WithEnvironment(ctx =>
+                          {
+                              if (ctx.EnvironmentVariables.TryGetValue("services__auth__https__0", out var authUrl))
+                                  ctx.EnvironmentVariables["Auth__Authority"] = authUrl;
+                          })
+                          .AddSecrets(builder, "ServiceAuth:B2BClientSecret", "ServiceAuth:CustomerClientSecret", "ServiceAuth:AuthClientSecret");
 
         var lanIp = builder.Configuration["MobileLanIp"];
         if (!string.IsNullOrEmpty(lanIp))
