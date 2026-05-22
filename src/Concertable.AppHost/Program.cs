@@ -1,6 +1,6 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var sql = builder.AddSqlServer();
+var sql = builder.AddSqlServerContainer();
 var b2bDb = sql.AddDatabase("B2BDb");
 var authDb = sql.AddDatabase("AuthDb");
 var customerDb = sql.AddDatabase("CustomerDb");
