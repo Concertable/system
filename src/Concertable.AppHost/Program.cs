@@ -23,7 +23,7 @@ var api = builder.AddApi<Projects.Concertable_B2B_Web>(b2bDb, auth, storage, blo
 auth.WithEnvironment("Services__B2BApiUrl", api.GetEndpoint("https"));
 auth.WithEnvironment("ServiceAuth__AuthClientId", "concertable-auth");
 
-builder.AddWorkers<Projects.Concertable_B2B_Workers>(b2bDb, paymentWeb);
+builder.AddWorkers<Projects.Concertable_B2B_Workers>(b2bDb, paymentWeb, auth);
 var customerWeb = builder.AddCustomerWeb<Projects.Concertable_Customer_Web>(auth, customerDb, asb, paymentWeb);
 auth.WithEnvironment("Services__CustomerApiUrl", customerWeb.GetEndpoint("https"));
 var searchWeb = builder.AddSearchWeb<Projects.Concertable_Search_Web>(auth, searchDb);
