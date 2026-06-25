@@ -1,0 +1,11 @@
+<Project>
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <GlobalPackageReference Include="Meziantou.Analyzer" Version="3.0.98" />
+  </ItemGroup>
+
+</Project>
