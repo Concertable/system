@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -23,7 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Shared\Tests\Concertable.E2ETests\Concertable.E2ETests.csproj" />
     <ProjectReference Include="..\Concertable.Customer.E2ETests\Concertable.Customer.E2ETests.csproj" />
-    <ProjectReference Include="..\..\..\..\Concertable.Payment\Tests\E2ETests\Concertable.Payment.E2ETests.Helpers\Concertable.Payment.E2ETests.Helpers.csproj" />
+    <ProjectReference Include="..\..\..\..\Concertable.Payment\tests\E2ETests\Concertable.Payment.E2ETests.Helpers\Concertable.Payment.E2ETests.Helpers.csproj" />
   </ItemGroup>
 
   <ItemGroup>

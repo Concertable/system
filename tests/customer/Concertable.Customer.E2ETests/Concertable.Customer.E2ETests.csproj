@@ -17,7 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Shared\Tests\Concertable.E2ETests\Concertable.E2ETests.csproj" />
-    <ProjectReference Include="..\..\..\..\Concertable.Payment\Tests\E2ETests\Concertable.Payment.E2ETests.Helpers\Concertable.Payment.E2ETests.Helpers.csproj" />
+    <ProjectReference Include="..\..\..\..\Concertable.Payment\tests\E2ETests\Concertable.Payment.E2ETests.Helpers\Concertable.Payment.E2ETests.Helpers.csproj" />
     <ProjectReference Include="..\..\..\src\Concertable.Customer.AppHost\Concertable.Customer.AppHost.csproj" />
     <ProjectReference Include="..\..\..\..\Shared\Seed\Concertable.Seed.Shared\Concertable.Seed.Shared.csproj" />
     <ProjectReference Include="..\..\..\..\Shared\Seed\Concertable.Seed.Infrastructure\Concertable.Seed.Infrastructure.csproj" />
