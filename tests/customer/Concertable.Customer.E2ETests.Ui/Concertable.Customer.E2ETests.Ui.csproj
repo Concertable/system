@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <ReqnrollCategory>Ui</ReqnrollCategory>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.Playwright" />
+    <PackageReference Include="Reqnroll.xUnit" />
+    <PackageReference Include="Reqnroll.Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Concertable.Customer.E2ETests\Concertable.Customer.E2ETests.csproj" />
+    <ProjectReference Include="..\..\..\..\Concertable.Payment\tests\E2ETests\Concertable.Payment.E2ETests.Helpers\Concertable.Payment.E2ETests.Helpers.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\Concertable.Customer.E2ETests\appsettings.E2E.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="reqnroll.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="Concertable.Customer.E2ETests" />
+    <Using Include="Concertable.E2ETests" />
+    <Using Include="Concertable.Testing" />
+    <Using Include="Concertable.Customer.Seed.Infrastructure" />
+    <Using Include="Concertable.Kernel.Identity" />
+    <Using Include="Concertable.E2ETests.Support" />
+    <Using Include="Microsoft.Playwright" />
+    <Using Include="Reqnroll" />
+  </ItemGroup>
+
+
+</Project>
