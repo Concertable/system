@@ -19,7 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Shared\Tests\Concertable.E2ETests\Concertable.E2ETests.csproj" />
     <ProjectReference Include="..\..\..\..\Concertable.Payment\tests\E2ETests\Concertable.Payment.E2ETests.Helpers\Concertable.Payment.E2ETests.Helpers.csproj" />
-    <ProjectReference Include="..\..\..\..\Concertable.Search\Tests\E2ETests\Concertable.Search.E2ETests.Helpers\Concertable.Search.E2ETests.Helpers.csproj" />
+    <ProjectReference Include="..\..\..\..\Concertable.Search\tests\E2ETests\Concertable.Search.E2ETests.Helpers\Concertable.Search.E2ETests.Helpers.csproj" />
     <ProjectReference Include="..\..\..\src\Concertable.B2B.AppHost\Concertable.B2B.AppHost.csproj" />
     <ProjectReference Include="..\..\..\src\Concertable.B2B.Workers\Concertable.B2B.Workers.csproj" />
     <ProjectReference Include="..\..\..\..\Shared\Seed\Concertable.Seed.Shared\Concertable.Seed.Shared.csproj" />
