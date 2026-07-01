@@ -16,11 +16,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\Shared\Tests\Concertable.E2ETests\Concertable.E2ETests.csproj" />
+    <ProjectReference Include="..\..\..\..\Concertable.Shared\tests\Concertable.E2ETests\Concertable.E2ETests.csproj" />
     <ProjectReference Include="..\..\..\..\Concertable.Payment\tests\E2ETests\Concertable.Payment.E2ETests.Helpers\Concertable.Payment.E2ETests.Helpers.csproj" />
     <ProjectReference Include="..\..\..\src\Concertable.Customer.AppHost\Concertable.Customer.AppHost.csproj" />
-    <ProjectReference Include="..\..\..\..\Shared\Seed\Concertable.Seed.Shared\Concertable.Seed.Shared.csproj" />
-    <ProjectReference Include="..\..\..\..\Shared\Seed\Concertable.Seed.Infrastructure\Concertable.Seed.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\..\Concertable.Shared\src\Seed\Concertable.Seed.Shared\Concertable.Seed.Shared.csproj" />
+    <ProjectReference Include="..\..\..\..\Concertable.Shared\src\Seed\Concertable.Seed.Infrastructure\Concertable.Seed.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\src\Seed\Concertable.Customer.Seed.Infrastructure\Concertable.Customer.Seed.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\..\Concertable.B2B\src\Seed\Concertable.B2B.Seed.Contracts\Concertable.B2B.Seed.Contracts.csproj" />
     <ProjectReference Include="..\..\..\src\Concertable.Customer.Web\Concertable.Customer.Web.csproj" />
