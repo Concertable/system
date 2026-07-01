@@ -17,13 +17,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\Shared\Tests\Concertable.E2ETests\Concertable.E2ETests.csproj" />
+    <ProjectReference Include="..\..\..\..\Concertable.Shared\tests\Concertable.E2ETests\Concertable.E2ETests.csproj" />
     <ProjectReference Include="..\..\..\..\Concertable.Payment\tests\E2ETests\Concertable.Payment.E2ETests.Helpers\Concertable.Payment.E2ETests.Helpers.csproj" />
     <ProjectReference Include="..\..\..\..\Concertable.Search\tests\E2ETests\Concertable.Search.E2ETests.Helpers\Concertable.Search.E2ETests.Helpers.csproj" />
     <ProjectReference Include="..\..\..\src\Concertable.B2B.AppHost\Concertable.B2B.AppHost.csproj" />
     <ProjectReference Include="..\..\..\src\Concertable.B2B.Workers\Concertable.B2B.Workers.csproj" />
-    <ProjectReference Include="..\..\..\..\Shared\Seed\Concertable.Seed.Shared\Concertable.Seed.Shared.csproj" />
-    <ProjectReference Include="..\..\..\..\Shared\Seed\Concertable.Seed.Infrastructure\Concertable.Seed.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\..\Concertable.Shared\src\Seed\Concertable.Seed.Shared\Concertable.Seed.Shared.csproj" />
+    <ProjectReference Include="..\..\..\..\Concertable.Shared\src\Seed\Concertable.Seed.Infrastructure\Concertable.Seed.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\src\Seed\Concertable.B2B.Seed.Infrastructure\Concertable.B2B.Seed.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\..\Concertable.Payment\src\Seed\Concertable.Payment.Seed\Concertable.Payment.Seed.csproj" />
     <ProjectReference Include="..\..\..\src\Concertable.B2B.Web\Concertable.B2B.Web.csproj" />
@@ -33,7 +33,7 @@
     <ProjectReference Include="..\..\..\src\Modules\Contract\Concertable.B2B.Contract.Infrastructure\Concertable.B2B.Contract.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Concert\Concertable.B2B.Concert.Infrastructure\Concertable.B2B.Concert.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Conversations\Concertable.B2B.Conversations.Infrastructure\Concertable.B2B.Conversations.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\..\..\Shared\Concertable.Shared.Blob\Concertable.Shared.Blob.Infrastructure\Concertable.Shared.Blob.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\..\Concertable.Shared\src\Concertable.Shared.Blob\Concertable.Shared.Blob.Infrastructure\Concertable.Shared.Blob.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
