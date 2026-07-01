@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.Testing" />
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Shared\Tests\Concertable.E2ETests\Concertable.E2ETests.csproj" />
+    <ProjectReference Include="..\..\..\..\Concertable.Payment\Tests\E2ETests\Concertable.Payment.E2ETests.Helpers\Concertable.Payment.E2ETests.Helpers.csproj" />
+    <ProjectReference Include="..\..\..\..\Concertable.Search\Tests\E2ETests\Concertable.Search.E2ETests.Helpers\Concertable.Search.E2ETests.Helpers.csproj" />
+    <ProjectReference Include="..\..\..\src\Concertable.B2B.AppHost\Concertable.B2B.AppHost.csproj" />
+    <ProjectReference Include="..\..\..\src\Concertable.B2B.Workers\Concertable.B2B.Workers.csproj" />
+    <ProjectReference Include="..\..\..\..\Shared\Seed\Concertable.Seed.Shared\Concertable.Seed.Shared.csproj" />
+    <ProjectReference Include="..\..\..\..\Shared\Seed\Concertable.Seed.Infrastructure\Concertable.Seed.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Seed\Concertable.B2B.Seed.Infrastructure\Concertable.B2B.Seed.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\..\Concertable.Payment\Seed\Concertable.Payment.Seed\Concertable.Payment.Seed.csproj" />
+    <ProjectReference Include="..\..\..\src\Concertable.B2B.Web\Concertable.B2B.Web.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\User\Concertable.B2B.User.Infrastructure\Concertable.B2B.User.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Artist\Concertable.B2B.Artist.Infrastructure\Concertable.B2B.Artist.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Venue\Concertable.B2B.Venue.Infrastructure\Concertable.B2B.Venue.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Contract\Concertable.B2B.Contract.Infrastructure\Concertable.B2B.Contract.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Concert\Concertable.B2B.Concert.Infrastructure\Concertable.B2B.Concert.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Conversations\Concertable.B2B.Conversations.Infrastructure\Concertable.B2B.Conversations.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\..\Shared\Concertable.Shared.Blob\Concertable.Shared.Blob.Infrastructure\Concertable.Shared.Blob.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\..\..\src\Concertable.B2B.Web\appsettings.E2E.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="Concertable.Testing" />
+    <Using Include="Concertable.E2ETests" />
+    <Using Include="Concertable.Payment.Seed" />
+  </ItemGroup>
+
+</Project>
