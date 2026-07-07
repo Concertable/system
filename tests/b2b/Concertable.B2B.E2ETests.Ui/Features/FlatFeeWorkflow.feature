@@ -10,6 +10,15 @@
     And the venue manager accepts and pays with a valid card
     Then a draft concert is created
 
+  @VenueManager @ResetsStripe
+  Scenario: Venue manager cancels a flat fee booking and the escrow is refunded
+    When the venue manager posts a flat fee opportunity for £500
+    And the artist applies to the opportunity
+    And the venue manager accepts and pays with a valid card
+    And a draft concert is created
+    And the venue manager cancels the booking
+    Then the booking is cancelled and the payment refunded
+
   @VenueManager
   Scenario: Venue manager books artist on a flat fee with a new card
     Given a flat fee opportunity has been applied to
