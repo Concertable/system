@@ -180,9 +180,18 @@ public sealed class VenueManagerSteps
         await payment.FailChallengeAsync();
     }
 
+    [When(@"a draft concert is created")]
     [Then(@"a draft concert is created")]
     public Task DraftConcertCreated() =>
         browser.Page.WaitForURLAsync("**/my/concerts/concert/**", new() { Timeout = 60_000 });
+
+    [When(@"the venue manager cancels the booking")]
+    public Task CancelsBooking() =>
+        new MyConcertPage(browser.Page).CancelBookingAsync();
+
+    [Then(@"the booking is cancelled and the payment refunded")]
+    public Task BookingCancelledAndRefunded() =>
+        new MyConcertPage(browser.Page).WaitUntilCancelledAsync();
 
     private Task<int> FetchNewestOpportunityIdAsync(int venueId) =>
         fixture.App.DbFixture.Opportunity.GetNewestAsync(venueId);
