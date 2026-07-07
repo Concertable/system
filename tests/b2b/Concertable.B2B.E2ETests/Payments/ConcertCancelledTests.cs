@@ -3,6 +3,7 @@ using Concertable.B2B.Concert.Application.DTOs;
 using Concertable.B2B.Concert.Api.Responses;
 using Concertable.B2B.Concert.Domain.Lifecycle;
 using Concertable.Payment.Client;
+using Concertable.Payment.Contracts;
 using Concertable.Testing;
 using Xunit;
 
