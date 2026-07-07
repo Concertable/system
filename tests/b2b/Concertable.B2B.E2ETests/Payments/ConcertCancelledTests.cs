@@ -5,7 +5,6 @@ using Concertable.B2B.Concert.Domain.Lifecycle;
 using Concertable.Payment.Client;
 using Concertable.Testing;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Concertable.B2B.E2ETests.Payments;
 
@@ -13,12 +12,10 @@ namespace Concertable.B2B.E2ETests.Payments;
 public sealed class ConcertCancelledTests : IAsyncLifetime
 {
     private readonly AppFixture fixture;
-    private readonly ITestOutputHelper output;
 
-    public ConcertCancelledTests(AppFixture fixture, ITestOutputHelper output)
+    public ConcertCancelledTests(AppFixture fixture)
     {
         this.fixture = fixture;
-        this.output = output;
     }
 
     private HttpClient venueManagerClient = null!;
@@ -67,8 +64,12 @@ public sealed class ConcertCancelledTests : IAsyncLifetime
             status => status == (int)EscrowStatus.Held,
             timeout: TimeSpan.FromSeconds(30));
 
-        var concert = await GetConcertByApplicationAsync(appId);
-        Assert.NotNull(concert!.Actions.Cancel);
+        // The draft concert is created by B2B reacting to a cross-service booking event, which
+        // lags the escrow hold — poll until it exists and offers the cancel action (Booked window).
+        var concert = await fixture.Polling.UntilAsync(
+            () => GetConcertByApplicationAsync(appId),
+            c => c.Actions.Cancel is not null,
+            timeout: TimeSpan.FromSeconds(30));
 
         var cancelResponse = await venueManagerClient.PostAsync($"/api/Concert/{concert.Id}/cancel");
         await cancelResponse.ShouldBe(HttpStatusCode.NoContent);
@@ -82,22 +83,28 @@ public sealed class ConcertCancelledTests : IAsyncLifetime
             () => fixture.DbFixture.Payment.GetEscrowRefundIdAsync(bookingId),
             id => id is not null,
             timeout: TimeSpan.FromSeconds(30));
+        Assert.NotNull(refundId);
 
         var status = await fixture.DbFixture.Payment.GetEscrowStatusAsync(bookingId);
         Assert.Equal((int)EscrowStatus.Refunded, status);
 
-        var refund = await fixture.Stripe.GetRefundAsync(refundId!);
+        var refund = await fixture.Stripe.GetRefundAsync(refundId);
         Assert.Equal("succeeded", refund.Status);
 
-        var after = await GetConcertByApplicationAsync(appId);
-        Assert.Null(after!.Actions.Cancel);
+        // Once cancelled, the cancel action is withdrawn from the concert response.
+        await fixture.Polling.UntilAsync(
+            () => GetConcertByApplicationAsync(appId),
+            c => c.Actions.Cancel is null,
+            timeout: TimeSpan.FromSeconds(30));
     }
 
-    private async Task<ConcertDetailsResponse?> GetConcertByApplicationAsync(int appId)
+    private async Task<ConcertDetailsResponse> GetConcertByApplicationAsync(int appId)
     {
         var response = await venueManagerClient.GetAsync($"/api/Concert/application/{appId}");
         await response.ShouldBe(HttpStatusCode.OK);
-        return await response.Content.ReadAsync<ConcertDetailsResponse>();
+        var concert = await response.Content.ReadAsync<ConcertDetailsResponse>();
+        Assert.NotNull(concert);
+        return concert;
     }
 
     private async Task AcceptAsync(int appId)
@@ -111,7 +118,8 @@ public sealed class ConcertCancelledTests : IAsyncLifetime
         var response = await venueManagerClient.PostAsync($"/api/Application/{applicationId}/checkout");
         await response.ShouldBe(HttpStatusCode.OK);
         var checkout = await response.Content.ReadAsync<CheckoutResult>();
-        return checkout!.Session.ClientSecret;
+        Assert.NotNull(checkout);
+        return checkout.Session.ClientSecret;
     }
 
     private sealed record CheckoutResult(CheckoutSession Session);
