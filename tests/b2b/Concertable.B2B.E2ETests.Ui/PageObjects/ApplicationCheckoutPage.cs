@@ -1,3 +1,5 @@
+using Concertable.B2B.E2ETests.Ui.Support;
+
 namespace Concertable.B2B.E2ETests.Ui.PageObjects;
 
 public sealed class ApplicationCheckoutPage
@@ -11,13 +13,24 @@ public sealed class ApplicationCheckoutPage
         this.payment = payment;
     }
 
-    public Task SubmitWithSavedCardAsync() => payment.PayWithSavedCardAsync();
+    private ILocator AgreeToTerms => page.GetByTestId("agree-to-terms");
+
+    public async Task SubmitWithSavedCardAsync()
+    {
+        await AgreeToTerms.EnsureCheckedAsync();
+        await payment.PayWithSavedCardAsync();
+    }
 
     public async Task SubmitWithSavedCardAndVerifyAsync()
     {
+        await AgreeToTerms.EnsureCheckedAsync();
         await payment.PayWithSavedCardAsync();
         await payment.CompleteChallengeIfRequiredAsync();
     }
 
-    public Task SubmitWithNewCardAsync(string cardNumber) => payment.PayWithNewCardAsync(cardNumber);
+    public async Task SubmitWithNewCardAsync(string cardNumber)
+    {
+        await AgreeToTerms.EnsureCheckedAsync();
+        await payment.PayWithNewCardAsync(cardNumber);
+    }
 }

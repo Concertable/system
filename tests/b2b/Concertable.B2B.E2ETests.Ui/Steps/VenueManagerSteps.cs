@@ -112,28 +112,34 @@ public sealed class VenueManagerSteps
         await applicationsPage.ClickAcceptAsync(state.ApplicationId);
 
         var acceptPage = new AcceptApplicationPage(browser.Page);
-        await acceptPage.ClickConfirmAsync();
+        await acceptPage.AgreeAndConfirmAsync();
     }
 
     [Given(@"a flat fee opportunity has been applied to")]
     public async Task AFlatFeeOpportunityHasBeenAppliedTo()
     {
         state.ApplicationId = fixture.App.SeedState.FlatFeeApp.Id;
-        await browser.Page.GotoSpaAsync($"{fixture.App.VenueSpaUrl}/applications/{state.ApplicationId}/checkout");
+        await GotoCheckoutAndAgreeAsync();
     }
 
     [Given(@"a door split opportunity has been applied to")]
     public async Task ADoorSplitOpportunityHasBeenAppliedTo()
     {
         state.ApplicationId = fixture.App.SeedState.DoorSplitApp.Id;
-        await browser.Page.GotoSpaAsync($"{fixture.App.VenueSpaUrl}/applications/{state.ApplicationId}/checkout");
+        await GotoCheckoutAndAgreeAsync();
     }
 
     [Given(@"a versus opportunity has been applied to")]
     public async Task AVersusOpportunityHasBeenAppliedTo()
     {
         state.ApplicationId = fixture.App.SeedState.VersusApp.Id;
+        await GotoCheckoutAndAgreeAsync();
+    }
+
+    private async Task GotoCheckoutAndAgreeAsync()
+    {
         await browser.Page.GotoSpaAsync($"{fixture.App.VenueSpaUrl}/applications/{state.ApplicationId}/checkout");
+        await browser.Page.GetByTestId("agree-to-terms").EnsureCheckedAsync();
     }
 
     [When(@"the venue manager pays the flat fee with a new card")]

@@ -110,7 +110,7 @@ public sealed class ConcertCancelledTests : IAsyncLifetime
 
     private async Task AcceptAsync(int appId)
     {
-        var response = await venueManagerClient.PostAsync($"/api/Application/{appId}/accept");
+        var response = await venueManagerClient.PostAsync($"/api/Application/{appId}/accept", new { agreedToTerms = true });
         await response.ShouldBe(HttpStatusCode.NoContent);
     }
 
