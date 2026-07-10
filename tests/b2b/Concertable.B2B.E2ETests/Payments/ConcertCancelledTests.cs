@@ -69,7 +69,7 @@ public sealed class ConcertCancelledTests : IAsyncLifetime
         // lags the escrow hold — poll until it exists and offers the cancel action (Booked window).
         var concert = await fixture.Polling.UntilAsync(
             () => GetConcertByApplicationAsync(appId),
-            c => c.Actions.Cancel is not null,
+            c => c.Actions!.Cancel is not null,
             timeout: TimeSpan.FromSeconds(30));
 
         var cancelResponse = await venueManagerClient.PostAsync($"/api/Concert/{concert.Id}/cancel");
@@ -95,7 +95,7 @@ public sealed class ConcertCancelledTests : IAsyncLifetime
         // Once cancelled, the cancel action is withdrawn from the concert response.
         await fixture.Polling.UntilAsync(
             () => GetConcertByApplicationAsync(appId),
-            c => c.Actions.Cancel is null,
+            c => c.Actions!.Cancel is null,
             timeout: TimeSpan.FromSeconds(30));
     }
 
