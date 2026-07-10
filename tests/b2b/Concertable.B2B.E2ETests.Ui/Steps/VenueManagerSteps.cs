@@ -191,6 +191,10 @@ public sealed class VenueManagerSteps
     public Task DraftConcertCreated() =>
         browser.Page.WaitForURLAsync("**/my/concerts/concert/**", new() { Timeout = 60_000 });
 
+    [Then(@"the booking agreement is downloadable")]
+    public Task BookingAgreementDownloadable() =>
+        new MyConcertPage(browser.Page).DownloadAgreementAsync();
+
     [When(@"the venue manager cancels the booking")]
     public Task CancelsBooking() =>
         new MyConcertPage(browser.Page).CancelBookingAsync();
