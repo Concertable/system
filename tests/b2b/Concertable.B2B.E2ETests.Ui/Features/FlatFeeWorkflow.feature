@@ -9,6 +9,7 @@
     And the artist applies to the opportunity
     And the venue manager accepts and pays with a valid card
     Then a draft concert is created
+    And the booking agreement is downloadable
 
   @VenueManager @ResetsStripe
   Scenario: Venue manager cancels a flat fee booking and the escrow is refunded
