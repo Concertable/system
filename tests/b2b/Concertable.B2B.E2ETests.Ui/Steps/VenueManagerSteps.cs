@@ -139,7 +139,7 @@ public sealed class VenueManagerSteps
     private async Task GotoCheckoutAndAgreeAsync()
     {
         await browser.Page.GotoSpaAsync($"{fixture.App.VenueSpaUrl}/applications/{state.ApplicationId}/checkout");
-        await browser.Page.GetByTestId("agree-to-terms").EnsureCheckedAsync();
+        await browser.Page.GetByTestId("e-sign").FillAsync("Vera Venue");
     }
 
     [When(@"the venue manager pays the flat fee with a new card")]
