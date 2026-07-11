@@ -9,13 +9,13 @@ public sealed class AcceptApplicationPage
     public AcceptApplicationPage(IPage page) => this.page = page;
 
     private ILocator ConfirmButton => page.GetByTestId("confirm");
-    private ILocator AgreeToTerms => page.GetByTestId("agree-to-terms");
+    private ILocator SignatureName => page.GetByTestId("e-sign");
 
     public Task ClickConfirmAsync() => ConfirmButton.ClickAsync();
 
     public async Task AgreeAndConfirmAsync()
     {
-        await AgreeToTerms.EnsureCheckedAsync();
+        await SignatureName.FillAsync("Vera Venue");
         await ConfirmButton.ClickAsync();
     }
 }

@@ -13,24 +13,24 @@ public sealed class ApplicationCheckoutPage
         this.payment = payment;
     }
 
-    private ILocator AgreeToTerms => page.GetByTestId("agree-to-terms");
+    private ILocator SignatureName => page.GetByTestId("e-sign");
 
     public async Task SubmitWithSavedCardAsync()
     {
-        await AgreeToTerms.EnsureCheckedAsync();
+        await SignatureName.FillAsync("Vera Venue");
         await payment.PayWithSavedCardAsync();
     }
 
     public async Task SubmitWithSavedCardAndVerifyAsync()
     {
-        await AgreeToTerms.EnsureCheckedAsync();
+        await SignatureName.FillAsync("Vera Venue");
         await payment.PayWithSavedCardAsync();
         await payment.CompleteChallengeIfRequiredAsync();
     }
 
     public async Task SubmitWithNewCardAsync(string cardNumber)
     {
-        await AgreeToTerms.EnsureCheckedAsync();
+        await SignatureName.FillAsync("Vera Venue");
         await payment.PayWithNewCardAsync(cardNumber);
     }
 }

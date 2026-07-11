@@ -15,7 +15,9 @@ public sealed class VenueDetailsPage
 
     private ILocator Opportunity(int id) => page.GetByTestId($"opportunity-{id}");
     private ILocator ApplyButton(int id) => Opportunity(id).GetByTestId("apply");
-    private ILocator AgreeToTerms(int id) => Opportunity(id).GetByTestId("agree-to-terms");
+    // The signature dialog renders in a portal at the page root, not inside the opportunity card.
+    private ILocator SignatureName => page.GetByTestId("e-sign");
+    private ILocator ConfirmApplyButton => page.GetByTestId("confirm-apply");
 
     public Task GotoAsync(int venueId) => page.GotoSpaAsync($"{url}/{venueId}");
 
@@ -23,8 +25,9 @@ public sealed class VenueDetailsPage
 
     public async Task AgreeAndApplyAsync(int opportunityId)
     {
-        await AgreeToTerms(opportunityId).EnsureCheckedAsync();
         await ApplyButton(opportunityId).ClickAsync();
+        await SignatureName.FillAsync("Artie Artist");
+        await ConfirmApplyButton.ClickAsync();
     }
 
     public Task WaitUntilAppliedAsync(int opportunityId) =>

@@ -13,19 +13,19 @@ public sealed class ApplyCheckoutPage
         this.payment = payment;
     }
 
-    private ILocator AgreeToTerms => page.GetByTestId("agree-to-terms");
+    private ILocator SignatureName => page.GetByTestId("e-sign");
 
     public async Task PayWithNewCardAsync(string cardNumber)
     {
         await page.WaitForURLAsync("**/opportunity/checkout/**");
-        await AgreeToTerms.EnsureCheckedAsync();
+        await SignatureName.FillAsync("Artie Artist");
         await payment.PayWithNewCardAsync(cardNumber);
     }
 
     public async Task PayWithSavedCardAsync()
     {
         await page.WaitForURLAsync("**/opportunity/checkout/**");
-        await AgreeToTerms.EnsureCheckedAsync();
+        await SignatureName.FillAsync("Artie Artist");
         await payment.PayWithSavedCardAsync();
     }
 }
