@@ -37,7 +37,7 @@ public sealed class ConcertDraftTests : IAsyncLifetime
         await fixture.Stripe.ConfirmHoldAsync(clientSecret);
 
         var acceptResponse = await venueManagerClient.PostAsync(
-            $"/api/Application/{fixture.SeedState.FlatFeeApp.Id}/accept", new { agreedToTerms = true });
+            $"/api/Application/{fixture.SeedState.FlatFeeApp.Id}/accept", new { eSignature = new { signatoryName = "Test Signatory" } });
         await acceptResponse.ShouldBe(HttpStatusCode.NoContent);
 
         var bookingId = await fixture.DbFixture.Booking.GetIdByApplicationIdAsync(fixture.SeedState.FlatFeeApp.Id);
@@ -63,7 +63,7 @@ public sealed class ConcertDraftTests : IAsyncLifetime
     public async Task ShouldCreateDraftAndPayVenue_WhenVenueHireApplicationAccepted()
     {
         var response = await venueManagerClient.PostAsync(
-            $"/api/Application/{fixture.SeedState.VenueHireApp.Id}/accept", new { agreedToTerms = true });
+            $"/api/Application/{fixture.SeedState.VenueHireApp.Id}/accept", new { eSignature = new { signatoryName = "Test Signatory" } });
         await response.ShouldBe(HttpStatusCode.NoContent);
 
         var bookingId = await fixture.DbFixture.Booking.GetIdByApplicationIdAsync(fixture.SeedState.VenueHireApp.Id);
