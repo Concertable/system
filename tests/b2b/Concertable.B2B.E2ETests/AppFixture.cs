@@ -227,6 +227,12 @@ public sealed class AppFixture : IAsyncLifetime
 
     public ResourceNotificationService ResourceNotifications => app.ResourceNotifications;
 
+    // AddNpmApp has no HTTP readiness check, so Aspire reports a SPA 'Running' before its Vite dev
+    // server actually serves. UI runs must gate on real serving (polls until 200, throws on timeout)
+    // before driving a browser at it — otherwise the first navigation races Vite's startup.
+    public Task WaitForSpasServingAsync(TimeSpan timeout) =>
+        healthWaiter.WaitForAllServingAsync([VenueSpaUrl, ArtistSpaUrl, BusinessSpaUrl], timeout);
+
     private async Task ReseedAsync()
     {
         await using var scope = host.Services.CreateAsyncScope();

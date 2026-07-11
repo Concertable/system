@@ -22,6 +22,7 @@ public sealed class UiFixture
                 "--disable-site-isolation-trials"
                 ]
         });
+        await App.WaitForSpasServingAsync(TimeSpan.FromMinutes(2));
         await WarmUpSpaAsync();
     }
 
