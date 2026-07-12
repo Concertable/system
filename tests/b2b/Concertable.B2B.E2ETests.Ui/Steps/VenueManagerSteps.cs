@@ -11,6 +11,7 @@ public sealed class VenueManagerSteps
     private readonly WorkflowState state;
     private readonly IStripePayment payment;
     private MyVenuePage myVenuePage = null!;
+    private string agreementPdfText = null!;
 
     public VenueManagerSteps(
         UiFixture fixture,
@@ -191,9 +192,17 @@ public sealed class VenueManagerSteps
     public Task DraftConcertCreated() =>
         browser.Page.WaitForURLAsync("**/my/concerts/concert/**", new() { Timeout = 60_000 });
 
-    [Then(@"the booking agreement is downloadable")]
-    public Task BookingAgreementDownloadable() =>
-        new MyConcertPage(browser.Page).DownloadAgreementAsync();
+    [When(@"the venue manager downloads the booking agreement")]
+    public async Task DownloadsBookingAgreement() =>
+        agreementPdfText = await new MyConcertPage(browser.Page).DownloadAgreementAsync();
+
+    [Then(@"the agreement PDF is signed by ""(.+)"" and ""(.+)""")]
+    public void AgreementPdfIsSignedBy(string partyA, string partyB)
+    {
+        Assert.Contains("Signatures", agreementPdfText);
+        Assert.Contains($"Signed by {partyA}", agreementPdfText);
+        Assert.Contains($"Signed by {partyB}", agreementPdfText);
+    }
 
     [When(@"the venue manager cancels the booking")]
     public Task CancelsBooking() =>
