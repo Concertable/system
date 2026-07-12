@@ -16,14 +16,13 @@ public sealed class MyConcertPage
         await ConfirmCancelButton.ClickAsync();
     }
 
-    public async Task DownloadAgreementAsync()
+    public async Task<string> DownloadAgreementAsync()
     {
         var pdf = page.WaitForResponseAsync(r => r.Url.Contains("/agreement/pdf") && r.Status == 200);
         await DownloadAgreementButton.ClickAsync();
         var response = await pdf;
-        var contentType = await response.HeaderValueAsync("content-type") ?? "";
-        if (!contentType.Contains("application/pdf"))
-            throw new InvalidOperationException($"Expected application/pdf, got '{contentType}'");
+
+        return Pdf.ExtractText(await response.BodyAsync());
     }
 
     public Task WaitUntilCancelledAsync() =>
