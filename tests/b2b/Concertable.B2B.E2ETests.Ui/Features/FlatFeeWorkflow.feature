@@ -11,14 +11,6 @@
     Then a draft concert is created
 
   @VenueManager
-  Scenario: The flat fee booking agreement is signed by both parties
-    Given a flat fee opportunity has been applied to
-    When the venue manager pays the flat fee with a new card
-    And a draft concert is created
-    And the venue manager downloads the booking agreement
-    Then the agreement PDF is signed by "The Rockers" and "Vera Venue"
-
-  @VenueManager
   Scenario: Venue manager cancels a flat fee booking and the escrow is refunded
     Given a flat fee opportunity has been applied to
     When the venue manager pays the flat fee with a new card
@@ -31,6 +23,8 @@
     Given a flat fee opportunity has been applied to
     When the venue manager pays the flat fee with a new card
     Then a draft concert is created
+    And the venue manager downloads the booking agreement
+    And the agreement PDF is signed by "The Rockers" and "Vera Venue"
 
   @VenueManager @PaymentFailure
   Scenario: Venue manager flat fee attempt is declined
