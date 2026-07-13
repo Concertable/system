@@ -8,11 +8,21 @@ public sealed class MyConcertPage
 
     private ILocator CancelButton => page.GetByTestId("cancel-booking");
     private ILocator ConfirmCancelButton => page.GetByTestId("cancel-booking-confirm");
+    private ILocator DownloadAgreementButton => page.GetByTestId("download-agreement");
 
     public async Task CancelBookingAsync()
     {
         await CancelButton.ClickAsync();
         await ConfirmCancelButton.ClickAsync();
+    }
+
+    public async Task<string> DownloadAgreementAsync()
+    {
+        var pdf = page.WaitForResponseAsync(r => r.Url.Contains("/agreement/pdf") && r.Status == 200);
+        await DownloadAgreementButton.ClickAsync();
+        var response = await pdf;
+
+        return Pdf.ExtractText(await response.BodyAsync());
     }
 
     public Task WaitUntilCancelledAsync() =>

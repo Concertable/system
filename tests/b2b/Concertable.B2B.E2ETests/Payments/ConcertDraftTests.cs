@@ -37,7 +37,7 @@ public sealed class ConcertDraftTests : IAsyncLifetime
         await fixture.Stripe.ConfirmHoldAsync(clientSecret);
 
         var acceptResponse = await venueManagerClient.PostAsync(
-            $"/api/Application/{fixture.SeedState.FlatFeeApp.Id}/accept");
+            $"/api/Application/{fixture.SeedState.FlatFeeApp.Id}/accept", new { eSignature = new { signatoryName = "Test Signatory" } });
         await acceptResponse.ShouldBe(HttpStatusCode.NoContent);
 
         var bookingId = await fixture.DbFixture.Booking.GetIdByApplicationIdAsync(fixture.SeedState.FlatFeeApp.Id);
@@ -63,7 +63,7 @@ public sealed class ConcertDraftTests : IAsyncLifetime
     public async Task ShouldCreateDraftAndPayVenue_WhenVenueHireApplicationAccepted()
     {
         var response = await venueManagerClient.PostAsync(
-            $"/api/Application/{fixture.SeedState.VenueHireApp.Id}/accept");
+            $"/api/Application/{fixture.SeedState.VenueHireApp.Id}/accept", new { eSignature = new { signatoryName = "Test Signatory" } });
         await response.ShouldBe(HttpStatusCode.NoContent);
 
         var bookingId = await fixture.DbFixture.Booking.GetIdByApplicationIdAsync(fixture.SeedState.VenueHireApp.Id);
@@ -90,7 +90,7 @@ public sealed class ConcertDraftTests : IAsyncLifetime
     {
         var acceptResponse = await venueManagerClient.PostAsync(
             $"/api/Application/{fixture.SeedState.DoorSplitApp.Id}/accept",
-            new { PaymentMethodId = AppFixture.TestPaymentMethodId });
+            new { PaymentMethodId = AppFixture.TestPaymentMethodId, eSignature = new { signatoryName = "Test Signatory" } });
         await acceptResponse.ShouldBe(HttpStatusCode.NoContent);
 
         var applicationResponse = await venueManagerClient.GetAsync($"/api/Application/{fixture.SeedState.DoorSplitApp.Id}");
@@ -104,7 +104,7 @@ public sealed class ConcertDraftTests : IAsyncLifetime
     {
         var acceptResponse = await venueManagerClient.PostAsync(
             $"/api/Application/{fixture.SeedState.VersusApp.Id}/accept",
-            new { PaymentMethodId = AppFixture.TestPaymentMethodId });
+            new { PaymentMethodId = AppFixture.TestPaymentMethodId, eSignature = new { signatoryName = "Test Signatory" } });
         await acceptResponse.ShouldBe(HttpStatusCode.NoContent);
 
         var applicationResponse = await venueManagerClient.GetAsync($"/api/Application/{fixture.SeedState.VersusApp.Id}");

@@ -34,7 +34,7 @@ public sealed class ArtistSteps
         await venuePage.GotoAsync(state.VenueId);
 
         var applied = browser.Page.WaitForResponseAsync($"**/api/application/{state.OpportunityId}");
-        await venuePage.ApplyAsync(state.OpportunityId);
+        await venuePage.AgreeAndApplyAsync(state.OpportunityId);
         state.ApplicationId = await ReadApplicationIdAsync(await applied);
 
         await venuePage.WaitUntilAppliedAsync(state.OpportunityId);

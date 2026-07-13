@@ -27,14 +27,8 @@ public sealed class CustomerSteps
     [Given(@"the customer is on a concert detail page")]
     public async Task GivenOnConcertDetailPage()
     {
-        findPage = new FindPage(browser.Page, fixture.App.CustomerSpaUrl);
-        await findPage.GotoAsync();
-        await findPage.OpenFilterPanelAsync();
-        await findPage.SelectHeaderTypeAsync("Concert");
-        await findPage.ApplyFiltersAsync();
-        await findPage.WaitForResultsAsync();
-        await findPage.ClickFirstResultAsync();
-        await browser.Page.WaitForURLAsync("**/find/concert/**");
+        var concertId = fixture.App.SeedState.UpcomingFlatFeeConcert.Id;
+        await browser.Page.GotoSpaAsync($"{fixture.App.CustomerSpaUrl}/find/concert/{concertId}");
         concertDetailsPage = new ConcertDetailsPage(browser.Page);
         await concertDetailsPage.WaitUntilLoadedAsync();
     }
