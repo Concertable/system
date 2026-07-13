@@ -11,6 +11,7 @@ public sealed class VenueManagerSteps
     private readonly WorkflowState state;
     private readonly IStripePayment payment;
     private MyVenuePage myVenuePage = null!;
+    private string agreementPdfText = null!;
 
     public VenueManagerSteps(
         UiFixture fixture,
@@ -112,28 +113,34 @@ public sealed class VenueManagerSteps
         await applicationsPage.ClickAcceptAsync(state.ApplicationId);
 
         var acceptPage = new AcceptApplicationPage(browser.Page);
-        await acceptPage.ClickConfirmAsync();
+        await acceptPage.AgreeAndConfirmAsync();
     }
 
     [Given(@"a flat fee opportunity has been applied to")]
     public async Task AFlatFeeOpportunityHasBeenAppliedTo()
     {
         state.ApplicationId = fixture.App.SeedState.FlatFeeApp.Id;
-        await browser.Page.GotoSpaAsync($"{fixture.App.VenueSpaUrl}/applications/{state.ApplicationId}/checkout");
+        await GotoCheckoutAndAgreeAsync();
     }
 
     [Given(@"a door split opportunity has been applied to")]
     public async Task ADoorSplitOpportunityHasBeenAppliedTo()
     {
         state.ApplicationId = fixture.App.SeedState.DoorSplitApp.Id;
-        await browser.Page.GotoSpaAsync($"{fixture.App.VenueSpaUrl}/applications/{state.ApplicationId}/checkout");
+        await GotoCheckoutAndAgreeAsync();
     }
 
     [Given(@"a versus opportunity has been applied to")]
     public async Task AVersusOpportunityHasBeenAppliedTo()
     {
         state.ApplicationId = fixture.App.SeedState.VersusApp.Id;
+        await GotoCheckoutAndAgreeAsync();
+    }
+
+    private async Task GotoCheckoutAndAgreeAsync()
+    {
         await browser.Page.GotoSpaAsync($"{fixture.App.VenueSpaUrl}/applications/{state.ApplicationId}/checkout");
+        await browser.Page.GetByTestId("e-sign").FillAsync("Vera Venue");
     }
 
     [When(@"the venue manager pays the flat fee with a new card")]
@@ -184,6 +191,19 @@ public sealed class VenueManagerSteps
     [Then(@"a draft concert is created")]
     public Task DraftConcertCreated() =>
         browser.Page.WaitForURLAsync("**/my/concerts/concert/**", new() { Timeout = 60_000 });
+
+    [When(@"the venue manager downloads the booking agreement")]
+    [Then(@"the venue manager downloads the booking agreement")]
+    public async Task DownloadsBookingAgreement() =>
+        agreementPdfText = await new MyConcertPage(browser.Page).DownloadAgreementAsync();
+
+    [Then(@"the agreement PDF is signed by ""(.+)"" and ""(.+)""")]
+    public void AgreementPdfIsSignedBy(string partyA, string partyB)
+    {
+        Assert.Contains("Signatures", agreementPdfText);
+        Assert.Contains($"Signed by {partyA}", agreementPdfText);
+        Assert.Contains($"Signed by {partyB}", agreementPdfText);
+    }
 
     [When(@"the venue manager cancels the booking")]
     public Task CancelsBooking() =>
