@@ -193,6 +193,7 @@ public sealed class VenueManagerSteps
         browser.Page.WaitForURLAsync("**/my/concerts/concert/**", new() { Timeout = 60_000 });
 
     [When(@"the venue manager downloads the booking agreement")]
+    [Then(@"the venue manager downloads the booking agreement")]
     public async Task DownloadsBookingAgreement() =>
         agreementPdfText = await new MyConcertPage(browser.Page).DownloadAgreementAsync();
 
