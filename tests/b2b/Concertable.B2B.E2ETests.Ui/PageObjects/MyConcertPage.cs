@@ -8,7 +8,7 @@ public sealed class MyConcertPage
 
     private ILocator CancelButton => page.GetByTestId("cancel-booking");
     private ILocator ConfirmCancelButton => page.GetByTestId("cancel-booking-confirm");
-    private ILocator DownloadAgreementButton => page.GetByTestId("download-agreement");
+    private ILocator DownloadContractButton => page.GetByTestId("download-contract");
 
     public async Task CancelBookingAsync()
     {
@@ -16,10 +16,10 @@ public sealed class MyConcertPage
         await ConfirmCancelButton.ClickAsync();
     }
 
-    public async Task<string> DownloadAgreementAsync()
+    public async Task<string> DownloadContractAsync()
     {
-        var pdf = page.WaitForResponseAsync(r => r.Url.Contains("/agreement/pdf") && r.Status == 200);
-        await DownloadAgreementButton.ClickAsync();
+        var pdf = page.WaitForResponseAsync(r => r.Url.Contains("/contract/pdf") && r.Status == 200);
+        await DownloadContractButton.ClickAsync();
         var response = await pdf;
 
         return Pdf.ExtractText(await response.BodyAsync());

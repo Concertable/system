@@ -23,8 +23,8 @@
     Given a flat fee opportunity has been applied to
     When the venue manager pays the flat fee with a new card
     Then a draft concert is created
-    And the venue manager downloads the booking agreement
-    And the agreement PDF is signed by "The Rockers" and "Vera Venue"
+    And the venue manager downloads the booking contract
+    And the contract PDF is signed by "The Rockers" and "Vera Venue"
 
   @VenueManager @PaymentFailure
   Scenario: Venue manager flat fee attempt is declined
