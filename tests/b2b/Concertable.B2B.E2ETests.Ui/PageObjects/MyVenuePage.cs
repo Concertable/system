@@ -16,7 +16,7 @@ public sealed class MyVenuePage
     private ILocator AddOpportunityButton => page.GetByTestId("opportunity-add");
     private ILocator LastCardEdit => page.GetByTestId("opportunity-card-edit").Last;
     private ILocator FlatFeeFeeInput => LastCardEdit.GetByTestId("contract-flatfee-fee");
-    private ILocator ContractTypeSelect => LastCardEdit.GetByTestId("opportunity-contract-type");
+    private ILocator DealTypeSelect => LastCardEdit.GetByTestId("opportunity-contract-type");
     private ILocator VenueHireFeeInput => LastCardEdit.GetByTestId("contract-venuehire-fee");
     private ILocator DoorSplitPercentInput => LastCardEdit.GetByTestId("contract-doorsplit-percent");
     private ILocator VersusGuaranteeInput => LastCardEdit.GetByTestId("contract-versus-guarantee");
@@ -38,7 +38,7 @@ public sealed class MyVenuePage
         await EditButton.ClickAsync();
         await Assertions.Expect(EditButton).ToHaveTextAsync("Editing");
         await AddOpportunityButton.ClickAsync();
-        await ContractTypeSelect.ClickAsync();
+        await DealTypeSelect.ClickAsync();
         await page.GetByRole(AriaRole.Option, new() { Name = "Venue Hire" }).ClickAsync();
         await VenueHireFeeInput.FillAsync(fee.ToString());
         await SaveButton.ClickAsync();
@@ -49,7 +49,7 @@ public sealed class MyVenuePage
         await EditButton.ClickAsync();
         await Assertions.Expect(EditButton).ToHaveTextAsync("Editing");
         await AddOpportunityButton.ClickAsync();
-        await ContractTypeSelect.ClickAsync();
+        await DealTypeSelect.ClickAsync();
         await page.GetByRole(AriaRole.Option, new() { Name = "Door Split" }).ClickAsync();
         await DoorSplitPercentInput.FillAsync(doorPercent.ToString());
         await SaveButton.ClickAsync();
@@ -60,7 +60,7 @@ public sealed class MyVenuePage
         await EditButton.ClickAsync();
         await Assertions.Expect(EditButton).ToHaveTextAsync("Editing");
         await AddOpportunityButton.ClickAsync();
-        await ContractTypeSelect.ClickAsync();
+        await DealTypeSelect.ClickAsync();
         await page.GetByRole(AriaRole.Option, new() { Name = "Versus" }).ClickAsync();
         await VersusGuaranteeInput.FillAsync(guarantee.ToString());
         await VersusPercentInput.FillAsync(doorPercent.ToString());
