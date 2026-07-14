@@ -42,10 +42,11 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
     [Fact]
     public async Task ShouldCompleteBookingAndPayArtist_WhenDoorSplitConcertFinishes()
     {
-        // PastDoorSplit: DoorSplit 70% — venue declares £20 door take → artist share = £14 (1400 pence)
+        // PastDoorSplit: DoorSplit 70% — 1 ticket sold on Concertable at £20, venue declares £0 extra
+        // door take → total £20 → artist share = £14 (1400 pence). Proves Concertable sales count.
 
-        // Arrange — the venue declares the night's door revenue (the sweep won't settle without it)
-        await fixture.DbFixture.Concert.DeclareDoorRevenueAsync(fixture.SeedState.PastDoorSplitBooking.Concert!.Id, 20m);
+        // Arrange — the venue declares the external door take (£0 here; all sales came through us)
+        await fixture.DbFixture.Concert.DeclareDoorRevenueAsync(fixture.SeedState.PastDoorSplitBooking.Concert!.Id, 0m);
 
         // Act
         await TriggerConcertFinishedFunctionAsync();
@@ -64,10 +65,11 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
     [Fact]
     public async Task ShouldCompleteBookingAndPayArtist_WhenVersusConcertFinishes()
     {
-        // PastVersus: Versus £100 + 70% door — venue declares £20 door take → artist share = £114 (11400 pence)
+        // PastVersus: Versus £100 + 70% door — 1 ticket sold on Concertable at £20, venue declares £0
+        // extra door take → total £20 → artist share = £100 + £14 = £114 (11400 pence).
 
-        // Arrange — the venue declares the night's door revenue (the sweep won't settle without it)
-        await fixture.DbFixture.Concert.DeclareDoorRevenueAsync(fixture.SeedState.PastVersusBooking.Concert!.Id, 20m);
+        // Arrange — the venue declares the external door take (£0 here; all sales came through us)
+        await fixture.DbFixture.Concert.DeclareDoorRevenueAsync(fixture.SeedState.PastVersusBooking.Concert!.Id, 0m);
 
         // Act
         await TriggerConcertFinishedFunctionAsync();
