@@ -15,6 +15,7 @@ public sealed class DbFixture
     public OpportunityDb Opportunity { get; private set; } = null!;
     public ApplicationDb Application { get; private set; } = null!;
     public BookingDb Booking { get; private set; } = null!;
+    public ConcertDb Concert { get; private set; } = null!;
     public PaymentDb Payment => payment.Payment;
 
     public DbFixture(DistributedApplication app) => this.app = app;
@@ -39,6 +40,7 @@ public sealed class DbFixture
         Opportunity = new OpportunityDb(b2b.Connection);
         Application = new ApplicationDb(b2b.Connection);
         Booking = new BookingDb(b2b.Connection);
+        Concert = new ConcertDb(b2b.Connection);
     }
 
     public async Task ResetAsync()
