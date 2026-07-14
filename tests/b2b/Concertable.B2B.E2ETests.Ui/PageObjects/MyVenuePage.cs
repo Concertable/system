@@ -15,12 +15,12 @@ public sealed class MyVenuePage
     private ILocator SaveButton => page.GetByTestId("save");
     private ILocator AddOpportunityButton => page.GetByTestId("opportunity-add");
     private ILocator LastCardEdit => page.GetByTestId("opportunity-card-edit").Last;
-    private ILocator FlatFeeFeeInput => LastCardEdit.GetByTestId("contract-flatfee-fee");
-    private ILocator DealTypeSelect => LastCardEdit.GetByTestId("opportunity-contract-type");
-    private ILocator VenueHireFeeInput => LastCardEdit.GetByTestId("contract-venuehire-fee");
-    private ILocator DoorSplitPercentInput => LastCardEdit.GetByTestId("contract-doorsplit-percent");
-    private ILocator VersusGuaranteeInput => LastCardEdit.GetByTestId("contract-versus-guarantee");
-    private ILocator VersusPercentInput => LastCardEdit.GetByTestId("contract-versus-percent");
+    private ILocator FlatFeeFeeInput => LastCardEdit.GetByTestId("deal-flatfee-fee");
+    private ILocator DealTypeSelect => LastCardEdit.GetByTestId("opportunity-deal-type");
+    private ILocator VenueHireFeeInput => LastCardEdit.GetByTestId("deal-venuehire-fee");
+    private ILocator DoorSplitPercentInput => LastCardEdit.GetByTestId("deal-doorsplit-percent");
+    private ILocator VersusGuaranteeInput => LastCardEdit.GetByTestId("deal-versus-guarantee");
+    private ILocator VersusPercentInput => LastCardEdit.GetByTestId("deal-versus-percent");
 
     public Task GotoAsync() => page.GotoSpaAsync(url);
 

@@ -11,7 +11,7 @@ public sealed class VenueManagerSteps
     private readonly WorkflowState state;
     private readonly IStripePayment payment;
     private MyVenuePage myVenuePage = null!;
-    private string agreementPdfText = null!;
+    private string contractPdfText = null!;
 
     public VenueManagerSteps(
         UiFixture fixture,
@@ -192,17 +192,17 @@ public sealed class VenueManagerSteps
     public Task DraftConcertCreated() =>
         browser.Page.WaitForURLAsync("**/my/concerts/concert/**", new() { Timeout = 60_000 });
 
-    [When(@"the venue manager downloads the booking agreement")]
-    [Then(@"the venue manager downloads the booking agreement")]
-    public async Task DownloadsBookingAgreement() =>
-        agreementPdfText = await new MyConcertPage(browser.Page).DownloadAgreementAsync();
+    [When(@"the venue manager downloads the booking contract")]
+    [Then(@"the venue manager downloads the booking contract")]
+    public async Task DownloadsBookingContract() =>
+        contractPdfText = await new MyConcertPage(browser.Page).DownloadContractAsync();
 
-    [Then(@"the agreement PDF is signed by ""(.+)"" and ""(.+)""")]
-    public void AgreementPdfIsSignedBy(string partyA, string partyB)
+    [Then(@"the contract PDF is signed by ""(.+)"" and ""(.+)""")]
+    public void ContractPdfIsSignedBy(string partyA, string partyB)
     {
-        Assert.Contains("Signatures", agreementPdfText);
-        Assert.Contains($"Signed by {partyA}", agreementPdfText);
-        Assert.Contains($"Signed by {partyB}", agreementPdfText);
+        Assert.Contains("Signatures", contractPdfText);
+        Assert.Contains($"Signed by {partyA}", contractPdfText);
+        Assert.Contains($"Signed by {partyB}", contractPdfText);
     }
 
     [When(@"the venue manager cancels the booking")]
