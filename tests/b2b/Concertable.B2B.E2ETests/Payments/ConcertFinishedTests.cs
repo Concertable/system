@@ -42,11 +42,12 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
     [Fact]
     public async Task ShouldCompleteBookingAndPayArtist_WhenDoorSplitConcertFinishes()
     {
-        // PastDoorSplit: DoorSplit 70% — 1 ticket sold on Concertable at £20, venue declares £0 extra
-        // door take → total £20 → artist share = £14 (1400 pence). Proves Concertable sales count.
+        // PastDoorSplit: DoorSplit 70% — 10 tickets sold on Concertable at £20 (£200) + venue declares
+        // £100 external door take → total £300 → artist share = £210 (21000 pence). Proves the split
+        // settles on both channels summed, not either alone.
 
-        // Arrange — the venue declares the external door take (£0 here; all sales came through us)
-        await fixture.DbFixture.Concert.DeclareDoorRevenueAsync(fixture.SeedState.PastDoorSplitBooking.Concert!.Id, 0m);
+        // Arrange — the venue declares the external door take on top of Concertable's own sales
+        await fixture.DbFixture.Concert.DeclareDoorRevenueAsync(fixture.SeedState.PastDoorSplitBooking.Concert!.Id, 100m);
 
         // Act
         await TriggerConcertFinishedFunctionAsync();
@@ -59,7 +60,7 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
 
         var intent = await fixture.StripePaymentIntents.GetAsync(paymentIntentId);
         Assert.Equal(StripeE2EAccountResolver.AccountIds[fixture.SeedState.ArtistManager1.Id], intent.TransferData.DestinationId);
-        Assert.Equal(1400L, intent.Amount);
+        Assert.Equal(21000L, intent.Amount);
     }
 
     [Fact]
