@@ -11,6 +11,7 @@ public sealed class VenueManagerSteps
     private readonly WorkflowState state;
     private readonly IStripePayment payment;
     private MyVenuePage myVenuePage = null!;
+    private MyConcertPage myConcertPage = null!;
     private string contractPdfText = null!;
 
     public VenueManagerSteps(
@@ -212,6 +213,34 @@ public sealed class VenueManagerSteps
     [Then(@"the booking is cancelled and the payment refunded")]
     public Task BookingCancelledAndRefunded() =>
         new MyConcertPage(browser.Page).WaitUntilCancelledAsync();
+
+    [Given(@"an ended door split concert with (\d+) tickets sold through Concertable")]
+    public Task AnEndedDoorSplitConcertWithConcertableSales(int ticketsSold)
+    {
+        var concert = fixture.App.SeedState.PastDoorSplitBooking.Concert!;
+        Assert.Equal(ticketsSold, concert.TicketsSold); // ties the scenario's figure to the seed
+        state.ConcertId = concert.Id;
+        return Task.CompletedTask;
+    }
+
+    [When(@"the venue manager enters £(\d+) of external door takings")]
+    public async Task EntersExternalDoorTakings(decimal externalTake)
+    {
+        await browser.UseRoleAsync(Role.VenueManager);
+        myConcertPage = new MyConcertPage(browser.Page, fixture.App.VenueSpaUrl);
+        await myConcertPage.GotoAsync(state.ConcertId!.Value);
+        await myConcertPage.EnterDoorTakingsAsync(externalTake);
+    }
+
+    [Then(@"the takings breakdown shows £([\d.]+) from Concertable and £([\d.]+) in total")]
+    public Task TakingsBreakdownShows(decimal concertable, decimal total) =>
+        myConcertPage.ExpectBreakdownAsync(concertable, total);
+
+    [When(@"the venue manager confirms the door takings")]
+    public Task ConfirmsDoorTakings() => myConcertPage.ConfirmDoorTakingsAsync();
+
+    [Then(@"the door takings are recorded")]
+    public Task DoorTakingsRecorded() => myConcertPage.WaitUntilDoorTakingsRecordedAsync();
 
     private Task<int> FetchNewestOpportunityIdAsync(int venueId) =>
         fixture.App.DbFixture.Opportunity.GetNewestAsync(venueId);
