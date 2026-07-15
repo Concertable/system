@@ -32,3 +32,11 @@
     Given a door split opportunity has been applied to
     When the venue manager registers a card with a 3DS-failing card
     Then the payment is rejected
+
+  @VenueManager
+  Scenario: Venue manager declares external door takings on top of Concertable sales
+    Given an ended door split concert with 10 tickets sold through Concertable
+    When the venue manager enters £100 of external door takings
+    Then the takings breakdown shows £200.00 from Concertable and £300.00 in total
+    When the venue manager confirms the door takings
+    Then the door takings are recorded
