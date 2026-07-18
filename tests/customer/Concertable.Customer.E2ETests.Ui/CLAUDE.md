@@ -2,8 +2,9 @@
 
 **The scenario-authoring rules that apply to every suite** — test one behaviour, start at the nearest
 already-verified state, fast-forward via seeded state (never UI replay), what can't be seeded
-(payment/Stripe), and baseline discipline — live in the shared E2E doc. Read it first:
-[`../../../../Concertable.Shared/tests/Concertable.E2ETests/CLAUDE.md`](../../../../Concertable.Shared/tests/Concertable.E2ETests/CLAUDE.md).
+(payment/Stripe), and baseline discipline — live in `E2E_CONVENTIONS.md`, imported here:
+
+@../../../../docs/E2E_CONVENTIONS.md
 
 This file only adds Customer-specific mechanics.
 
