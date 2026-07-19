@@ -4,6 +4,7 @@ using Concertable.B2B.Concert.Api.Responses;
 using Concertable.B2B.Concert.Domain.Lifecycle;
 using Concertable.Payment.Client;
 using Concertable.Payment.Contracts;
+using Concertable.Payment.Contracts.Enums;
 using Concertable.Testing;
 using Xunit;
 
