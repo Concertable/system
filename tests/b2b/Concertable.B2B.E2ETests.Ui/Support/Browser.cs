@@ -33,6 +33,12 @@ public sealed class Browser : IAsyncDisposable, IDisposable, IPageAccessor
         await CreateContextAsync(role);
     }
 
+    public async Task UseFreshContextAsync()
+    {
+        await SaveTraceAndDisposeAsync();
+        await CreateContextAsync(null);
+    }
+
     private async Task CreateContextAsync(Role? role)
     {
         var options = new BrowserNewContextOptions { IgnoreHTTPSErrors = true };
