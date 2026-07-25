@@ -62,6 +62,8 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
         Assert.Equal(StripeE2EAccountResolver.AccountIds[fixture.SeedState.ArtistManager1.Id], intent.TransferData.DestinationId);
         Assert.Equal(22000L, intent.Amount);
         Assert.Equal(21000L, intent.TransferData.Amount);
+
+        await AssertSettlementLedgerAsync(fixture.SeedState.PastDoorSplitBooking.Id, expectedPlatformRevenue: 1000L);
     }
 
     [Fact]
@@ -86,6 +88,19 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
         Assert.Equal(StripeE2EAccountResolver.AccountIds[fixture.SeedState.ArtistManager1.Id], intent.TransferData.DestinationId);
         Assert.Equal(12400L, intent.Amount);
         Assert.Equal(11400L, intent.TransferData.Amount);
+
+        await AssertSettlementLedgerAsync(fixture.SeedState.PastVersusBooking.Id, expectedPlatformRevenue: 1000L);
+    }
+
+    private async Task AssertSettlementLedgerAsync(int bookingId, long expectedPlatformRevenue)
+    {
+        await fixture.Polling.UntilAsync(
+            () => fixture.DbFixture.Payment.GetLedgerTransactionCountAsync(bookingId),
+            count => count >= 1,
+            timeout: TimeSpan.FromSeconds(30));
+
+        Assert.Equal(0L, await fixture.DbFixture.Payment.GetLedgerSignedSumAsync(bookingId));
+        Assert.Equal(expectedPlatformRevenue, await fixture.DbFixture.Payment.GetLedgerPlatformRevenueAsync(bookingId));
     }
 
     private Task TriggerConcertFinishedFunctionAsync() =>
