@@ -44,7 +44,8 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
     {
         // PastDoorSplit: DoorSplit 70% — 10 tickets sold on Concertable at £20 (£200) + venue declares
         // £100 external door take → total £300 → artist share = £210 (21000 pence). Proves the split
-        // settles on both channels summed, not either alone.
+        // settles on both channels summed, not either alone. The venue is charged £210 + £10 platform
+        // fee = £220 (22000); the artist receives £210, the platform keeps £10.
 
         // Arrange — the venue declares the external door take on top of Concertable's own sales
         await fixture.DbFixture.Concert.DeclareDoorRevenueAsync(fixture.SeedState.PastDoorSplitBooking.Concert!.Id, 100m);
@@ -60,14 +61,16 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
 
         var intent = await fixture.StripePaymentIntents.GetAsync(paymentIntentId);
         Assert.Equal(StripeE2EAccountResolver.AccountIds[fixture.SeedState.ArtistManager1.Id], intent.TransferData.DestinationId);
-        Assert.Equal(21000L, intent.Amount);
+        Assert.Equal(22000L, intent.Amount);
+        Assert.Equal(21000L, intent.TransferData.Amount);
     }
 
     [Fact]
     public async Task ShouldCompleteBookingAndPayArtist_WhenVersusConcertFinishes()
     {
         // PastVersus: Versus £100 + 70% door — 1 ticket sold on Concertable at £20, venue declares £0
-        // extra door take → total £20 → artist share = £100 + £14 = £114 (11400 pence).
+        // extra door take → total £20 → artist share = £100 + £14 = £114 (11400 pence). The venue is
+        // charged £114 + £10 platform fee = £124 (12400); the artist receives £114, the platform keeps £10.
 
         // Arrange — the venue declares the external door take (£0 here; all sales came through us)
         await fixture.DbFixture.Concert.DeclareDoorRevenueAsync(fixture.SeedState.PastVersusBooking.Concert!.Id, 0m);
@@ -83,7 +86,8 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
 
         var intent = await fixture.StripePaymentIntents.GetAsync(paymentIntentId);
         Assert.Equal(StripeE2EAccountResolver.AccountIds[fixture.SeedState.ArtistManager1.Id], intent.TransferData.DestinationId);
-        Assert.Equal(11400L, intent.Amount);
+        Assert.Equal(12400L, intent.Amount);
+        Assert.Equal(11400L, intent.TransferData.Amount);
     }
 
     private Task TriggerConcertFinishedFunctionAsync() =>
