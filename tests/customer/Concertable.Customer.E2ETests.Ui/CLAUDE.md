@@ -4,7 +4,7 @@
 already-verified state, fast-forward via seeded state (never UI replay), what can't be seeded
 (payment/Stripe), and baseline discipline — live in `E2E_CONVENTIONS.md`, imported here:
 
-@../../../../docs/E2E_CONVENTIONS.md
+@../../../../agents/E2E_CONVENTIONS.md
 
 This file only adds Customer-specific mechanics.
 
