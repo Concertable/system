@@ -98,11 +98,12 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
     {
         await fixture.Polling.UntilAsync(
             () => fixture.DbFixture.Payment.GetLedgerTransactionCountAsync(bookingId),
-            count => count >= 1,
+            count => count == 1,
             timeout: TimeSpan.FromSeconds(30));
 
         Assert.Equal(0L, await fixture.DbFixture.Payment.GetLedgerSignedSumAsync(bookingId));
         Assert.Equal(stripeCharge - stripeTransfer, await fixture.DbFixture.Payment.GetLedgerPlatformRevenueAsync(bookingId));
+        Assert.Equal(1, await fixture.DbFixture.Payment.GetLedgerTransactionCountAsync(bookingId));
     }
 
     private Task TriggerConcertFinishedFunctionAsync() =>
