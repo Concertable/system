@@ -2,7 +2,7 @@
   A customer uses the search filter to find a concert, purchases a ticket, waits
   for confirmation, and then opens their QR code from the upcoming tickets page.
 
-  @Customer
+  @Customer @quarantine
   Scenario: Customer searches for concerts, purchases a ticket, and views the QR code
     When the customer opens the filter panel on the find page
     And the customer selects the header type "Concert"

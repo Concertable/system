@@ -40,8 +40,14 @@ public sealed class FindPage
 
     public async Task ApplyFiltersAsync()
     {
-        await ApplyButton.ClickAsync();
-        await FilterPanel.WaitForAsync(new() { State = WaitForSelectorState.Hidden });
+        await page.RunAndWaitForResponseAsync(
+            async () =>
+            {
+                await ApplyButton.ClickAsync();
+                await FilterPanel.WaitForAsync(new() { State = WaitForSelectorState.Hidden });
+            },
+            resp => resp.Url.Contains("/header?") && resp.Ok,
+            new() { Timeout = 30_000 });
     }
 
     public async Task AddGenreFilterAsync(string genre)
