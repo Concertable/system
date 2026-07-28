@@ -60,7 +60,8 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
 
         var intent = await fixture.StripePaymentIntents.GetAsync(paymentIntentId);
         Assert.Equal(StripeE2EAccountResolver.AccountIds[fixture.SeedState.ArtistManager1.Id], intent.TransferData.DestinationId);
-        Assert.Equal(21000L, intent.Amount);
+        Assert.Equal(22000L, intent.Amount);
+        Assert.Equal(21000L, intent.TransferData.Amount);
     }
 
     [Fact]
@@ -83,7 +84,8 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
 
         var intent = await fixture.StripePaymentIntents.GetAsync(paymentIntentId);
         Assert.Equal(StripeE2EAccountResolver.AccountIds[fixture.SeedState.ArtistManager1.Id], intent.TransferData.DestinationId);
-        Assert.Equal(11400L, intent.Amount);
+        Assert.Equal(12400L, intent.Amount);
+        Assert.Equal(11400L, intent.TransferData.Amount);
     }
 
     private Task TriggerConcertFinishedFunctionAsync() =>
