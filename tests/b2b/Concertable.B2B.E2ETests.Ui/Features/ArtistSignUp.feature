@@ -7,6 +7,7 @@
     When they click get started as an artist
     And they click the sign up link
     And they register as ArtistManager
+    And their email verification completes
     And they sign in with their new credentials
     And they fill in the create artist form
     And they submit the create artist form

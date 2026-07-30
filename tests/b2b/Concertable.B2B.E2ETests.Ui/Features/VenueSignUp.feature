@@ -7,6 +7,7 @@
     When they click get started as a venue
     And they click the sign up link
     And they register as VenueManager
+    And their email verification completes
     And they sign in with their new credentials
     And they fill in the create venue form
     And they submit the create venue form

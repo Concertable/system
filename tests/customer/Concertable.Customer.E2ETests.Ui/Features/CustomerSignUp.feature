@@ -7,5 +7,6 @@
     When they go to sign in
     And they click the sign up link
     And they register with a new email
+    And their email verification completes
     And they sign in with their new credentials
     Then they are returned to the customer home page authenticated
