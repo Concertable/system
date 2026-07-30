@@ -209,6 +209,9 @@ public sealed class AppFixture : IAsyncLifetime
         return client;
     }
 
+    public Task WaitForTokenMintingAsync(string email, string password) =>
+        tokenMinter.WaitUntilMintableAsync(email, password, Polling);
+
     public async Task DisposeAsync()
     {
         B2BClient.Dispose();

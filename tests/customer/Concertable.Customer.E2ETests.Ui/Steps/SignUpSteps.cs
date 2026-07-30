@@ -50,6 +50,10 @@ public sealed class SignUpSteps
         await registerPage.ClickSignInAsync();
     }
 
+    [When(@"their email verification completes")]
+    public Task EmailVerificationCompletes() =>
+        fixture.App.WaitForTokenMintingAsync(state.SignUpEmail!, state.SignUpPassword!);
+
     [When(@"they sign in with their new credentials")]
     public async Task SignInWithNewCredentials()
     {
