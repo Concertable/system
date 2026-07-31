@@ -76,7 +76,7 @@ public sealed class CustomerSteps
     [Then(@"the customer should be on the concert detail page")]
     public async Task OnConcertDetailPage()
     {
-        await browser.Page.WaitForURLAsync("**/find/concert/**");
+        await browser.Page.WaitForSpaUrlAsync("**/find/concert/**");
         concertDetailsPage = new ConcertDetailsPage(browser.Page);
         await concertDetailsPage.WaitUntilLoadedAsync();
     }
@@ -88,7 +88,7 @@ public sealed class CustomerSteps
     [Then(@"the customer should be on the checkout page")]
     public async Task OnCheckoutPage()
     {
-        await browser.Page.WaitForURLAsync("**/concert/checkout/**");
+        await browser.Page.WaitForSpaUrlAsync("**/concert/checkout/**");
         checkoutPage = new TicketCheckoutPage(browser.Page, payment);
     }
 
@@ -133,7 +133,7 @@ public sealed class CustomerSteps
     [Then(@"the customer should be on the upcoming tickets page")]
     public async Task OnUpcomingTicketsPage()
     {
-        await browser.Page.WaitForURLAsync("**/profile/tickets/upcoming");
+        await browser.Page.WaitForSpaUrlAsync("**/profile/tickets/upcoming");
         upcomingTicketsPage = new CustomerUpcomingTicketsPage(browser.Page);
         await upcomingTicketsPage.WaitForTicketListAsync();
     }
