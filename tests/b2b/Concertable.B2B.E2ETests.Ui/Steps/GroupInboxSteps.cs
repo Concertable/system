@@ -47,7 +47,7 @@ public sealed class GroupInboxSteps
         await browser.Page.WaitForURLAsync($"{VenueSpaUrl}/", new() { Timeout = 30_000 });
 
         mailbox = new MailboxPage(browser.Page, VenueSpaUrl);
-        await mailbox.SwitchOrganizationAsync(VenueOrgName);
+        await mailbox.ChooseOrganizationAsync(VenueOrgName);
     }
 
     [Then(@"the colleague has (\d+) unread message")]
