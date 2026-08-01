@@ -9,7 +9,7 @@ public sealed class Browser : IAsyncDisposable, IDisposable, IPageAccessor
     private readonly ILogger<Browser> logger;
     private IBrowser playwrightBrowser = null!;
     private UiFixture fixture = null!;
-    private Role? currentRole;
+    private LoginPersona? currentPersona;
 
     public IBrowserContext Context { get; private set; } = null!;
     public IPage Page { get; private set; } = null!;
@@ -19,18 +19,18 @@ public sealed class Browser : IAsyncDisposable, IDisposable, IPageAccessor
         this.logger = logger;
     }
 
-    public async Task InitializeAsync(IBrowser playwrightBrowser, Role? role, UiFixture fixture)
+    public async Task InitializeAsync(IBrowser playwrightBrowser, LoginPersona? persona, UiFixture fixture)
     {
         this.playwrightBrowser = playwrightBrowser;
         this.fixture = fixture;
-        await CreateContextAsync(role);
+        await CreateContextAsync(persona);
     }
 
-    public async Task UseRoleAsync(Role role)
+    public async Task UsePersonaAsync(LoginPersona persona)
     {
-        if (currentRole == role) return;
+        if (currentPersona == persona) return;
         await SaveTraceAndDisposeAsync();
-        await CreateContextAsync(role);
+        await CreateContextAsync(persona);
     }
 
     public async Task UseFreshContextAsync()
@@ -39,10 +39,10 @@ public sealed class Browser : IAsyncDisposable, IDisposable, IPageAccessor
         await CreateContextAsync(null);
     }
 
-    private async Task CreateContextAsync(Role? role)
+    private async Task CreateContextAsync(LoginPersona? persona)
     {
         var options = new BrowserNewContextOptions { IgnoreHTTPSErrors = true };
-        if (role is not null) options.StorageState = await LoginCaptureHooks.GetOrCaptureAsync(fixture, role.Value);
+        if (persona is not null) options.StorageState = await LoginCaptureHooks.GetOrCaptureAsync(fixture, persona.Value);
         Context = await playwrightBrowser.NewContextAsync(options);
         await Context.Tracing.StartAsync(new TracingStartOptions
         {
@@ -75,7 +75,7 @@ public sealed class Browser : IAsyncDisposable, IDisposable, IPageAccessor
         {
             if (frame == Page.MainFrame) logger.NavigatedTo(frame.Url);
         };
-        currentRole = role;
+        currentPersona = persona;
     }
 
     private async Task SaveTraceAndDisposeAsync()
@@ -84,7 +84,7 @@ public sealed class Browser : IAsyncDisposable, IDisposable, IPageAccessor
         Directory.CreateDirectory("playwright-traces");
         await Context.Tracing.StopAsync(new TracingStopOptions
         {
-            Path = $"playwright-traces/trace-{currentRole}-{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}.zip",
+            Path = $"playwright-traces/trace-{currentPersona}-{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}.zip",
         });
         logger.PlaywrightTraceSaved();
         await Context.DisposeAsync();

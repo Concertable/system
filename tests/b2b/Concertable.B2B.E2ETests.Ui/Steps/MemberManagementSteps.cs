@@ -59,7 +59,7 @@ public sealed class MemberManagementSteps
     [When(@"the owner returns to the members page")]
     public async Task OwnerReturnsToTheMembersPage()
     {
-        await browser.UseRoleAsync(Role.VenueManager);
+        await browser.UsePersonaAsync(LoginPersona.VenueManager);
         membersPage = new MembersPage(browser.Page, VenueSpaUrl);
         await membersPage.GotoAsync();
         await membersPage.WaitForRosterAsync();
