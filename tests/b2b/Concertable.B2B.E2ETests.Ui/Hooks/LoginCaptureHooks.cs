@@ -5,28 +5,28 @@ namespace Concertable.B2B.E2ETests.Ui.Hooks;
 
 public static class LoginCaptureHooks
 {
-    private static readonly Dictionary<Role, string> storageStateByRole = [];
+    private static readonly Dictionary<LoginPersona, string> storageStateByPersona = [];
 
-    public static void Reset() => storageStateByRole.Clear();
+    public static void Reset() => storageStateByPersona.Clear();
 
-    public static async Task<string> GetOrCaptureAsync(UiFixture fixture, Role role)
+    public static async Task<string> GetOrCaptureAsync(UiFixture fixture, LoginPersona persona)
     {
-        if (storageStateByRole.TryGetValue(role, out var state))
+        if (storageStateByPersona.TryGetValue(persona, out var state))
             return state;
 
         var seed = fixture.App.SeedState;
-        var (email, password, spaUrl) = role switch
+        var (email, password, spaUrl) = persona switch
         {
-            Role.VenueManager  => (seed.VenueManager1.Email,  SeedState.TestPassword, fixture.App.VenueSpaUrl),
-            Role.ArtistManager => (seed.ArtistManager1.Email, SeedState.TestPassword, fixture.App.ArtistSpaUrl),
-            _ => throw new ArgumentOutOfRangeException(nameof(role))
+            LoginPersona.VenueManager  => (seed.VenueManager1.Email,  SeedState.TestPassword, fixture.App.VenueSpaUrl),
+            LoginPersona.ArtistManager => (seed.ArtistManager1.Email, SeedState.TestPassword, fixture.App.ArtistSpaUrl),
+            _ => throw new ArgumentOutOfRangeException(nameof(persona))
         };
 
-        await CaptureAsync(fixture, role, email, password, spaUrl);
-        return storageStateByRole[role];
+        await CaptureAsync(fixture, persona, email, password, spaUrl);
+        return storageStateByPersona[persona];
     }
 
-    private static async Task CaptureAsync(UiFixture fixture, Role role, string email, string password, string spaUrl)
+    private static async Task CaptureAsync(UiFixture fixture, LoginPersona persona, string email, string password, string spaUrl)
     {
         await using var context = await fixture.Browser.NewContextAsync(new() { IgnoreHTTPSErrors = true });
         var page = await context.NewPageAsync();
@@ -36,6 +36,6 @@ public static class LoginCaptureHooks
         await login.SignInAsync(email, password);
         await page.WaitForURLAsync($"{spaUrl}/");
 
-        storageStateByRole[role] = await context.StorageStateAsync();
+        storageStateByPersona[persona] = await context.StorageStateAsync();
     }
 }
