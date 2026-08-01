@@ -28,7 +28,7 @@ public sealed class ArtistSteps
     [When(@"the artist applies to the opportunity")]
     public async Task ArtistApplies()
     {
-        await browser.UseRoleAsync(Role.ArtistManager);
+        await browser.UsePersonaAsync(LoginPersona.ArtistManager);
 
         venuePage = new VenueDetailsPage(browser.Page, fixture.App.ArtistSpaUrl);
         await venuePage.GotoAsync(state.VenueId);
@@ -43,7 +43,7 @@ public sealed class ArtistSteps
     [When(@"the artist applies to the venue hire opportunity with a valid card")]
     public async Task ArtistAppliesToVenueHireWithValidCard()
     {
-        await browser.UseRoleAsync(Role.ArtistManager);
+        await browser.UsePersonaAsync(LoginPersona.ArtistManager);
 
         venuePage = new VenueDetailsPage(browser.Page, fixture.App.ArtistSpaUrl);
         await venuePage.GotoAsync(state.VenueId);

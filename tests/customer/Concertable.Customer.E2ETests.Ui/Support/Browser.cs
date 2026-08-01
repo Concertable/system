@@ -9,7 +9,6 @@ public sealed class Browser : IAsyncDisposable, IDisposable, IPageAccessor
     private readonly ILogger<Browser> logger;
     private IBrowser playwrightBrowser = null!;
     private UiFixture fixture = null!;
-    private Role? currentRole;
 
     public IBrowserContext Context { get; private set; } = null!;
     public IPage Page { get; private set; } = null!;
@@ -19,17 +18,17 @@ public sealed class Browser : IAsyncDisposable, IDisposable, IPageAccessor
         this.logger = logger;
     }
 
-    public async Task InitializeAsync(IBrowser playwrightBrowser, Role? role, UiFixture fixture)
+    public async Task InitializeAsync(IBrowser playwrightBrowser, bool authenticated, UiFixture fixture)
     {
         this.playwrightBrowser = playwrightBrowser;
         this.fixture = fixture;
-        await CreateContextAsync(role);
+        await CreateContextAsync(authenticated);
     }
 
-    private async Task CreateContextAsync(Role? role)
+    private async Task CreateContextAsync(bool authenticated)
     {
         var options = new BrowserNewContextOptions { IgnoreHTTPSErrors = true };
-        if (role is not null) options.StorageState = await LoginCaptureHooks.GetOrCaptureAsync(fixture);
+        if (authenticated) options.StorageState = await LoginCaptureHooks.GetOrCaptureAsync(fixture);
         Context = await playwrightBrowser.NewContextAsync(options);
         await Context.Tracing.StartAsync(new TracingStartOptions
         {
@@ -51,7 +50,6 @@ public sealed class Browser : IAsyncDisposable, IDisposable, IPageAccessor
             if (msg.Type == "error") logger.BrowserConsoleError(msg.Text);
             if (msg.Type == "warning") logger.BrowserConsoleError($"[console warn] {msg.Text}");
         };
-        currentRole = role;
     }
 
     private async Task SaveTraceAndDisposeAsync()

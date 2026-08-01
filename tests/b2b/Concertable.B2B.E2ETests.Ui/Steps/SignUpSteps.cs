@@ -59,9 +59,9 @@ public sealed class SignUpSteps
     }
 
     [When(@"they register as (.*)")]
-    public async Task RegisterAsRole(string role)
+    public async Task RegisterAsPersona(string persona)
     {
-        _ = role;
+        _ = persona;
         state.SignUpEmail = $"signup-{Guid.NewGuid():N}@e2e.test";
         state.SignUpPassword = "P@ssw0rd!";
         await registerPage.RegisterAsync(state.SignUpEmail!, state.SignUpPassword!);
