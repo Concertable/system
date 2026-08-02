@@ -107,11 +107,11 @@ public sealed class ConcertCancelledTests : IAsyncLifetime
             timeout: TimeSpan.FromSeconds(30));
     }
 
-    private async Task<ConcertDetailsResponse> GetConcertByApplicationAsync(int appId)
+    private async Task<MyDetailsResponse> GetConcertByApplicationAsync(int appId)
     {
         var response = await venueManagerClient.GetAsync($"/api/Concert/application/{appId}");
         await response.ShouldBe(HttpStatusCode.OK);
-        var concert = await response.Content.ReadAsync<ConcertDetailsResponse>();
+        var concert = await response.Content.ReadAsync<MyDetailsResponse>();
         Assert.NotNull(concert);
         return concert;
     }
