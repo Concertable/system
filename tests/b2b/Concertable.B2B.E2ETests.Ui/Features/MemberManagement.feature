@@ -24,3 +24,9 @@ Feature: Organization member management
     Then the tenant switcher offers the colleague both organizations
     When the colleague switches to their own organization
     Then member management shows only their own organization's members
+
+  Scenario: A signed-out invitation link resumes acceptance after login
+    Given a colleague has a pending venue invitation
+    When the colleague opens the invitation link signed out
+    And the colleague signs in from the invitation
+    Then the colleague appears in the member roster
