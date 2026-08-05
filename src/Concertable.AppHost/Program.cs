@@ -4,7 +4,7 @@ var sql = builder.AddSqlServerContainer();
 var b2bDb = sql.AddDatabase(AppHostConstants.Databases.B2B);
 var authDb = sql.AddDatabase(AppHostConstants.Databases.Auth);
 var customerDb = sql.AddDatabase(AppHostConstants.Databases.Customer);
-var searchDb = sql.AddDatabase(AppHostConstants.Databases.Search);
+var searchDb = sql.AddDatabase(SearchConstants.Database);
 var paymentDb = sql.AddDatabase(AppHostConstants.Databases.Payment);
 
 var (storage, blobs) = builder.AddAzureStorage();
