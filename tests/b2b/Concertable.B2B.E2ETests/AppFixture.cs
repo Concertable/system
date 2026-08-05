@@ -143,6 +143,7 @@ public sealed class AppFixture : IAsyncLifetime
                 [$"ConnectionStrings:{AppHostConstants.Databases.B2B}"] = b2bConnectionString,
                 ["BlobStorage:ContainerName"] = "images",
                 ["ExternalServices:UseRealBlob"] = "false",
+                ["Legal:PlatformTermsVersion"] = "2026-07",
             })
             .Build();
 
