@@ -21,7 +21,7 @@ public sealed class DbFixture
 
     public async Task InitializeAsync()
     {
-        await customer.InitializeAsync(app, AppHostConstants.Databases.Customer, new RespawnerOptions
+        await customer.InitializeAsync(app, CustomerConstants.Database, new RespawnerOptions
         {
             TablesToIgnore = [
                 "__EFMigrationsHistory",
