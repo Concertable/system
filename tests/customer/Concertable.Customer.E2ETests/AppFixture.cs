@@ -112,13 +112,13 @@ public sealed class AppFixture : IAsyncLifetime
         await DbFixture.InitializeAsync();
         await DbFixture.ResetAsync();
 
-        var customerConnectionString = await app.GetConnectionStringAsync(AppHostConstants.Databases.Customer)
+        var customerConnectionString = await app.GetConnectionStringAsync(CustomerConstants.Database)
             ?? throw new InvalidOperationException("Customer DB connection string is missing.");
 
         var customerSeedConfig = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                [$"ConnectionStrings:{AppHostConstants.Databases.Customer}"] = customerConnectionString,
+                [$"ConnectionStrings:{CustomerConstants.Database}"] = customerConnectionString,
             })
             .Build();
 
