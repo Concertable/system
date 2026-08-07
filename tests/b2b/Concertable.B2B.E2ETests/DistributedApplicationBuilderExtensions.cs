@@ -33,7 +33,7 @@ internal static class DistributedApplicationBuilderExtensions
     {
         var auth = builder.Resources
             .OfType<ProjectResource>()
-            .Single(r => r.Name == AppHostConstants.ResourceNames.Auth);
+            .Single(r => r.Name == AuthConstants.Resource);
 
         auth.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
         {
