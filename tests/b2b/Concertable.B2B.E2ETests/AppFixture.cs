@@ -125,7 +125,7 @@ public sealed class AppFixture : IAsyncLifetime
             [B2BWebUrl, SearchWebUrl, PaymentWebUrl],
             TimeSpan.FromMinutes(12));
 
-        var paymentConnectionString = await app.GetConnectionStringAsync(AppHostConstants.Databases.Payment);
+        var paymentConnectionString = await app.GetConnectionStringAsync(PaymentConstants.Database);
         await healthWaiter.WaitForPayoutAccountsAsync(paymentConnectionString, 4, TimeSpan.FromMinutes(3));
 
         DbFixture = new DbFixture(app);
