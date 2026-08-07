@@ -2,7 +2,7 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 var sql = builder.AddSqlServerContainer();
 var b2bDb = sql.AddDatabase(AppHostConstants.Databases.B2B);
-var authDb = sql.AddDatabase(AppHostConstants.Databases.Auth);
+var authDb = sql.AddDatabase(AuthConstants.Database);
 var customerDb = sql.AddDatabase(CustomerConstants.Database);
 var searchDb = sql.AddDatabase(SearchConstants.Database);
 var paymentDb = sql.AddDatabase(AppHostConstants.Databases.Payment);
