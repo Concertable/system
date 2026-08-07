@@ -204,6 +204,17 @@ function Assert-DockerHealthy {
     }
 }
 
+function Assert-HostCapacity {
+    # An E2E boot needs the host mostly to itself; a competing full-solution build or another
+    # E2E run starves it and it dies at fixture startup. Wait up to 5 min for transient
+    # contention (a build finishing) before refusing. WHY in host-capacity.ps1.
+    & (Join-Path $PSScriptRoot 'host-capacity.ps1') -WaitSeconds 300
+    if ($LASTEXITCODE -ne 0) {
+        Remove-Item Env:\HEADLESS -ErrorAction SilentlyContinue
+        exit 1
+    }
+}
+
 function Show-Usage {
     Write-Host ""
     Write-Host "  Usage: ./scripts/e2e.ps1 <ui|api> <command> [-Headed]" -ForegroundColor White
@@ -226,7 +237,7 @@ function Show-Usage {
 }
 
 function Invoke-UiCommand([string]$cmd) {
-    if ($cmd -in @('run', 'regress', 'b2b', 'customer', '3ds')) { Assert-DockerHealthy }
+    if ($cmd -in @('run', 'regress', 'b2b', 'customer', '3ds')) { Assert-DockerHealthy; Assert-HostCapacity }
     switch ($cmd) {
         "run" {
             $b2b  = Invoke-PrettyTest 'B2B'      "$b2bUi/Concertable.B2B.E2ETests.Ui.csproj"
@@ -264,7 +275,7 @@ function Invoke-UiCommand([string]$cmd) {
 
 function Invoke-ApiCommand([string]$cmd) {
     $settings = @('--settings', $runsettings)
-    if ($cmd -in @('run', 'b2b', 'customer')) { Assert-DockerHealthy }
+    if ($cmd -in @('run', 'b2b', 'customer')) { Assert-DockerHealthy; Assert-HostCapacity }
     switch ($cmd) {
         "run" {
             $b2b  = Invoke-PrettyTest 'B2B API'      "$b2bApi/Concertable.B2B.E2ETests.csproj"           $settings 'api-tests.last.log'
