@@ -102,7 +102,7 @@ public sealed class CustomerSteps
 
     [When(@"the customer pays with a declined card")]
     public Task PaysWithDeclinedCard() =>
-        checkoutPage.PayWithDeclinedCardAsync(StripeCards.Decline);
+        checkoutPage.PayWithNewCardAsync(StripeCards.Decline);
 
     [When(@"the customer pays with a 3DS card")]
     public async Task PaysWith3dsCard()

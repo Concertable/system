@@ -22,9 +22,9 @@ public sealed class StripeHooks(UiFixture fixture)
         var seedData = app.SeedState;
         var customerIds = new[]
         {
-            app.StripeRun.ResolveCustomer(seedData.VenueManager1.Id),
-            app.StripeRun.ResolveCustomer(seedData.ArtistManager1.Id),
-            app.StripeRun.ResolveCustomer(SeedCustomers.CustomerId(1)),
+            app.StripeCustomers.Resolve(seedData.VenueManager1.Id),
+            app.StripeCustomers.Resolve(seedData.ArtistManager1.Id),
+            app.StripeCustomers.Resolve(SeedCustomers.CustomerId(1)),
         };
 
         foreach (var id in customerIds)

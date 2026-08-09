@@ -76,7 +76,7 @@ public sealed class ArtistSteps
 
     [When(@"the artist pays the venue hire fee with a declined card")]
     public Task PaysVenueHireFeeWithDeclinedCard() =>
-        new ApplyCheckoutPage(browser.Page, payment).PayWithDeclinedCardAsync(StripeCards.Decline);
+        new ApplyCheckoutPage(browser.Page, payment).PayWithNewCardAsync(StripeCards.Decline);
 
     [When(@"the artist pays the venue hire fee with a 3DS card")]
     public async Task PaysVenueHireFeeWith3dsCard()
