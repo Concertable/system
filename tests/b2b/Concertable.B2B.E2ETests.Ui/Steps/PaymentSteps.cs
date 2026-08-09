@@ -22,9 +22,8 @@ public sealed class PaymentSteps
     [Then(@"a payment hold of £(\d+) is captured from the artist")]
     public async Task PaymentHoldCaptured(decimal amount)
     {
-        var resolver = new StripeE2EAccountResolver();
         var hold = await fixture.App.Stripe.FindCapturedHoldAsync(
-            resolver.ResolveCustomer(fixture.App.SeedState.ArtistManager1.Id), amount);
+            fixture.App.StripeRun.ResolveCustomer(fixture.App.SeedState.ArtistManager1.Id), amount);
         Assert.NotNull(hold);
     }
 
