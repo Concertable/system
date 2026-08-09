@@ -12,14 +12,15 @@ internal static class DistributedApplicationBuilderExtensions
         string customerApiBaseUrl,
         string searchApiBaseUrl,
         string authBaseUrl,
-        string paymentBaseUrl)
+        string paymentBaseUrl,
+        StripeE2ERun stripeRun)
     {
         builder.PinAuthService(authBaseUrl);
         builder.PinAuthCustomerApi(customerApiBaseUrl);
         builder.PinCustomerWeb(customerApiBaseUrl, authBaseUrl, paymentBaseUrl);
         builder.AddSearchService(searchApiBaseUrl, authBaseUrl);
-        builder.PinPaymentWeb(paymentBaseUrl, authBaseUrl);
-        builder.PinPaymentWorkers();
+        builder.PinPaymentWeb(paymentBaseUrl, authBaseUrl, stripeRun);
+        builder.PinPaymentWorkers(stripeRun);
         builder.AddEphemeralSql();
         builder.PinStripeCli(paymentBaseUrl);
         return builder;
@@ -55,6 +56,7 @@ internal static class DistributedApplicationBuilderExtensions
             context.EnvironmentVariables["ASPNETCORE_URLS"] = customerApiBaseUrl;
             context.EnvironmentVariables["Auth__Authority"] = authBaseUrl;
             context.EnvironmentVariables["services__payment-web__https__0"] = paymentBaseUrl;
+            context.EnvironmentVariables["ServiceAuth__ClientSecret"] = Concertable.E2ETests.DistributedApplicationBuilderExtensions.CustomerServiceAuthSecret;
         }));
     }
 }

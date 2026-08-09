@@ -13,15 +13,16 @@ internal static class DistributedApplicationBuilderExtensions
         string apiBaseUrl,
         string searchApiBaseUrl,
         string authBaseUrl,
-        string paymentBaseUrl)
+        string paymentBaseUrl,
+        StripeE2ERun stripeRun)
     {
         builder.PinAuthService(authBaseUrl);
         builder.PinAuthB2BApi(apiBaseUrl);
         builder.PinB2BWeb(apiBaseUrl, authBaseUrl, paymentBaseUrl);
         builder.PinWorkers(authBaseUrl, paymentBaseUrl);
         builder.AddSearchService(searchApiBaseUrl, authBaseUrl);
-        builder.PinPaymentWeb(paymentBaseUrl, authBaseUrl);
-        builder.PinPaymentWorkers();
+        builder.PinPaymentWeb(paymentBaseUrl, authBaseUrl, stripeRun);
+        builder.PinPaymentWorkers(stripeRun);
         builder.AddEphemeralSql();
         builder.PinStripeCli(paymentBaseUrl);
         return builder;
@@ -54,6 +55,7 @@ internal static class DistributedApplicationBuilderExtensions
         {
             context.EnvironmentVariables["Auth__Authority"] = authBaseUrl;
             context.EnvironmentVariables["services__payment-web__https__0"] = paymentBaseUrl;
+            context.EnvironmentVariables["ServiceAuth__ClientSecret"] = Concertable.E2ETests.DistributedApplicationBuilderExtensions.B2BServiceAuthSecret;
         }));
     }
 
@@ -76,6 +78,7 @@ internal static class DistributedApplicationBuilderExtensions
             context.EnvironmentVariables["ASPNETCORE_URLS"] = apiBaseUrl;
             context.EnvironmentVariables["Auth__Authority"] = authBaseUrl;
             context.EnvironmentVariables["services__payment-web__https__0"] = paymentBaseUrl;
+            context.EnvironmentVariables["ServiceAuth__ClientSecret"] = Concertable.E2ETests.DistributedApplicationBuilderExtensions.B2BServiceAuthSecret;
             context.EnvironmentVariables["ExternalServices__UseRealStripe"] = "true";
             context.EnvironmentVariables["ExternalServices__UseRealEmail"] = "false";
             if (!string.IsNullOrEmpty(googleApiKey))

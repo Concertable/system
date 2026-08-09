@@ -2,7 +2,7 @@ namespace Concertable.B2B.E2ETests.Ui.Support;
 
 public sealed class UiFixture
 {
-    private IPlaywright playwright = null!;
+    private IPlaywright? playwright;
 
     public AppFixture App { get; } = new();
     public IBrowser Browser { get; private set; } = null!;
@@ -36,8 +36,15 @@ public sealed class UiFixture
 
     public async Task DisposeAsync()
     {
-        await Browser.DisposeAsync();
-        playwright.Dispose();
-        await App.DisposeAsync();
+        try
+        {
+            if (Browser is not null)
+                await Browser.DisposeAsync();
+            playwright?.Dispose();
+        }
+        finally
+        {
+            await App.DisposeAsync();
+        }
     }
 }

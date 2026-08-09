@@ -24,6 +24,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Stripe;
 using System.Net.Http.Headers;
 using CustomerDevDbInitializer = Concertable.Customer.Web.DevDbInitializer;
 
@@ -53,6 +54,7 @@ public sealed class AppFixture : IAsyncLifetime
     public SeedState SeedState { get; private set; } = null!;
     public SeedCatalog Catalog { get; private set; } = null!;
     public DbFixture DbFixture { get; private set; } = null!;
+    public StripeE2ERun StripeRun { get; private set; } = null!;
     public string AuthUrl => authUrl;
     public string CustomerSpaUrl => customerSpaUrl;
 
@@ -89,11 +91,14 @@ public sealed class AppFixture : IAsyncLifetime
         logger.InitializingE2ETestFixture();
 
         healthWaiter = new HealthWaiter(loggerFactory.CreateLogger<HealthWaiter>());
-
         var builder = await DistributedApplicationTestingBuilder
             .CreateAsync<Projects.Concertable_Customer_AppHost>();
+        var stripeSecretKey = builder.Configuration["Stripe:SecretKey"]
+            ?? throw new InvalidOperationException("Stripe:SecretKey is not configured for the Customer E2E fixture.");
+        var stripeClient = new StripeClient(stripeSecretKey);
+        StripeRun = await StripeE2ERun.CreateAsync(stripeClient);
 
-        builder.AddCustomerE2E(customerWebUrl, searchWebUrl, authUrl, paymentWebUrl);
+        builder.AddCustomerE2E(customerWebUrl, searchWebUrl, authUrl, paymentWebUrl, StripeRun);
 
         app = await builder.BuildAsync();
         resourceLogger = new AspireResourceLogger(
@@ -175,15 +180,35 @@ public sealed class AppFixture : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        CustomerClient.Dispose();
-        tokenMinter.Dispose();
-        healthWaiter.Dispose();
-        await DbFixture.DisposeAsync();
-        await host.StopAsync();
-        host.Dispose();
-        await app.DisposeAsync();
-        await resourceLogger.DisposeAsync();
-        loggerFactory.Dispose();
+        try
+        {
+            CustomerClient?.Dispose();
+            tokenMinter.Dispose();
+            healthWaiter?.Dispose();
+            if (DbFixture is not null)
+                await DbFixture.DisposeAsync();
+            if (host is not null)
+            {
+                await host.StopAsync();
+                host.Dispose();
+            }
+            if (app is not null)
+                await app.DisposeAsync();
+            if (resourceLogger is not null)
+                await resourceLogger.DisposeAsync();
+        }
+        finally
+        {
+            try
+            {
+                if (StripeRun is not null)
+                    await StripeRun.DisposeAsync();
+            }
+            finally
+            {
+                loggerFactory.Dispose();
+            }
+        }
     }
 
     public ResourceNotificationService ResourceNotifications => app.ResourceNotifications;
