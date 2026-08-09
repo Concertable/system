@@ -7,11 +7,13 @@ public sealed class PaymentSteps
 {
     private readonly UiFixture fixture;
     private readonly Browser browser;
+    private readonly WorkflowState state;
 
-    public PaymentSteps(UiFixture fixture, Browser browser)
+    public PaymentSteps(UiFixture fixture, Browser browser, WorkflowState state)
     {
         this.fixture = fixture;
         this.browser = browser;
+        this.state = state;
     }
 
     [Then(@"the payment is rejected")]
@@ -22,8 +24,10 @@ public sealed class PaymentSteps
     [Then(@"a payment hold of £(\d+) is captured from the artist")]
     public async Task PaymentHoldCaptured(decimal amount)
     {
-        var hold = await fixture.App.Stripe.FindCapturedHoldAsync(
-            fixture.App.StripeRun.ResolveCustomer(fixture.App.SeedState.ArtistManager1.Id), amount);
+        var bookingId = await fixture.App.DbFixture.Booking.GetIdByApplicationIdAsync(state.ApplicationId);
+        var paymentIntentId = await fixture.App.DbFixture.Payment.GetEscrowPaymentIntentIdAsync(bookingId);
+        var hold = await fixture.App.Stripe.GetCapturedHoldAsync(paymentIntentId, amount);
+
         Assert.NotNull(hold);
     }
 
