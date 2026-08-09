@@ -21,6 +21,7 @@ using Concertable.Kernel.Identity;
 using Concertable.Messaging.Infrastructure.Extensions;
 using Concertable.Messaging.Infrastructure.Inbox;
 using Concertable.Messaging.Infrastructure.Outbox;
+using Concertable.Payment.Hosting;
 using Concertable.Seed.Shared;
 using Concertable.Seed.Infrastructure;
 using Concertable.Seed.Shared.Extensions;
