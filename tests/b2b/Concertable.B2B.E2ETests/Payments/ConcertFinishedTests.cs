@@ -59,7 +59,7 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
             timeout: TimeSpan.FromSeconds(30));
 
         var intent = await fixture.StripePaymentIntents.GetAsync(paymentIntentId);
-        Assert.Equal(StripeAccountResolver.AccountIds[fixture.SeedState.ArtistManager1.Id], intent.TransferData.DestinationId);
+        Assert.Equal(StripeE2EAccountResolver.AccountIds[fixture.SeedState.ArtistManager1.Id], intent.TransferData.DestinationId);
         Assert.Equal(22000L, intent.Amount);
         Assert.Equal(21000L, intent.TransferData.Amount);
 
@@ -86,7 +86,7 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
             timeout: TimeSpan.FromSeconds(30));
 
         var intent = await fixture.StripePaymentIntents.GetAsync(paymentIntentId);
-        Assert.Equal(StripeAccountResolver.AccountIds[fixture.SeedState.ArtistManager1.Id], intent.TransferData.DestinationId);
+        Assert.Equal(StripeE2EAccountResolver.AccountIds[fixture.SeedState.ArtistManager1.Id], intent.TransferData.DestinationId);
         Assert.Equal(12400L, intent.Amount);
         Assert.Equal(11400L, intent.TransferData.Amount);
 
