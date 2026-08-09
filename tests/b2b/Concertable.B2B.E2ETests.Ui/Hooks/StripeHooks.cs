@@ -30,7 +30,7 @@ public sealed class StripeHooks(UiFixture fixture)
 
         foreach (var id in customerIds)
         {
-            await app.Stripe.DetachAllCardsAsync(id);
+            await app.Stripe.EnsureNoCardsAttachedAsync(id);
             await app.Stripe.AttachTestCardAsync(id);
         }
     }
