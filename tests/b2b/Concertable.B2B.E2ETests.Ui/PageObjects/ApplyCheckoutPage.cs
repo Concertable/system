@@ -28,4 +28,11 @@ public sealed class ApplyCheckoutPage
         await SignatureName.FillAsync("Artie Artist");
         await payment.PayWithSavedCardAsync();
     }
+
+    public async Task PayWithDeclinedCardAsync(string cardNumber)
+    {
+        await page.WaitForURLAsync("**/opportunity/checkout/**");
+        await SignatureName.FillAsync("Artie Artist");
+        await payment.PayWithDeclinedCardAsync(cardNumber);
+    }
 }
