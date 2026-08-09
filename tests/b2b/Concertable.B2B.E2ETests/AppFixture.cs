@@ -4,6 +4,7 @@ using Aspire.Hosting.Testing;
 using Azure.Storage.Blobs;
 using Concertable.B2B.Artist.Infrastructure.Extensions;
 using Concertable.B2B.Concert.Infrastructure.Extensions;
+using Concertable.B2B.DataAccess.Infrastructure;
 using Concertable.B2B.Deal.Infrastructure.Extensions;
 using Concertable.B2B.Conversations.Infrastructure.Extensions;
 using Concertable.B2B.Tenant.Infrastructure.Extensions;
@@ -161,6 +162,7 @@ public sealed class AppFixture : IAsyncLifetime
                 services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
                 services.AddScoped<AuditInterceptor>();
                 services.AddScoped<TenantInterceptor>();
+                services.AddScoped<VenueArtistTenantInterceptor>();
                 services.AddScoped<IDomainEventDispatchInterceptor, SeedingDomainEventDispatchInterceptor>();
                 services.AddGeometry();
                 services.AddOutbox(opt => opt.UseSqlServer(b2bConnectionString), runDispatcher: false);
