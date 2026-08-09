@@ -22,6 +22,9 @@ public sealed class TicketCheckoutPage
     public Task PayWithNewCardAsync(string cardNumber) =>
         payment.PayWithNewCardAsync(cardNumber);
 
+    public Task PayWithDeclinedCardAsync(string cardNumber) =>
+        payment.PayWithDeclinedCardAsync(cardNumber);
+
     public Task WaitForSuccessScreenAsync() =>
         Assertions.Expect(SuccessScreen).ToBeVisibleAsync(new() { Timeout = 30_000 });
 

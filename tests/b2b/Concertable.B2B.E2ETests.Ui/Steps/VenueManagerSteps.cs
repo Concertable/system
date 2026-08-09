@@ -150,7 +150,7 @@ public sealed class VenueManagerSteps
 
     [When(@"the venue manager pays the flat fee with a declined card")]
     public Task PaysFlatFeeWithDeclinedCard() =>
-        payment.PayWithNewCardAsync(StripeCards.Decline);
+        payment.PayWithDeclinedCardAsync(StripeCards.Decline);
 
     [When(@"the venue manager pays the flat fee with a 3DS card")]
     public async Task PaysFlatFeeWith3dsCard()
@@ -172,7 +172,7 @@ public sealed class VenueManagerSteps
 
     [When(@"the venue manager registers a card with a declined card")]
     public Task RegistersCardWithDeclinedCard() =>
-        payment.PayWithNewCardAsync(StripeCards.Decline);
+        payment.PayWithDeclinedCardAsync(StripeCards.Decline);
 
     [When(@"the venue manager registers a card with a 3DS card")]
     public async Task RegistersCardWith3dsCard()
