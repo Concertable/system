@@ -14,15 +14,15 @@ internal static class DistributedApplicationBuilderExtensions
         string searchApiBaseUrl,
         string authBaseUrl,
         string paymentBaseUrl,
-        StripeE2ERun stripeRun)
+        StripeCustomerResolver stripeCustomers)
     {
         builder.PinAuthService(authBaseUrl);
         builder.PinAuthB2BApi(apiBaseUrl);
         builder.PinB2BWeb(apiBaseUrl, authBaseUrl, paymentBaseUrl);
         builder.PinWorkers(authBaseUrl, paymentBaseUrl);
         builder.AddSearchService(searchApiBaseUrl, authBaseUrl);
-        builder.PinPaymentWeb(paymentBaseUrl, authBaseUrl, stripeRun);
-        builder.PinPaymentWorkers(stripeRun);
+        builder.PinPaymentWeb(paymentBaseUrl, authBaseUrl, stripeCustomers);
+        builder.PinPaymentWorkers(stripeCustomers);
         builder.AddEphemeralSql();
         builder.PinStripeCli(paymentBaseUrl);
         return builder;

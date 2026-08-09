@@ -64,7 +64,7 @@ public sealed class AppFixture : IAsyncLifetime
     public IPollingService Polling { get; private set; } = null!;
     public PaymentIntentService StripePaymentIntents { get; private set; } = null!;
     public StripeFixture Stripe { get; private set; } = null!;
-    public StripeE2ERun StripeRun { get; private set; } = null!;
+    public StripeCustomerResolver StripeCustomers { get; private set; } = null!;
     public SeedState SeedState { get; private set; } = null!;
     public DbFixture DbFixture { get; private set; } = null!;
 
@@ -107,9 +107,9 @@ public sealed class AppFixture : IAsyncLifetime
         var stripeSecretKey = builder.Configuration["Stripe:SecretKey"]
             ?? throw new InvalidOperationException("Stripe:SecretKey is not configured for the B2B E2E fixture.");
         var stripeClient = new StripeClient(stripeSecretKey);
-        StripeRun = await StripeE2ERun.CreateAsync(stripeClient);
+        StripeCustomers = await StripeCustomerResolver.CreateAsync(stripeClient);
 
-        builder.AddB2BE2E(B2BWebUrl, SearchWebUrl, authUrl, PaymentWebUrl, StripeRun);
+        builder.AddB2BE2E(B2BWebUrl, SearchWebUrl, authUrl, PaymentWebUrl, StripeCustomers);
         StripePaymentIntents = new PaymentIntentService(stripeClient);
         Stripe = new StripeFixture(stripeClient);
 
@@ -129,7 +129,8 @@ public sealed class AppFixture : IAsyncLifetime
             [B2BWebUrl, SearchWebUrl, PaymentWebUrl],
             TimeSpan.FromMinutes(12));
 
-        var paymentConnectionString = await app.GetConnectionStringAsync(AppHostConstants.Databases.Payment);
+        var paymentConnectionString = await app.GetConnectionStringAsync(AppHostConstants.Databases.Payment)
+            ?? throw new InvalidOperationException("Payment connection string is missing.");
         await healthWaiter.WaitForPayoutAccountsAsync(paymentConnectionString, 4, TimeSpan.FromMinutes(3));
 
         DbFixture = new DbFixture(app);
@@ -244,8 +245,8 @@ public sealed class AppFixture : IAsyncLifetime
         {
             try
             {
-                if (StripeRun is not null)
-                    await StripeRun.DisposeAsync();
+                if (StripeCustomers is not null)
+                    await StripeCustomers.DisposeAsync();
             }
             finally
             {

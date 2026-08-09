@@ -54,7 +54,7 @@ public sealed class AppFixture : IAsyncLifetime
     public SeedState SeedState { get; private set; } = null!;
     public SeedCatalog Catalog { get; private set; } = null!;
     public DbFixture DbFixture { get; private set; } = null!;
-    public StripeE2ERun StripeRun { get; private set; } = null!;
+    public StripeCustomerResolver StripeCustomers { get; private set; } = null!;
     public string AuthUrl => authUrl;
     public string CustomerSpaUrl => customerSpaUrl;
 
@@ -96,9 +96,9 @@ public sealed class AppFixture : IAsyncLifetime
         var stripeSecretKey = builder.Configuration["Stripe:SecretKey"]
             ?? throw new InvalidOperationException("Stripe:SecretKey is not configured for the Customer E2E fixture.");
         var stripeClient = new StripeClient(stripeSecretKey);
-        StripeRun = await StripeE2ERun.CreateAsync(stripeClient);
+        StripeCustomers = await StripeCustomerResolver.CreateAsync(stripeClient);
 
-        builder.AddCustomerE2E(customerWebUrl, searchWebUrl, authUrl, paymentWebUrl, StripeRun);
+        builder.AddCustomerE2E(customerWebUrl, searchWebUrl, authUrl, paymentWebUrl, StripeCustomers);
 
         app = await builder.BuildAsync();
         resourceLogger = new AspireResourceLogger(
@@ -201,8 +201,8 @@ public sealed class AppFixture : IAsyncLifetime
         {
             try
             {
-                if (StripeRun is not null)
-                    await StripeRun.DisposeAsync();
+                if (StripeCustomers is not null)
+                    await StripeCustomers.DisposeAsync();
             }
             finally
             {
