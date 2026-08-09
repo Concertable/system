@@ -64,7 +64,7 @@ public sealed class AppFixture : IAsyncLifetime
     public IPollingService Polling { get; private set; } = null!;
     public PaymentIntentService StripePaymentIntents { get; private set; } = null!;
     public StripeFixture Stripe { get; private set; } = null!;
-    public StripeCustomerResolver StripeCustomers { get; private set; } = null!;
+    public StripeCustomerResolver StripeCustomerResolver { get; private set; } = null!;
     public SeedState SeedState { get; private set; } = null!;
     public DbFixture DbFixture { get; private set; } = null!;
 
@@ -107,9 +107,9 @@ public sealed class AppFixture : IAsyncLifetime
         var stripeSecretKey = builder.Configuration["Stripe:SecretKey"]
             ?? throw new InvalidOperationException("Stripe:SecretKey is not configured for the B2B E2E fixture.");
         var stripeClient = new StripeClient(stripeSecretKey);
-        StripeCustomers = await StripeCustomerResolver.CreateAsync(stripeClient);
+        StripeCustomerResolver = await Concertable.E2ETests.StripeCustomerResolver.CreateAsync(stripeClient);
 
-        builder.AddB2BE2E(B2BWebUrl, SearchWebUrl, authUrl, PaymentWebUrl, StripeCustomers);
+        builder.AddB2BE2E(B2BWebUrl, SearchWebUrl, authUrl, PaymentWebUrl, StripeCustomerResolver);
         StripePaymentIntents = new PaymentIntentService(stripeClient);
         Stripe = new StripeFixture(stripeClient);
 
@@ -245,8 +245,8 @@ public sealed class AppFixture : IAsyncLifetime
         {
             try
             {
-                if (StripeCustomers is not null)
-                    await StripeCustomers.DisposeAsync();
+                if (StripeCustomerResolver is not null)
+                    await StripeCustomerResolver.DisposeAsync();
             }
             finally
             {
