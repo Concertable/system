@@ -10,6 +10,7 @@ public sealed class Browser : IAsyncDisposable, IDisposable, IPageAccessor
     private IBrowser playwrightBrowser = null!;
     private UiFixture fixture = null!;
     private LoginPersona? currentPersona;
+    private bool establishDeniedCookieConsent;
 
     public IBrowserContext Context { get; private set; } = null!;
     public IPage Page { get; private set; } = null!;
@@ -19,10 +20,15 @@ public sealed class Browser : IAsyncDisposable, IDisposable, IPageAccessor
         this.logger = logger;
     }
 
-    public async Task InitializeAsync(IBrowser playwrightBrowser, LoginPersona? persona, UiFixture fixture)
+    public async Task InitializeAsync(
+        IBrowser playwrightBrowser,
+        LoginPersona? persona,
+        UiFixture fixture,
+        bool establishDeniedCookieConsent)
     {
         this.playwrightBrowser = playwrightBrowser;
         this.fixture = fixture;
+        this.establishDeniedCookieConsent = establishDeniedCookieConsent;
         await CreateContextAsync(persona);
     }
 
@@ -44,6 +50,7 @@ public sealed class Browser : IAsyncDisposable, IDisposable, IPageAccessor
         var options = new BrowserNewContextOptions { IgnoreHTTPSErrors = true };
         if (persona is not null) options.StorageState = await LoginCaptureHooks.GetOrCaptureAsync(fixture, persona.Value);
         Context = await playwrightBrowser.NewContextAsync(options);
+        if (establishDeniedCookieConsent) await CookieConsentState.EstablishDeniedAsync(Context);
         await Context.Tracing.StartAsync(new TracingStartOptions
         {
             Screenshots = true,
