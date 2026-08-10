@@ -20,17 +20,16 @@ public sealed class StripeHooks(UiFixture fixture)
     private static async Task DetachSeededCustomerCardsAsync(AppFixture app)
     {
         var seedData = app.SeedState;
-        var resolver = new StripeE2EAccountResolver();
         var customerIds = new[]
         {
-            resolver.ResolveCustomer(seedData.VenueManager1.Id),
-            resolver.ResolveCustomer(seedData.ArtistManager1.Id),
-            resolver.ResolveCustomer(SeedCustomers.CustomerId(1)),
+            app.StripeCustomerResolver.Resolve(seedData.VenueManager1.Id),
+            app.StripeCustomerResolver.Resolve(seedData.ArtistManager1.Id),
+            app.StripeCustomerResolver.Resolve(SeedCustomers.CustomerId(1)),
         };
 
         foreach (var id in customerIds)
         {
-            await app.Stripe.DetachAllCardsAsync(id);
+            await app.Stripe.EnsureNoCardsAttachedAsync(id);
             await app.Stripe.AttachTestCardAsync(id);
         }
     }

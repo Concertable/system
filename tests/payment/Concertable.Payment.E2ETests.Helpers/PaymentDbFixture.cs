@@ -1,5 +1,6 @@
 using System.Data.Common;
 using Aspire.Hosting;
+using Concertable.Payment.Hosting;
 using Respawn;
 using Respawn.Graph;
 
@@ -20,7 +21,7 @@ public sealed class PaymentDbFixture
 
     public async Task InitializeAsync(DistributedApplication app)
     {
-        await db.InitializeAsync(app, AppHostConstants.Databases.Payment, new RespawnerOptions
+        await db.InitializeAsync(app, PaymentConstants.Database, new RespawnerOptions
         {
             TablesToIgnore = ["__EFMigrationsHistory", new Table("payment", "PayoutAccounts")],
             DbAdapter = DbAdapter.SqlServer,
