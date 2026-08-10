@@ -3,6 +3,7 @@ using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
 using Azure.Storage.Blobs;
 using Concertable.B2B.Artist.Infrastructure.Extensions;
+using Concertable.B2B.Hosting;
 using Concertable.B2B.Concert.Infrastructure.Extensions;
 using Concertable.B2B.DataAccess.Infrastructure;
 using Concertable.B2B.Deal.Infrastructure.Extensions;
@@ -138,7 +139,7 @@ public sealed class AppFixture : IAsyncLifetime
         await DbFixture.InitializeAsync();
         await DbFixture.ResetAsync();
 
-        var b2bConnectionString = await app.GetConnectionStringAsync(AppHostConstants.Databases.B2B);
+        var b2bConnectionString = await app.GetConnectionStringAsync(B2BConstants.Database);
         var blobConnectionString = await app.GetConnectionStringAsync("blobs");
         var asbConnectionString = await app.GetConnectionStringAsync("asb")
             ?? throw new InvalidOperationException("ASB connection string is missing.");
@@ -146,7 +147,7 @@ public sealed class AppFixture : IAsyncLifetime
         var b2bSeedConfig = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                [$"ConnectionStrings:{AppHostConstants.Databases.B2B}"] = b2bConnectionString,
+                [$"ConnectionStrings:{B2BConstants.Database}"] = b2bConnectionString,
                 ["BlobStorage:ContainerName"] = "images",
                 ["ExternalServices:UseRealBlob"] = "false",
                 ["Legal:PlatformTermsVersion"] = "2026-07",
