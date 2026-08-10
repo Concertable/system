@@ -1,4 +1,5 @@
 using Aspire.Hosting;
+using Concertable.Customer.Hosting;
 using Respawn;
 using Respawn.Graph;
 using ConcertSchema = Concertable.Customer.Concert.Infrastructure.Schema;

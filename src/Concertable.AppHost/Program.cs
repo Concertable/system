@@ -1,3 +1,4 @@
+using Concertable.Customer.Hosting;
 using Concertable.Payment.Hosting;
 using Concertable.Search.Hosting;
 

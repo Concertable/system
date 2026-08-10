@@ -4,6 +4,7 @@ using Aspire.Hosting.Testing;
 using Concertable.B2B.Seed.Contracts;
 using Concertable.Customer.Artist.Infrastructure.Extensions;
 using Concertable.Customer.Concert.Infrastructure.Extensions;
+using Concertable.Customer.Hosting;
 using Concertable.Customer.Preference.Infrastructure.Extensions;
 using Concertable.Customer.Seed.Infrastructure;
 using Concertable.Customer.Venue.Infrastructure.Extensions;
