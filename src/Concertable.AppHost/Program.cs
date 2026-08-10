@@ -1,4 +1,5 @@
 using Concertable.Payment.Hosting;
+using Concertable.Search.Hosting;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
