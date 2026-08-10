@@ -1,6 +1,7 @@
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
+using Concertable.B2B.Hosting;
 using Concertable.Search.E2ETests.Helpers;
 using Microsoft.Extensions.Configuration;
 
@@ -49,7 +50,7 @@ internal static class DistributedApplicationBuilderExtensions
     {
         var workers = builder.Resources
             .OfType<ProjectResource>()
-            .Single(r => r.Name == AppHostConstants.ResourceNames.Workers);
+            .Single(r => r.Name == B2BConstants.WorkersResource);
 
         workers.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
         {
@@ -67,7 +68,7 @@ internal static class DistributedApplicationBuilderExtensions
     {
         var b2bWeb = builder.Resources
             .OfType<ProjectResource>()
-            .Single(r => r.Name == AppHostConstants.ResourceNames.B2BWeb);
+            .Single(r => r.Name == B2BConstants.WebResource);
 
         var googleApiKey = builder.Configuration["GoogleApiKey"];
         var stripeSecretKey = builder.Configuration["Stripe:SecretKey"];

@@ -1,4 +1,5 @@
 using Aspire.Hosting;
+using Concertable.B2B.Hosting;
 using Respawn;
 using Respawn.Graph;
 using UserSchema = Concertable.B2B.User.Infrastructure.Schema;
@@ -22,7 +23,7 @@ public sealed class DbFixture
 
     public async Task InitializeAsync()
     {
-        await b2b.InitializeAsync(app, AppHostConstants.Databases.B2B, new RespawnerOptions
+        await b2b.InitializeAsync(app, B2BConstants.Database, new RespawnerOptions
         {
             TablesToIgnore =
             [
