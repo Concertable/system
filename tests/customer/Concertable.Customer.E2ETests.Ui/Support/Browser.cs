@@ -18,18 +18,23 @@ public sealed class Browser : IAsyncDisposable, IDisposable, IPageAccessor
         this.logger = logger;
     }
 
-    public async Task InitializeAsync(IBrowser playwrightBrowser, bool authenticated, UiFixture fixture)
+    public async Task InitializeAsync(
+        IBrowser playwrightBrowser,
+        bool authenticated,
+        UiFixture fixture,
+        bool establishDeniedCookieConsent)
     {
         this.playwrightBrowser = playwrightBrowser;
         this.fixture = fixture;
-        await CreateContextAsync(authenticated);
+        await CreateContextAsync(authenticated, establishDeniedCookieConsent);
     }
 
-    private async Task CreateContextAsync(bool authenticated)
+    private async Task CreateContextAsync(bool authenticated, bool establishDeniedCookieConsent)
     {
         var options = new BrowserNewContextOptions { IgnoreHTTPSErrors = true };
         if (authenticated) options.StorageState = await LoginCaptureHooks.GetOrCaptureAsync(fixture);
         Context = await playwrightBrowser.NewContextAsync(options);
+        if (establishDeniedCookieConsent) await CookieConsentState.EstablishDeniedAsync(Context);
         await Context.Tracing.StartAsync(new TracingStartOptions
         {
             Screenshots = true,
