@@ -99,7 +99,7 @@ public sealed class AppFixture : IAsyncLifetime
         var stripeClient = new StripeClient(stripeSecretKey);
         StripeCustomerResolver = await Concertable.Testing.E2E.StripeCustomerResolver.CreateAsync(stripeClient);
 
-        builder.AddCustomerE2E(customerWebUrl, searchWebUrl, authUrl, paymentWebUrl, StripeCustomerResolver);
+        builder.AddE2EStack(customerWebUrl, searchWebUrl, authUrl, paymentWebUrl, StripeCustomerResolver);
 
         app = await builder.BuildAsync();
         resourceLogger = new AspireResourceLogger(

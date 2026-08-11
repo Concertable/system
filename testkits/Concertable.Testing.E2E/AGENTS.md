@@ -9,7 +9,7 @@ This library holds only what **every** E2E suite needs, with no knowledge of any
 
 Things that must **never** be added here:
 
-- **Per-service composition** (`AddB2BE2E`, `AddCustomerE2E`, `PinB2BWeb`, `PinCustomerWeb`, …). These live in the owning suite: `Concertable.B2B.E2ETests` and `Concertable.Customer.E2ETests` each carry their own `DistributedApplicationBuilderExtensions`.
+- **Per-service composition** (each suite's own `AddE2EStack`, `PinAuthApi`, `PinWeb`, …). These live in the owning suite: `Concertable.B2B.E2ETests` and `Concertable.Customer.E2ETests` each carry their own `DistributedApplicationBuilderExtensions`. Name these for their **role**, never by restating the suite (`AddE2EStack`, not `AddB2BE2E`) — the namespace already says which service; keep a prefix only when composing *another* service (`AddSearchService`, `PinPaymentWeb`).
 - **Data-service helpers**, even when more than one suite consumes them. They get a helpers project owned by that service, referenced explicitly by the suites that need it — see `Concertable.Payment.E2ETests.Helpers` and `Concertable.Search.E2ETests.Helpers` (`AddSearchService`: both find pages are Search-backed, so both suites run Search by importing Search's own helpers project as an isolated dependency).
 - Anything referencing a data service's runtime projects, types, or seed libraries.
 
