@@ -58,7 +58,7 @@ internal static class DistributedApplicationBuilderExtensions
             context.EnvironmentVariables["ASPNETCORE_URLS"] = customerApiBaseUrl;
             context.EnvironmentVariables["Auth__Authority"] = authBaseUrl;
             context.EnvironmentVariables["services__payment-web__https__0"] = paymentBaseUrl;
-            context.EnvironmentVariables["ServiceAuth__ClientSecret"] = Concertable.E2ETests.DistributedApplicationBuilderExtensions.CustomerServiceAuthSecret;
+            context.EnvironmentVariables["ServiceAuth__ClientSecret"] = Concertable.Testing.E2E.DistributedApplicationBuilderExtensions.CustomerServiceAuthSecret;
         }));
     }
 }

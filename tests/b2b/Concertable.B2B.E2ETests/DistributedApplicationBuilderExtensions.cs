@@ -57,7 +57,7 @@ internal static class DistributedApplicationBuilderExtensions
         {
             context.EnvironmentVariables["Auth__Authority"] = authBaseUrl;
             context.EnvironmentVariables["services__payment-web__https__0"] = paymentBaseUrl;
-            context.EnvironmentVariables["ServiceAuth__ClientSecret"] = Concertable.E2ETests.DistributedApplicationBuilderExtensions.B2BServiceAuthSecret;
+            context.EnvironmentVariables["ServiceAuth__ClientSecret"] = Concertable.Testing.E2E.DistributedApplicationBuilderExtensions.B2BServiceAuthSecret;
         }));
     }
 
@@ -80,7 +80,7 @@ internal static class DistributedApplicationBuilderExtensions
             context.EnvironmentVariables["ASPNETCORE_URLS"] = apiBaseUrl;
             context.EnvironmentVariables["Auth__Authority"] = authBaseUrl;
             context.EnvironmentVariables["services__payment-web__https__0"] = paymentBaseUrl;
-            context.EnvironmentVariables["ServiceAuth__ClientSecret"] = Concertable.E2ETests.DistributedApplicationBuilderExtensions.B2BServiceAuthSecret;
+            context.EnvironmentVariables["ServiceAuth__ClientSecret"] = Concertable.Testing.E2E.DistributedApplicationBuilderExtensions.B2BServiceAuthSecret;
             context.EnvironmentVariables["ExternalServices__UseRealStripe"] = "true";
             context.EnvironmentVariables["ExternalServices__UseRealEmail"] = "false";
             if (!string.IsNullOrEmpty(googleApiKey))

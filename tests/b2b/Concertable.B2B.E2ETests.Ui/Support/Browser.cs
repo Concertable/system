@@ -1,5 +1,4 @@
 using Concertable.B2B.E2ETests.Ui.Hooks;
-using Concertable.E2ETests.Support;
 using Microsoft.Extensions.Logging;
 
 namespace Concertable.B2B.E2ETests.Ui.Support;

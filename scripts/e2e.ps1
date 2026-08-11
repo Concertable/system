@@ -15,7 +15,7 @@ $customerUi = Join-Path $repoRoot "api/Concertable.Customer/tests/E2ETests/Conce
 $b2bApi      = Join-Path $repoRoot "api/Concertable.B2B/tests/E2ETests/Concertable.B2B.E2ETests"
 $customerApi = Join-Path $repoRoot "api/Concertable.Customer/tests/E2ETests/Concertable.Customer.E2ETests"
 $runsettings = Join-Path $repoRoot "api/Concertable.runsettings"
-$baselineMd = Join-Path $repoRoot "api/Concertable.Shared/tests/Concertable.E2ETests/E2E_BASELINE.md"
+$baselineMd = Join-Path $repoRoot "api/Concertable.Shared/tests/Concertable.Testing.E2E/E2E_BASELINE.md"
 
 $quiet = @('--nologo', '--verbosity', 'quiet')
 
@@ -268,7 +268,7 @@ function Invoke-UiCommand([string]$cmd) {
             $r = Invoke-PrettyTest '3DS' "$b2bUi/Concertable.B2B.E2ETests.Ui.csproj" @('--filter', 'DisplayName~3DS')
             Show-Summary @($r)
         }
-        "trace" { & (Join-Path $repoRoot "api/Concertable.Shared/tests/Concertable.E2ETests/ui-trace.ps1") }
+        "trace" { & (Join-Path $repoRoot "api/Concertable.Shared/tests/Concertable.Testing.E2E/ui-trace.ps1") }
         default { Show-Usage }
     }
 }
