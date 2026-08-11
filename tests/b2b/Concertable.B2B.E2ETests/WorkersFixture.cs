@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Aspire.Hosting;
 using Aspire.Hosting.Testing;
+using Concertable.B2B.Hosting;
 
 namespace Concertable.B2B.E2ETests;
 
@@ -12,7 +13,7 @@ public sealed class WorkersFixture : IDisposable
 
     public WorkersFixture(DistributedApplication app, IPollingService polling)
     {
-        client = app.CreateHttpClient(AppHostConstants.ResourceNames.Workers);
+        client = app.CreateHttpClient(B2BConstants.WorkersResource);
         this.polling = polling;
     }
 

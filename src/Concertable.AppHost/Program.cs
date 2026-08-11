@@ -1,10 +1,13 @@
+using Concertable.B2B.Hosting;
+using Concertable.Customer.Hosting;
+using Concertable.Frontend.Hosting;
 using Concertable.Payment.Hosting;
 using Concertable.Search.Hosting;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
 var sql = builder.AddSqlServerContainer();
-var b2bDb = sql.AddDatabase(AppHostConstants.Databases.B2B);
+var b2bDb = sql.AddDatabase(B2BConstants.Database);
 var authDb = sql.AddDatabase(AuthConstants.Database);
 var customerDb = sql.AddDatabase(CustomerConstants.Database);
 var searchDb = sql.AddDatabase(SearchConstants.Database);
@@ -22,12 +25,12 @@ asb.Topology()
 
 var auth = builder.AddAuth<Projects.Concertable_Auth>(authDb, b2bDb, asb);
 var paymentWeb = builder.AddPaymentWeb<Projects.Concertable_Payment_Web>(auth, paymentDb, asb);
-var api = builder.AddApi<Projects.Concertable_B2B_Web>(b2bDb, auth, storage, blobs, asb, paymentWeb);
+var api = builder.AddB2BWeb<Projects.Concertable_B2B_Web>(b2bDb, auth, storage, blobs, asb, paymentWeb);
 
 auth.WithEnvironment("Services__B2BApiUrl", api.GetEndpoint("https"));
 auth.WithEnvironment("ServiceAuth__AuthClientId", "concertable-auth");
 
-builder.AddWorkers<Projects.Concertable_B2B_Workers>(b2bDb, paymentWeb, auth);
+builder.AddB2BWorkers<Projects.Concertable_B2B_Workers>(b2bDb, paymentWeb, auth);
 var customerWeb = builder.AddCustomerWeb<Projects.Concertable_Customer_Web>(auth, customerDb, asb, paymentWeb);
 auth.WithEnvironment("Services__CustomerApiUrl", customerWeb.GetEndpoint("https"));
 var searchWeb = builder.AddSearchWeb<Projects.Concertable_Search_Web>(auth, searchDb);
