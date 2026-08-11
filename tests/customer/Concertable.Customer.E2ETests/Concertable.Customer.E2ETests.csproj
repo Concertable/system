@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\Concertable.Shared\tests\Concertable.E2ETests\Concertable.E2ETests.csproj" />
+    <ProjectReference Include="..\..\..\..\Concertable.Shared\tests\Concertable.Testing.E2E\Concertable.Testing.E2E.csproj" />
     <ProjectReference Include="..\..\..\..\Concertable.Payment\tests\E2ETests\Concertable.Payment.E2ETests.Helpers\Concertable.Payment.E2ETests.Helpers.csproj" />
     <ProjectReference Include="..\..\..\src\Concertable.Customer.AppHost\Concertable.Customer.AppHost.csproj" />
     <ProjectReference Include="..\..\..\..\Concertable.Shared\src\Seed\Concertable.Seed.Shared\Concertable.Seed.Shared.csproj" />
@@ -36,7 +36,8 @@
   <ItemGroup>
     <Using Include="Xunit" />
     <Using Include="Concertable.Testing" />
-    <Using Include="Concertable.E2ETests" />
+    <Using Include="Concertable.Testing.E2E" />
+    <Using Include="Concertable.Payment.E2ETests.Helpers" />
   </ItemGroup>
 
 </Project>
