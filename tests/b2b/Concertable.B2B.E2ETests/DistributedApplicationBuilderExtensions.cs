@@ -10,7 +10,7 @@ namespace Concertable.B2B.E2ETests;
 
 internal static class DistributedApplicationBuilderExtensions
 {
-    public static IDistributedApplicationTestingBuilder AddB2BE2E(
+    public static IDistributedApplicationTestingBuilder AddE2EStack(
         this IDistributedApplicationTestingBuilder builder,
         string apiBaseUrl,
         string searchApiBaseUrl,
@@ -19,8 +19,8 @@ internal static class DistributedApplicationBuilderExtensions
         StripeCustomerResolver stripeCustomers)
     {
         builder.PinAuthService(authBaseUrl);
-        builder.PinAuthB2BApi(apiBaseUrl);
-        builder.PinB2BWeb(apiBaseUrl, authBaseUrl, paymentBaseUrl);
+        builder.PinAuthApi(apiBaseUrl);
+        builder.PinWeb(apiBaseUrl, authBaseUrl, paymentBaseUrl);
         builder.PinWorkers(authBaseUrl, paymentBaseUrl);
         builder.AddSearchService(searchApiBaseUrl, authBaseUrl);
         builder.PinPaymentWeb(paymentBaseUrl, authBaseUrl, stripeCustomers);
@@ -30,7 +30,7 @@ internal static class DistributedApplicationBuilderExtensions
         return builder;
     }
 
-    private static void PinAuthB2BApi(
+    private static void PinAuthApi(
         this IDistributedApplicationTestingBuilder builder,
         string apiBaseUrl)
     {
@@ -61,7 +61,7 @@ internal static class DistributedApplicationBuilderExtensions
         }));
     }
 
-    private static void PinB2BWeb(
+    private static void PinWeb(
         this IDistributedApplicationTestingBuilder builder,
         string apiBaseUrl,
         string authBaseUrl,

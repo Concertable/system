@@ -60,7 +60,7 @@ The B2B/Customer AppHosts add the Vite SPAs (`AddVenueSpa`/`AddArtistSpa`/`AddBu
 
 **Resolves when:**
 
-- The API E2E composition (`AddB2BE2E` / `AddCustomerE2E`) strips the `NodeAppResource` SPA resources, so the headless API stack doesn't launch frontends at all — mirroring how `AddEphemeralSql` tailors the dev AppHost for testing.
+- The API E2E composition (each suite's `AddE2EStack`) strips the `NodeAppResource` SPA resources, so the headless API stack doesn't launch frontends at all — mirroring how `AddEphemeralSql` tailors the dev AppHost for testing.
 
 ### WORKAROUND — 12-minute E2E health wait covers slow demo-user seeding
 
@@ -73,31 +73,3 @@ The 71 demo users are created one `CredentialRegisteredEvent` at a time (Auth re
 **Resolves when:**
 
 - The credential seed is fast enough to finish well inside a 6-minute budget — e.g. tighten the outbox/inbox dispatch interval for the E2E environment, or batch the credential registration — at which point the timeout reverts to 6 and this entry is deleted.
-
----
-
-## LOW
-
-### Service-owned E2E APIs repeat ownership already expressed by their namespace
-
-The service composition entry points are named `AddCustomerE2E` inside
-`Concertable.Customer.E2ETests` and `AddB2BE2E` inside `Concertable.B2B.E2ETests`. Each has one owning
-suite and one call site, so the service prefix repeats context the project and namespace already make
-unambiguous. Private helpers repeat the same pattern (`PinAuthCustomerApi`, `PinCustomerWeb`,
-`PinAuthB2BApi`, `PinB2BWeb`). This makes APIs longer without adding information and encourages every
-type/member to restate its folder ownership.
-
-The correction is contextual, not a blind removal of every service name. A cross-service composition
-method such as `AddSearchService` or `PinPaymentWeb` is invoked alongside several services and its
-prefix identifies the resource being added; that information remains valuable at the call site.
-
-**Resolves when:**
-
-- Rename the B2B and Customer suite entry points to the same role-based name, such as `AddE2EStack`,
-  within their existing service-owned namespaces, and rename private helpers to roles such as
-  `PinAuthApi` / `PinWeb` where the enclosing namespace already supplies the service identity.
-- Audit service-owned E2E types and members in the same sweep: remove owner prefixes that merely
-  repeat their namespace/project, but retain a service/resource prefix wherever multiple services are
-  composed in the same scope or removing it would make the call ambiguous.
-- Capture that context rule in the E2E conventions so future APIs neither stutter their namespace nor
-  erase meaningful cross-service identity.

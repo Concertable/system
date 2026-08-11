@@ -111,7 +111,7 @@ public sealed class AppFixture : IAsyncLifetime
         var stripeClient = new StripeClient(stripeSecretKey);
         StripeCustomerResolver = await Concertable.Testing.E2E.StripeCustomerResolver.CreateAsync(stripeClient);
 
-        builder.AddB2BE2E(B2BWebUrl, SearchWebUrl, authUrl, PaymentWebUrl, StripeCustomerResolver);
+        builder.AddE2EStack(B2BWebUrl, SearchWebUrl, authUrl, PaymentWebUrl, StripeCustomerResolver);
         StripePaymentIntents = new PaymentIntentService(stripeClient);
         Stripe = new StripeFixture(stripeClient);
 
