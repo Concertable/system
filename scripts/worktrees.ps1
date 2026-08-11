@@ -14,7 +14,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-$repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+$scriptCheckout = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $persistentBranches = @('Chore/TechDebt')
 
 function Run {
@@ -35,6 +35,11 @@ function Run {
     }
     [pscustomobject]@{ ExitCode = $exitCode; Text = $text.Trim() }
 }
+
+$commonDirectory = (Run git @(
+    '-C', $scriptCheckout, 'rev-parse', '--path-format=absolute', '--git-common-dir'
+)).Text
+$repositoryRoot = [IO.Path]::GetDirectoryName($commonDirectory)
 
 function Git {
     param([string[]] $Arguments, [switch] $AllowFailure)
