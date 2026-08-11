@@ -1,6 +1,8 @@
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
+using Concertable.Auth.Hosting;
+using Concertable.Customer.Hosting;
 using Concertable.Search.E2ETests.Helpers;
 
 namespace Concertable.Customer.E2ETests;
