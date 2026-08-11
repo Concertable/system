@@ -257,7 +257,6 @@ function RemoveTarget {
         $extended = if ($target.StartsWith('\\?\')) { $target } else { "\\?\$target" }
         Remove-Item -LiteralPath $extended -Recurse -Force
     }
-    Git @('worktree', 'prune') | Out-Null
     if ((Git @('show-ref', '--verify', '--quiet', "refs/heads/$branch") -AllowFailure).ExitCode -eq 0) {
         Git @('branch', '-D', '--', $branch) | Out-Null
     }
