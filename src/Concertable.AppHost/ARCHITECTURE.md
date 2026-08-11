@@ -34,4 +34,5 @@ from a standalone host by *breadth* (all data services + StripeCli), not by wait
 - [`README.md`](./README.md) — what this project is and isn't.
 - [`api/ARCHITECTURE.md`](../ARCHITECTURE.md) — adapter-vs-data services and the microservice premise.
 - [`../Concertable.AppHost.Shared/`](../Concertable.AppHost.Shared/README.md) — shared helpers (references + adapter-service waits).
+- [`../Concertable.Frontend.Hosting/`](../Concertable.Frontend.Hosting/) — frontend-surface composition (web SPAs + mobile apps).
 - [`TECH_DEBT.md`](./TECH_DEBT.md).

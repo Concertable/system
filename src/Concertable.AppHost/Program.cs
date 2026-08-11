@@ -1,5 +1,6 @@
 using Concertable.B2B.Hosting;
 using Concertable.Customer.Hosting;
+using Concertable.Frontend.Hosting;
 using Concertable.Payment.Hosting;
 using Concertable.Search.Hosting;
 
