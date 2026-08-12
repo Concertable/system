@@ -9,6 +9,9 @@ $repoRoot = Split-Path $PSScriptRoot -Parent
 Set-Location $repoRoot
 [Environment]::CurrentDirectory = $repoRoot
 
+$authProjects = @(
+    "api/Concertable.Auth/tests/Concertable.Auth.IntegrationTests/Concertable.Auth.IntegrationTests.csproj"
+)
 $b2bProjects = @(
     "api/Concertable.B2B/src/Modules/Artist/Tests/Concertable.B2B.Artist.IntegrationTests/Concertable.B2B.Artist.IntegrationTests.csproj",
     "api/Concertable.B2B/src/Modules/Concert/Tests/Concertable.B2B.Concert.IntegrationTests/Concertable.B2B.Concert.IntegrationTests.csproj",
@@ -29,7 +32,7 @@ $searchProjects = @(
     "api/Concertable.Search/tests/Concertable.Search.IntegrationTests/Concertable.Search.IntegrationTests.csproj"
 )
 
-$allProjects = $b2bProjects + $customerProjects + $searchProjects
+$allProjects = $authProjects + $b2bProjects + $customerProjects + $searchProjects
 
 function Invoke-IntegrationProject([string]$csproj, [string[]]$extra) {
     $name = [System.IO.Path]::GetFileNameWithoutExtension($csproj)
@@ -69,6 +72,10 @@ switch ($cmd) {
         $exit = Invoke-Projects 'All integration tests' $allProjects $rest
         exit $exit
     }
+    "auth" {
+        $exit = Invoke-Projects 'Auth integration tests' $authProjects $rest
+        exit $exit
+    }
     "b2b" {
         $exit = Invoke-Projects 'B2B integration tests' $b2bProjects $rest
         exit $exit
@@ -82,6 +89,9 @@ switch ($cmd) {
         exit $exit
     }
     "list" {
+        Write-Host ""
+        Write-Host "Auth:" -ForegroundColor Yellow
+        $authProjects | ForEach-Object { Write-Host "  $_" }
         Write-Host ""
         Write-Host "B2B:" -ForegroundColor Yellow
         $b2bProjects | ForEach-Object { Write-Host "  $_" }
@@ -106,7 +116,8 @@ switch ($cmd) {
         Write-Host "  Usage: ./scripts/integration.ps1 <command> [-- <extra dotnet test args>]" -ForegroundColor White
         Write-Host ""
         Write-Host "  Commands:" -ForegroundColor DarkGray
-        Write-Host "    run        Run all integration tests (B2B + Customer + Search)"
+        Write-Host "    run        Run all integration tests (Auth + B2B + Customer + Search)"
+        Write-Host "    auth       Run Auth integration tests only"
         Write-Host "    b2b        Run B2B integration tests only"
         Write-Host "    customer   Run Customer integration tests only"
         Write-Host "    search     Run Search integration tests only"
