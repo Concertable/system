@@ -6,34 +6,35 @@ namespace Concertable.Customer.E2ETests.Ui.Support;
 public sealed class Browser : IAsyncDisposable, IDisposable, IPageAccessor
 {
     private readonly ILogger<Browser> logger;
+    private readonly ScenarioContext scenario;
     private IBrowser playwrightBrowser = null!;
     private UiFixture fixture = null!;
 
     public IBrowserContext Context { get; private set; } = null!;
     public IPage Page { get; private set; } = null!;
 
-    public Browser(ILogger<Browser> logger)
+    public Browser(ILogger<Browser> logger, ScenarioContext scenario)
     {
         this.logger = logger;
+        this.scenario = scenario;
     }
 
     public async Task InitializeAsync(
         IBrowser playwrightBrowser,
         bool authenticated,
-        UiFixture fixture,
-        bool establishDeniedCookieConsent)
+        UiFixture fixture)
     {
         this.playwrightBrowser = playwrightBrowser;
         this.fixture = fixture;
-        await CreateContextAsync(authenticated, establishDeniedCookieConsent);
+        await CreateContextAsync(authenticated);
     }
 
-    private async Task CreateContextAsync(bool authenticated, bool establishDeniedCookieConsent)
+    private async Task CreateContextAsync(bool authenticated)
     {
         var options = new BrowserNewContextOptions { IgnoreHTTPSErrors = true };
         if (authenticated) options.StorageState = await LoginCaptureHooks.GetOrCaptureAsync(fixture);
         Context = await playwrightBrowser.NewContextAsync(options);
-        if (establishDeniedCookieConsent) await CookieConsentState.EstablishDeniedAsync(Context);
+        if (!scenario.HasTag("CookieConsent")) await CookieConsentState.EstablishDeniedAsync(Context);
         await Context.Tracing.StartAsync(new TracingStartOptions
         {
             Screenshots = true,

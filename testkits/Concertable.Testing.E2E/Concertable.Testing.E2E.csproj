@@ -16,6 +16,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Respawn" />
     <PackageReference Include="Microsoft.Playwright" />
+    <PackageReference Include="Reqnroll" />
     <PackageReference Include="Stripe.net" />
     <PackageReference Include="xunit" />
   </ItemGroup>
