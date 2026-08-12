@@ -34,13 +34,12 @@ public sealed class PlaywrightHooks
 
         var tags = scenarioContext.ScenarioInfo.Tags;
         var isSignUp = tags.Contains("SignUp");
-        var establishDeniedCookieConsent = !tags.Contains("CookieConsent");
 
         var persona = isSignUp ? null : tags
             .Select(tag => Enum.TryParse<LoginPersona>(tag, out var p) ? (LoginPersona?)p : null)
             .FirstOrDefault(p => p is not null);
 
-        await browser.InitializeAsync(fixture.Browser, persona, fixture, establishDeniedCookieConsent);
+        await browser.InitializeAsync(fixture.Browser, persona, fixture);
     }
 
     [AfterScenario]
