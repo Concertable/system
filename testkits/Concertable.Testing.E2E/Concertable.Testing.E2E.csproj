@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsTestProject>false</IsTestProject>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.SqlServer" />
+    <PackageReference Include="Aspire.Hosting.Testing" />
+    <PackageReference Include="Microsoft.Data.SqlClient" />
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Respawn" />
+    <PackageReference Include="Microsoft.Playwright" />
+    <PackageReference Include="Reqnroll" />
+    <PackageReference Include="Stripe.net" />
+    <PackageReference Include="xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Concertable.AppHost.Shared\Concertable.AppHost.Shared.csproj" IsAspireProjectResource="false" />
+    <ProjectReference Include="..\..\..\Concertable.Auth\src\Concertable.Auth.Hosting\Concertable.Auth.Hosting.csproj" IsAspireProjectResource="false" />
+    <ProjectReference Include="..\..\..\Concertable.Payment\src\Concertable.Payment.Hosting\Concertable.Payment.Hosting.csproj" IsAspireProjectResource="false" />
+    <ProjectReference Include="..\..\src\Seed\Concertable.Seed.Identity\Concertable.Seed.Identity.csproj" />
+    <ProjectReference Include="..\Concertable.Testing\Concertable.Testing.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="Concertable.Testing" />
+  </ItemGroup>
+
+</Project>
