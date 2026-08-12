@@ -34,11 +34,13 @@
   <ItemGroup>
     <Using Include="Xunit" />
     <Using Include="Concertable.Customer.E2ETests" />
-    <Using Include="Concertable.E2ETests" />
+    <Using Include="Concertable.Testing.E2E" />
+    <Using Include="Concertable.Payment.E2ETests.Helpers" />
     <Using Include="Concertable.Testing" />
     <Using Include="Concertable.Customer.Seed.Infrastructure" />
     <Using Include="Concertable.Kernel.Identity" />
-    <Using Include="Concertable.E2ETests.Support" />
+    <Using Include="Concertable.Testing.E2E.Ui" />
+    <Using Include="Concertable.Payment.E2ETests.Helpers.Ui" />
     <Using Include="Microsoft.Playwright" />
     <Using Include="Reqnroll" />
   </ItemGroup>

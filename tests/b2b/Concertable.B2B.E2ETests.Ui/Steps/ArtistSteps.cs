@@ -1,6 +1,5 @@
 using Concertable.B2B.E2ETests.Ui.PageObjects;
 using Concertable.B2B.E2ETests.Ui.Support;
-using Concertable.E2ETests.Support;
 
 namespace Concertable.B2B.E2ETests.Ui.Steps;
 
