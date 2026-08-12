@@ -33,7 +33,7 @@ public sealed class PlaywrightHooks
         LoginCaptureHooks.Reset();
 
         var tags = scenarioContext.ScenarioInfo.Tags;
-        var isSignUp = tags.Contains("SignUp");
+        var isSignUp = scenarioContext.HasTag("SignUp");
 
         var persona = isSignUp ? null : tags
             .Select(tag => Enum.TryParse<LoginPersona>(tag, out var p) ? (LoginPersona?)p : null)
