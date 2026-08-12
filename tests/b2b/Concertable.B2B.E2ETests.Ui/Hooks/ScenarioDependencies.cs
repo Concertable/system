@@ -1,5 +1,4 @@
 using Concertable.B2B.E2ETests.Ui.Support;
-using Concertable.E2ETests.Support;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Reqnroll.Microsoft.Extensions.DependencyInjection;

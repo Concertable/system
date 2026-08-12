@@ -32,13 +32,11 @@ public sealed class PlaywrightHooks
         await fixture.App.ResetAsync();
         LoginCaptureHooks.Reset();
 
-        var tags = scenarioContext.ScenarioInfo.Tags;
-        var isSignUp = tags.Contains("SignUp");
-        var establishDeniedCookieConsent = !tags.Contains("CookieConsent");
+        var isSignUp = scenarioContext.HasTag("SignUp");
 
-        var authenticated = !isSignUp && tags.Contains("Customer");
+        var authenticated = !isSignUp && scenarioContext.HasTag("Customer");
 
-        await browser.InitializeAsync(fixture.Browser, authenticated, fixture, establishDeniedCookieConsent);
+        await browser.InitializeAsync(fixture.Browser, authenticated, fixture);
     }
 
     [AfterScenario]
