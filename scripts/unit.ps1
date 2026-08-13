@@ -128,6 +128,9 @@ switch ($cmd) {
         Write-Host "Auth:" -ForegroundColor Yellow
         $authProjects | ForEach-Object { Write-Host "  $_" }
         Write-Host ""
+        Write-Host "DataAccess:" -ForegroundColor Yellow
+        $dataAccessProjects | ForEach-Object { Write-Host "  $_" }
+        Write-Host ""
         Write-Host "B2B:" -ForegroundColor Yellow
         $b2bProjects | ForEach-Object { Write-Host "  $_" }
         Write-Host ""
@@ -159,7 +162,7 @@ switch ($cmd) {
         Write-Host "  Usage: ./scripts/unit.ps1 <command> [-- <extra dotnet test args>]" -ForegroundColor White
         Write-Host ""
         Write-Host "  Commands:" -ForegroundColor DarkGray
-        Write-Host "    run        Run all unit tests (Auth + B2B + Customer + Search + Payment + Shared)"
+        Write-Host "    run        Run all unit tests (Auth + DataAccess + B2B + Customer + Search + Payment + Shared)"
         Write-Host "    auth       Run Auth unit tests only"
         Write-Host "    b2b        Run B2B unit tests only"
         Write-Host "    customer   Run Customer unit tests only"
