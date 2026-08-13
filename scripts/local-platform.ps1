@@ -1,12 +1,11 @@
-param(
-    [Parameter(Position = 0, Mandatory = $true)]
-    [ValidateSet('prepare', 'restore', 'build', 'test')]
-    [string]$Command,
-    [Parameter(Position = 1)]
-    [string]$Target,
-    [Parameter(Position = 2, ValueFromRemainingArguments = $true)]
-    [string[]]$Rest
-)
+$invocationArguments = @($args)
+$Command = if ($invocationArguments.Count -gt 0) { [string]$invocationArguments[0] } else { $null }
+$Target = if ($invocationArguments.Count -gt 1) { [string]$invocationArguments[1] } else { $null }
+$Rest = if ($invocationArguments.Count -gt 2) { [string[]]$invocationArguments[2..($invocationArguments.Count - 1)] } else { @() }
+
+if ($Command -notin @('prepare', 'restore', 'build', 'test')) {
+    throw "Command must be one of: prepare, restore, build, test."
+}
 
 $repoRoot = Split-Path $PSScriptRoot -Parent
 $platformRoot = Join-Path $repoRoot 'artifacts/local-platform'
