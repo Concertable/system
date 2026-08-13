@@ -9,6 +9,7 @@ param(
 $repoRoot = Split-Path $PSScriptRoot -Parent
 Set-Location $repoRoot
 [Environment]::CurrentDirectory = $repoRoot
+$localPlatform = Join-Path $PSScriptRoot 'local-platform.ps1'
 
 $b2bUi      = Join-Path $repoRoot "api/Concertable.B2B/tests/E2ETests/Concertable.B2B.E2ETests.Ui"
 $customerUi = Join-Path $repoRoot "api/Concertable.Customer/tests/E2ETests/Concertable.Customer.E2ETests.Ui"
@@ -60,7 +61,7 @@ function Invoke-Regress([string]$suite, [string]$csproj) {
     $filter = ($expected | ForEach-Object { "DisplayName=$_" }) -join '|'
 
     # Preflight: confirm each baseline scenario resolves to a real test
-    $list = dotnet test $csproj --list-tests --filter $filter @quiet 2>&1
+    $list = & $localPlatform test $csproj --list-tests --filter $filter @quiet 2>&1
     $discovered = $list | Where-Object { $_ -match '^\s{4}\S' } | ForEach-Object { $_.Trim() }
     if ($discovered.Count -ne $expected.Count) {
         $missing = $expected | Where-Object { $discovered -notcontains $_ }
@@ -73,7 +74,7 @@ function Invoke-Regress([string]$suite, [string]$csproj) {
 
     # Run them
     $logPath = (Join-Path (Split-Path $csproj -Parent) 'regress.last.log')
-    dotnet test $csproj --filter $filter @quiet --logger "console;verbosity=normal" 2>&1 | Tee-Object -FilePath $logPath | Out-Host
+    & $localPlatform test $csproj --filter $filter @quiet --logger "console;verbosity=normal" 2>&1 | Tee-Object -FilePath $logPath | Out-Host
 
     # Parse pass/fail totals (Tee writes UTF-16 on Windows)
     $logBytes = [System.IO.File]::ReadAllBytes($logPath)
@@ -110,7 +111,7 @@ function Invoke-Regress([string]$suite, [string]$csproj) {
     Write-Host "  Retrying $($failedNames.Count) failed scenario(s) in isolation (flaky-stack guard)..." -ForegroundColor Cyan
     $retryFilter = ($failedNames | ForEach-Object { "DisplayName=$_" }) -join '|'
     $retryLog = (Join-Path (Split-Path $csproj -Parent) 'regress.retry.last.log')
-    dotnet test $csproj --filter $retryFilter @quiet --logger "console;verbosity=normal" 2>&1 | Tee-Object -FilePath $retryLog | Out-Host
+    & $localPlatform test $csproj --filter $retryFilter @quiet --logger "console;verbosity=normal" 2>&1 | Tee-Object -FilePath $retryLog | Out-Host
 
     $retryBytes = [System.IO.File]::ReadAllBytes($retryLog)
     $retryText = if ($retryBytes.Length -ge 2 -and $retryBytes[0] -eq 0xFF -and $retryBytes[1] -eq 0xFE) {
@@ -149,7 +150,7 @@ function Invoke-PrettyTest([string]$suite, [string]$csproj, [string[]]$extra, [s
         '--logger', 'trx;LogFileName=run.trx',
         '--logger', 'console;verbosity=normal'
     ) + $extra
-    dotnet test @testArgs *> $log
+    & $localPlatform test @testArgs *> $log
 
     if (-not (Test-Path $trx)) {
         Write-Host "  No results -- build or run failed. Full log: $log" -ForegroundColor Red
@@ -237,7 +238,12 @@ function Show-Usage {
 }
 
 function Invoke-UiCommand([string]$cmd) {
-    if ($cmd -in @('run', 'regress', 'b2b', 'customer', '3ds')) { Assert-DockerHealthy; Assert-HostCapacity }
+    if ($cmd -in @('run', 'regress', 'b2b', 'customer', '3ds')) {
+        Assert-DockerHealthy
+        Assert-HostCapacity
+        & $localPlatform prepare
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    }
     switch ($cmd) {
         "run" {
             $b2b  = Invoke-PrettyTest 'B2B'      "$b2bUi/Concertable.B2B.E2ETests.Ui.csproj"
@@ -275,7 +281,12 @@ function Invoke-UiCommand([string]$cmd) {
 
 function Invoke-ApiCommand([string]$cmd) {
     $settings = @('--settings', $runsettings)
-    if ($cmd -in @('run', 'b2b', 'customer')) { Assert-DockerHealthy; Assert-HostCapacity }
+    if ($cmd -in @('run', 'b2b', 'customer')) {
+        Assert-DockerHealthy
+        Assert-HostCapacity
+        & $localPlatform prepare
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    }
     switch ($cmd) {
         "run" {
             $b2b  = Invoke-PrettyTest 'B2B API'      "$b2bApi/Concertable.B2B.E2ETests.csproj"           $settings 'api-tests.last.log'
