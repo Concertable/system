@@ -23,6 +23,8 @@ internal static class DistributedApplicationBuilderExtensions
             .OfType<ProjectResource>()
             .Single(r => r.Name == PaymentConstants.WebResource);
 
+        paymentWeb.LaunchAs(new Projects.Concertable_Payment_E2ETests_Web());
+
         var stripeSecretKey = builder.Configuration["Stripe:SecretKey"];
 
         paymentWeb.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
@@ -63,6 +65,8 @@ internal static class DistributedApplicationBuilderExtensions
             .OfType<ProjectResource>()
             .Single(r => r.Name == PaymentConstants.WorkersResource);
 
+        paymentWorkers.LaunchAs(new Projects.Concertable_Payment_E2ETests_Workers());
+
         paymentWorkers.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
         {
             context.EnvironmentVariables["DOTNET_ENVIRONMENT"] = "E2E";
@@ -76,6 +80,13 @@ internal static class DistributedApplicationBuilderExtensions
     {
         foreach (var (key, value) in stripeCustomers.GetConfiguration())
             context.EnvironmentVariables[key.Replace(":", "__")] = value;
+    }
+
+    private static void LaunchAs(this ProjectResource resource, IProjectMetadata host)
+    {
+        foreach (var metadata in resource.Annotations.OfType<IProjectMetadata>().ToList())
+            resource.Annotations.Remove(metadata);
+        resource.Annotations.Add(host);
     }
 
     internal static void PinStripeCli(
