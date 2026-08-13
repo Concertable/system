@@ -23,7 +23,7 @@ internal static class DistributedApplicationBuilderExtensions
             .OfType<ProjectResource>()
             .Single(r => r.Name == PaymentConstants.WebResource);
 
-        paymentWeb.LaunchAs(new Projects.Concertable_Payment_E2ETests_WebHost());
+        paymentWeb.LaunchAs(new Projects.Concertable_Payment_E2ETests_Web());
 
         var stripeSecretKey = builder.Configuration["Stripe:SecretKey"];
 
@@ -65,7 +65,7 @@ internal static class DistributedApplicationBuilderExtensions
             .OfType<ProjectResource>()
             .Single(r => r.Name == PaymentConstants.WorkersResource);
 
-        paymentWorkers.LaunchAs(new Projects.Concertable_Payment_E2ETests_WorkersHost());
+        paymentWorkers.LaunchAs(new Projects.Concertable_Payment_E2ETests_Workers());
 
         paymentWorkers.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
         {
