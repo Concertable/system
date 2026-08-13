@@ -48,12 +48,12 @@ function Invoke-Project([string]$csproj) {
 
     Write-Host ("  {0,-54}" -f $name) -NoNewline
 
-    $testArgs = @(
-        $localPlatform, 'test', $csproj, '--nologo', '--verbosity', 'quiet',
-        '--results-directory', $resultsDir,
-        '--logger', 'trx;LogFileName=run.trx'
-    )
-    $proc = Start-Process -FilePath $powerShell -ArgumentList $testArgs -NoNewWindow -Wait -PassThru `
+    $escapedLocalPlatform = $localPlatform.Replace("'", "''")
+    $escapedProject = $csproj.Replace("'", "''")
+    $escapedResultsDir = $resultsDir.Replace("'", "''")
+    $command = "& '$escapedLocalPlatform' test '$escapedProject' --nologo --verbosity quiet --results-directory '$escapedResultsDir' --logger 'trx;LogFileName=run.trx'"
+    $encodedCommand = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($command))
+    $proc = Start-Process -FilePath $powerShell -ArgumentList '-NoProfile', '-EncodedCommand', $encodedCommand -NoNewWindow -Wait -PassThru `
         -RedirectStandardOutput $log -RedirectStandardError $errLog
     if ((Test-Path $errLog) -and (Get-Item $errLog).Length -gt 0) { Get-Content $errLog | Add-Content $log }
     Remove-Item $errLog -ErrorAction SilentlyContinue

@@ -13,6 +13,9 @@ $localPlatform = Join-Path $PSScriptRoot 'local-platform.ps1'
 $authProjects = @(
     "api/Concertable.Auth/tests/Concertable.Auth.UnitTests/Concertable.Auth.UnitTests.csproj"
 )
+$dataAccessProjects = @(
+    "api/Concertable.DataAccess/Tests/Concertable.DataAccess.UnitTests/Concertable.DataAccess.UnitTests.csproj"
+)
 $b2bProjects = @(
     "api/Concertable.B2B/src/Concertable.B2B.DataAccess/Tests/Concertable.B2B.DataAccess.UnitTests/Concertable.B2B.DataAccess.UnitTests.csproj",
     "api/Concertable.B2B/src/Modules/Concert/Tests/Concertable.B2B.Concert.UnitTests/Concertable.B2B.Concert.UnitTests.csproj",
@@ -42,7 +45,7 @@ $sharedProjects = @(
     "api/Concertable.Messaging/Tests/Concertable.Messaging.AzureServiceBus.UnitTests/Concertable.Messaging.AzureServiceBus.UnitTests.csproj"
 )
 
-$allProjects = $authProjects + $b2bProjects + $customerProjects + $searchProjects + $paymentProjects + $sharedProjects
+$allProjects = $authProjects + $dataAccessProjects + $b2bProjects + $customerProjects + $searchProjects + $paymentProjects + $sharedProjects
 
 function Invoke-UnitProject([string]$csproj, [string[]]$extra) {
     $name = [System.IO.Path]::GetFileNameWithoutExtension($csproj)
