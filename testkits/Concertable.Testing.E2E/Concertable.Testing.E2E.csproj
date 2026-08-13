@@ -1,11 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <Sdk Name="Aspire.AppHost.Sdk" Version="13.3.2" />
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsTestProject>false</IsTestProject>
     <IsPackable>false</IsPackable>
+    <IsAspireHost>true</IsAspireHost>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,8 +28,11 @@
     <ProjectReference Include="..\..\..\Concertable.AppHost.Shared\Concertable.AppHost.Shared.csproj" IsAspireProjectResource="false" />
     <ProjectReference Include="..\..\..\Concertable.Auth\src\Concertable.Auth.Hosting\Concertable.Auth.Hosting.csproj" IsAspireProjectResource="false" />
     <ProjectReference Include="..\..\..\Concertable.Payment\src\Concertable.Payment.Hosting\Concertable.Payment.Hosting.csproj" IsAspireProjectResource="false" />
-    <ProjectReference Include="..\..\src\Seed\Concertable.Seed.Identity\Concertable.Seed.Identity.csproj" />
-    <ProjectReference Include="..\Concertable.Testing\Concertable.Testing.csproj" />
+    <!-- Aspire project resources: the E2E stack launches these Payment hosts (production + Stripe adapter) in place of the E2E-agnostic production hosts. -->
+    <ProjectReference Include="..\..\..\Concertable.Payment\tests\E2ETests\Concertable.Payment.E2ETests.WebHost\Concertable.Payment.E2ETests.WebHost.csproj" />
+    <ProjectReference Include="..\..\..\Concertable.Payment\tests\E2ETests\Concertable.Payment.E2ETests.WorkersHost\Concertable.Payment.E2ETests.WorkersHost.csproj" />
+    <ProjectReference Include="..\..\src\Seed\Concertable.Seed.Identity\Concertable.Seed.Identity.csproj" IsAspireProjectResource="false" />
+    <ProjectReference Include="..\Concertable.Testing\Concertable.Testing.csproj" IsAspireProjectResource="false" />
   </ItemGroup>
 
   <ItemGroup>
