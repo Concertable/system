@@ -22,7 +22,8 @@ function Run {
     $oldPreference = $ErrorActionPreference
     try {
         $ErrorActionPreference = 'Continue'
-        $executable = (Get-Command "$Program.exe" -CommandType Application -ErrorAction Stop).Source
+        # No ".exe": Windows resolves it through PATHEXT, and hard-coding it makes every call fail on Linux.
+        $executable = (Get-Command $Program -CommandType Application -ErrorAction Stop).Source
         $output = @(& $executable @Arguments 2>&1)
         $exitCode = $LASTEXITCODE
     }
