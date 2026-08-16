@@ -17,6 +17,14 @@ public sealed class MailboxPage
     private ILocator MessageFrom(string sender) =>
         page.GetByTestId("mailbox-message").Filter(new() { HasText = sender });
 
+    private ILocator ReportTriggerFor(string sender) =>
+        MessageFrom(sender).GetByTestId("message-report-trigger");
+
+    private ILocator ReportCategory => page.GetByTestId("report-category");
+    private ILocator ReportDetails => page.GetByTestId("report-details");
+    private ILocator ReportSubmit => page.GetByTestId("report-submit");
+    private ILocator ReportConfirmation => page.GetByTestId("report-confirmation");
+
     public Task GotoHomeAsync() => page.GotoSpaAsync($"{spaBaseUrl}/");
 
     public async Task OpenAsync()
@@ -38,4 +46,18 @@ public sealed class MailboxPage
 
     public Task ExpectNoUnreadAsync() =>
         Assertions.Expect(UnreadBadge).ToHaveCountAsync(0, new() { Timeout = 30_000 });
+
+    public async Task ReportMessageAsync(string sender, string category, string details)
+    {
+        await ReportTriggerFor(sender).ClickAsync();
+
+        await ReportCategory.GetByRole(AriaRole.Combobox).ClickAsync();
+        await page.GetByRole(AriaRole.Option, new() { Name = category, Exact = true }).ClickAsync();
+
+        await ReportDetails.FillAsync(details);
+        await ReportSubmit.ClickAsync();
+    }
+
+    public Task ExpectReportConfirmationAsync() =>
+        Assertions.Expect(ReportConfirmation).ToBeVisibleAsync(new() { Timeout = 30_000 });
 }
