@@ -210,7 +210,10 @@ function AssertTarget {
 
 function AssertLedger {
     param([int] $Number, [string] $Head, [string] $DefaultRef)
-    $paths = (Gh @('pr', 'diff', $Number.ToString(), '--name-only')).Text -split "\r?\n"
+    $paths = (Gh @(
+        'api', '--paginate', "repos/{owner}/{repo}/pulls/$Number/files",
+        '--jq', '.[].filename'
+    )).Text -split "\r?\n"
     $ledgers = @($paths | Where-Object { $_ -match '^plans/.+_PROGRESS\.md$' })
     if ($ledgers.Count -eq 0) { throw "Plan-managed close requires a progress ledger in PR #$Number." }
     foreach ($ledger in $ledgers) {
