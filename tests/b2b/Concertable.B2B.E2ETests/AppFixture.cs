@@ -172,6 +172,7 @@ public sealed class AppFixture : IAsyncLifetime
                 services.AddScoped<IDomainEventDispatchInterceptor, SeedingDomainEventDispatchInterceptor>();
                 services.AddGeometry();
                 services.AddOutbox(opt => opt.UseSqlServer(b2bConnectionString), runDispatcher: false);
+                services.AddInProcessEventDispatch();
                 services.AddInbox(opt => opt.UseSqlServer(b2bConnectionString));
                 services.AddSeedingInfrastructure();
                 services.AddScoped<SeedState>();
