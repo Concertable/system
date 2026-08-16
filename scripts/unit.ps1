@@ -39,6 +39,7 @@ $paymentProjects = @(
 )
 $sharedProjects = @(
     "api/Concertable.Shared/tests/Concertable.Grpc.UnitTests/Concertable.Grpc.UnitTests.csproj",
+    "api/Concertable.Shared/tests/Concertable.Contracts.UnitTests/Concertable.Contracts.UnitTests.csproj",
     "api/Concertable.Shared/tests/Concertable.Kernel.UnitTests/Concertable.Kernel.UnitTests.csproj",
     "api/Concertable.Shared/tests/Concertable.Shared.Api.UnitTests/Concertable.Shared.Api.UnitTests.csproj",
     "api/Concertable.Messaging/Tests/Concertable.Messaging.UnitTests/Concertable.Messaging.UnitTests.csproj",
