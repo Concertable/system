@@ -198,7 +198,7 @@ function AssertTarget {
     if (IsPersistent $item.Branch) { throw "Persistent worktree cannot be removed: $($item.Branch)" }
     $current = Canonical (Get-Location).Path
     if ([string]::Equals($current, $target, [StringComparison]::OrdinalIgnoreCase) -or
-        $current.StartsWith($target + '\', [StringComparison]::OrdinalIgnoreCase)) {
+        $current.StartsWith($target + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
         throw 'Run this command from a different checkout.'
     }
     $dirty = Dirty $target
@@ -263,7 +263,11 @@ function RemoveTarget {
         }
     }
     if (Test-Path -LiteralPath $target) {
-        $extended = if ($target.StartsWith('\\?\')) { $target } else { "\\?\$target" }
+        # The \\?\ long-path prefix is Windows-only; on Linux it would be read as part of the filename.
+        $extended =
+            if ([IO.Path]::DirectorySeparatorChar -ne '\') { $target }
+            elseif ($target.StartsWith('\\?\')) { $target }
+            else { "\\?\$target" }
         Remove-Item -LiteralPath $extended -Recurse -Force
     }
     if ((Git @('show-ref', '--verify', '--quiet', "refs/heads/$branch") -AllowFailure).ExitCode -eq 0) {
