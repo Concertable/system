@@ -31,7 +31,7 @@ public sealed class MembersPage
     public async Task<Guid> InviteAsync(string email)
     {
         var invited = page.WaitForResponseAsync(r =>
-            r.Url.Contains("/api/organizations/invitations")
+            r.Url.Contains("/api/organization/invitations")
             && r.Request.Method == "POST");
         await InviteEmail.FillAsync(email);
         await InviteSubmit.ClickAsync();
