@@ -31,3 +31,9 @@ mechanics that are ours:
   own `AGENTS.md` adds its concrete `SeedState` shape.
 - **The unseedable thing here is payment/Stripe state** — real Payment emits only on live Stripe webhooks, so
   no seeder creates a PaymentIntent or charge. Split any scenario whose assertion needs a real Stripe object.
+- **Page objects, `data-testid` naming and step-binding shape** are
+  [`E2E_UI_CONVENTIONS.md`](./E2E_UI_CONVENTIONS.md) — a page object owns every selector and Playwright call,
+  a step binding owns none.
+- **The traps that have cost real time here** are [`E2E_CONSIDERATIONS.md`](./E2E_CONSIDERATIONS.md) — chiefly
+  that the 3DS off-session card is only challenged once per PaymentMethod *ever*, so a saved-card verify flow
+  needs `CompleteChallengeIfRequiredAsync`, and that a timing-out wait is a signal to diagnose, never to widen.
