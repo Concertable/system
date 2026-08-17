@@ -1,10 +1,9 @@
 # B2B UI E2E (Reqnroll + Playwright) — service-specific authoring notes
 
 **The scenario-authoring rules that apply to every suite** — test one behaviour, start at the nearest
-already-verified state, fast-forward via seeded state (never UI replay), what can't be seeded
-(payment/Stripe), and baseline discipline — live in `E2E_CONVENTIONS.md`, imported here:
-
-@../../../../agents/E2E_CONVENTIONS.md
+already-verified state, fast-forward via seeded state (never UI replay), what can't be seeded, baseline
+discipline — are the **`e2e-scenarios` skill**; this repo's baseline path and run script are in
+[`Concertable.Testing.E2E`](../../../../Concertable.Shared/tests/Concertable.Testing.E2E/AGENTS.md).
 
 This file only adds the B2B-specific mechanics.
 
@@ -39,5 +38,5 @@ Scenario: Venue manager cancels a flat fee booking and the escrow is refunded
 ```
 
 The cancel + `Cancelled` transition should start from a seeded booked state via a `Given`. The
-**refund** assertion needs a real charge to reverse (can't be seeded — see the shared doc), so it stays
+**refund** assertion needs a real charge to reverse (can't be seeded), so it stays
 on a flow that actually accepted + paid; split the two rather than re-driving everything.
