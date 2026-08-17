@@ -47,7 +47,9 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
         // settles on both channels summed, not either alone.
 
         // Arrange — the venue declares the external door take on top of Concertable's own sales
-        await fixture.DbFixture.Concert.DeclareDoorRevenueAsync(fixture.SeedState.PastDoorSplitBooking.Concert!.Id, 100m);
+        await fixture.DbFixture.Concert.DeclareDoorRevenueAsync(
+            fixture.SeedState.ConcertFor(fixture.SeedState.PastDoorSplitBooking).Id,
+            100m);
 
         // Act
         await TriggerConcertFinishedFunctionAsync();
@@ -74,7 +76,9 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
         // extra door take → total £20 → artist share = £100 + £14 = £114 (11400 pence).
 
         // Arrange — the venue declares the external door take (£0 here; all sales came through us)
-        await fixture.DbFixture.Concert.DeclareDoorRevenueAsync(fixture.SeedState.PastVersusBooking.Concert!.Id, 0m);
+        await fixture.DbFixture.Concert.DeclareDoorRevenueAsync(
+            fixture.SeedState.ConcertFor(fixture.SeedState.PastVersusBooking).Id,
+            0m);
 
         // Act
         await TriggerConcertFinishedFunctionAsync();
