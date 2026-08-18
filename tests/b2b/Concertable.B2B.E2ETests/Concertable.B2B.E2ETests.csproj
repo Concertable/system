@@ -31,6 +31,9 @@
     <ProjectReference Include="..\..\..\src\Modules\Artist\Concertable.B2B.Artist.Infrastructure\Concertable.B2B.Artist.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Venue\Concertable.B2B.Venue.Infrastructure\Concertable.B2B.Venue.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Deal\Concertable.B2B.Deal.Infrastructure\Concertable.B2B.Deal.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Opportunity\Concertable.B2B.Opportunity.Infrastructure\Concertable.B2B.Opportunity.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Application\Concertable.B2B.Application.Infrastructure\Concertable.B2B.Application.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Booking\Concertable.B2B.Booking.Infrastructure\Concertable.B2B.Booking.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Concert\Concertable.B2B.Concert.Infrastructure\Concertable.B2B.Concert.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Conversations\Concertable.B2B.Conversations.Infrastructure\Concertable.B2B.Conversations.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\..\Concertable.Shared\src\Concertable.Shared.Blob\Concertable.Shared.Blob.Infrastructure\Concertable.Shared.Blob.Infrastructure.csproj" />
