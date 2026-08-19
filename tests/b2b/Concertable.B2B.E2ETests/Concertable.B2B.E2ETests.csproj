@@ -28,6 +28,7 @@
     <ProjectReference Include="..\..\..\src\Seed\Concertable.B2B.Seed.Infrastructure\Concertable.B2B.Seed.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\src\Concertable.B2B.Web\Concertable.B2B.Web.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\User\Concertable.B2B.User.Infrastructure\Concertable.B2B.User.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Admin\Concertable.B2B.Admin.Infrastructure\Concertable.B2B.Admin.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Artist\Concertable.B2B.Artist.Infrastructure\Concertable.B2B.Artist.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Venue\Concertable.B2B.Venue.Infrastructure\Concertable.B2B.Venue.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Deal\Concertable.B2B.Deal.Infrastructure\Concertable.B2B.Deal.Infrastructure.csproj" />
