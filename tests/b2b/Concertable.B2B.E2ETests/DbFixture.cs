@@ -3,6 +3,7 @@ using Concertable.B2B.Hosting;
 using Respawn;
 using Respawn.Graph;
 using UserSchema = Concertable.B2B.User.Infrastructure.Schema;
+using AdminSchema = Concertable.B2B.Admin.Infrastructure.Schema;
 using MessagingSchema = Concertable.Messaging.Infrastructure.Schema;
 
 namespace Concertable.B2B.E2ETests;
@@ -29,7 +30,7 @@ public sealed class DbFixture
             [
                 "__EFMigrationsHistory",
                 new Table(UserSchema.Name, UserSchema.Tables.Users),
-                new Table(UserSchema.Name, UserSchema.Tables.AdminProfiles),
+                new Table(AdminSchema.Name, AdminSchema.Tables.AdminProfiles),
                 new Table(MessagingSchema.Name, MessagingSchema.Tables.Inbox),
             ],
             DbAdapter = DbAdapter.SqlServer,
