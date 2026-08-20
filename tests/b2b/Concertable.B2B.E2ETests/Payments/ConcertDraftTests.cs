@@ -37,7 +37,7 @@ public sealed class ConcertDraftTests : IAsyncLifetime
         await fixture.Stripe.ConfirmHoldAsync(clientSecret);
 
         var acceptResponse = await venueManagerClient.PostAsync(
-            $"/api/Application/{fixture.SeedState.FlatFeeApp.Id}/accept", new { eSignature = new { signatoryName = "Test Signatory" } });
+            $"/api/application/{fixture.SeedState.FlatFeeApp.Id}/accept", new { eSignature = new { signatoryName = "Test Signatory" } });
         await acceptResponse.ShouldBe(HttpStatusCode.NoContent);
 
         var bookingId = await fixture.DbFixture.Booking.GetIdByApplicationIdAsync(fixture.SeedState.FlatFeeApp.Id);
@@ -51,7 +51,7 @@ public sealed class ConcertDraftTests : IAsyncLifetime
         await fixture.Polling.UntilAsync(
             async () =>
             {
-                var response = await venueManagerClient.GetAsync($"/api/Application/{fixture.SeedState.FlatFeeApp.Id}");
+                var response = await venueManagerClient.GetAsync($"/api/application/{fixture.SeedState.FlatFeeApp.Id}");
                 await response.ShouldBe(HttpStatusCode.OK);
                 return await response.Content.ReadAsync<ApplicationResponse>();
             },
@@ -63,7 +63,7 @@ public sealed class ConcertDraftTests : IAsyncLifetime
     public async Task ShouldCreateDraftAndPayVenue_WhenVenueHireApplicationAccepted()
     {
         var response = await venueManagerClient.PostAsync(
-            $"/api/Application/{fixture.SeedState.VenueHireApp.Id}/accept", new { eSignature = new { signatoryName = "Test Signatory" } });
+            $"/api/application/{fixture.SeedState.VenueHireApp.Id}/accept", new { eSignature = new { signatoryName = "Test Signatory" } });
         await response.ShouldBe(HttpStatusCode.NoContent);
 
         var bookingId = await fixture.DbFixture.Booking.GetIdByApplicationIdAsync(fixture.SeedState.VenueHireApp.Id);
@@ -77,7 +77,7 @@ public sealed class ConcertDraftTests : IAsyncLifetime
         await fixture.Polling.UntilAsync(
             async () =>
             {
-                var response = await venueManagerClient.GetAsync($"/api/Application/{fixture.SeedState.VenueHireApp.Id}");
+                var response = await venueManagerClient.GetAsync($"/api/application/{fixture.SeedState.VenueHireApp.Id}");
                 await response.ShouldBe(HttpStatusCode.OK);
                 return await response.Content.ReadAsync<ApplicationResponse>();
             },
@@ -89,11 +89,11 @@ public sealed class ConcertDraftTests : IAsyncLifetime
     public async Task ShouldCreateDraft_WhenDoorSplitApplicationAccepted()
     {
         var acceptResponse = await venueManagerClient.PostAsync(
-            $"/api/Application/{fixture.SeedState.DoorSplitApp.Id}/accept",
+            $"/api/application/{fixture.SeedState.DoorSplitApp.Id}/accept",
             new { PaymentMethodId = AppFixture.TestPaymentMethodId, eSignature = new { signatoryName = "Test Signatory" } });
         await acceptResponse.ShouldBe(HttpStatusCode.NoContent);
 
-        var applicationResponse = await venueManagerClient.GetAsync($"/api/Application/{fixture.SeedState.DoorSplitApp.Id}");
+        var applicationResponse = await venueManagerClient.GetAsync($"/api/application/{fixture.SeedState.DoorSplitApp.Id}");
         await applicationResponse.ShouldBe(HttpStatusCode.OK);
         var application = await applicationResponse.Content.ReadAsync<ApplicationResponse>();
         Assert.Equal(ApplicationStatus.Accepted, application!.Status);
@@ -103,11 +103,11 @@ public sealed class ConcertDraftTests : IAsyncLifetime
     public async Task ShouldCreateDraft_WhenVersusApplicationAccepted()
     {
         var acceptResponse = await venueManagerClient.PostAsync(
-            $"/api/Application/{fixture.SeedState.VersusApp.Id}/accept",
+            $"/api/application/{fixture.SeedState.VersusApp.Id}/accept",
             new { PaymentMethodId = AppFixture.TestPaymentMethodId, eSignature = new { signatoryName = "Test Signatory" } });
         await acceptResponse.ShouldBe(HttpStatusCode.NoContent);
 
-        var applicationResponse = await venueManagerClient.GetAsync($"/api/Application/{fixture.SeedState.VersusApp.Id}");
+        var applicationResponse = await venueManagerClient.GetAsync($"/api/application/{fixture.SeedState.VersusApp.Id}");
         await applicationResponse.ShouldBe(HttpStatusCode.OK);
         var application = await applicationResponse.Content.ReadAsync<ApplicationResponse>();
         Assert.Equal(ApplicationStatus.Accepted, application!.Status);
@@ -115,7 +115,7 @@ public sealed class ConcertDraftTests : IAsyncLifetime
 
     private async Task<string> PlaceAcceptHoldAsync(int applicationId)
     {
-        var response = await venueManagerClient.PostAsync($"/api/Application/{applicationId}/checkout");
+        var response = await venueManagerClient.PostAsync($"/api/application/{applicationId}/checkout");
         await response.ShouldBe(HttpStatusCode.OK);
         var checkout = await response.Content.ReadAsync<CheckoutResult>();
         return checkout!.Session.ClientSecret;

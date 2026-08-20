@@ -37,8 +37,9 @@ public sealed class SignUpSteps
     public async Task ClickSignUpLink()
     {
         await loginPage.WaitForUrlAsync($"{fixture.App.AuthUrl}/Account/Login**");
+        var registrationLoaded = registerPage.WaitForLoadAsync();
         await loginPage.ClickSignUpAsync();
-        await registerPage.WaitForLoadAsync();
+        await registrationLoaded;
     }
 
     [When(@"they register with a new email")]

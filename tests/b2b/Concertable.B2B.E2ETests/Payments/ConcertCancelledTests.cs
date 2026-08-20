@@ -73,7 +73,7 @@ public sealed class ConcertCancelledTests : IAsyncLifetime
             c => c.Actions!.Cancel is not null,
             timeout: TimeSpan.FromSeconds(30));
 
-        var cancelResponse = await venueManagerClient.PostAsync($"/api/Concert/{concert.Id}/cancel");
+        var cancelResponse = await venueManagerClient.PostAsync($"/api/concert/{concert.Id}/cancel");
         await cancelResponse.ShouldBe(HttpStatusCode.NoContent);
 
         await fixture.Polling.UntilAsync(
@@ -109,7 +109,7 @@ public sealed class ConcertCancelledTests : IAsyncLifetime
 
     private async Task<MyDetailsResponse> GetConcertByApplicationAsync(int appId)
     {
-        var response = await venueManagerClient.GetAsync($"/api/Concert/application/{appId}");
+        var response = await venueManagerClient.GetAsync($"/api/concert/application/{appId}");
         await response.ShouldBe(HttpStatusCode.OK);
         var concert = await response.Content.ReadAsync<MyDetailsResponse>();
         Assert.NotNull(concert);
@@ -118,13 +118,13 @@ public sealed class ConcertCancelledTests : IAsyncLifetime
 
     private async Task AcceptAsync(int appId)
     {
-        var response = await venueManagerClient.PostAsync($"/api/Application/{appId}/accept", new { eSignature = new { signatoryName = "Test Signatory" } });
+        var response = await venueManagerClient.PostAsync($"/api/application/{appId}/accept", new { eSignature = new { signatoryName = "Test Signatory" } });
         await response.ShouldBe(HttpStatusCode.NoContent);
     }
 
     private async Task<string> PlaceAcceptHoldAsync(int applicationId)
     {
-        var response = await venueManagerClient.PostAsync($"/api/Application/{applicationId}/checkout");
+        var response = await venueManagerClient.PostAsync($"/api/application/{applicationId}/checkout");
         await response.ShouldBe(HttpStatusCode.OK);
         var checkout = await response.Content.ReadAsync<CheckoutResult>();
         Assert.NotNull(checkout);

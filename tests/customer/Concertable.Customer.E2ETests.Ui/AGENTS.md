@@ -1,10 +1,9 @@
 # Customer UI E2E (Reqnroll + Playwright) — service-specific authoring notes
 
 **The scenario-authoring rules that apply to every suite** — test one behaviour, start at the nearest
-already-verified state, fast-forward via seeded state (never UI replay), what can't be seeded
-(payment/Stripe), and baseline discipline — live in `E2E_CONVENTIONS.md`, imported here:
-
-@../../../../agents/E2E_CONVENTIONS.md
+already-verified state, fast-forward via seeded state (never UI replay), what can't be seeded, baseline
+discipline — are the **`e2e-scenarios` skill**; this repo's baseline path and run script are in
+[`Concertable.Testing.E2E`](../../../../Concertable.Shared/tests/Concertable.Testing.E2E/AGENTS.md).
 
 This file only adds Customer-specific mechanics.
 
@@ -17,4 +16,4 @@ starting state that isn't seeded yet, add the seeded state + a `Given`; don't re
 already covers.
 
 The one thing you cannot seed remains payment/Stripe state: a ticket-purchase confirmation that needs a
-real charge/webhook must run the real paying flow — see the shared doc.
+real charge/webhook must run the real paying flow.

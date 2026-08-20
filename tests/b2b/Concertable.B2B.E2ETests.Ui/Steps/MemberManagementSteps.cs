@@ -44,7 +44,7 @@ public sealed class MemberManagementSteps
     {
         using var client = await fixture.App.CreateAuthenticatedClientAsync(fixture.App.SeedState.VenueManager1.Email);
         var response = await client.PostAsJsonAsync(
-            "/api/organizations/invitations",
+            "/api/organization/invitations",
             new { email = ColleagueEmail, role = "staff" });
         response.EnsureSuccessStatusCode();
         var invitation = await response.Content.ReadFromJsonAsync<InvitationReference>();
