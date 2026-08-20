@@ -1,0 +1,13 @@
+<Project>
+
+  <PropertyGroup>
+    <NuGetAudit>false</NuGetAudit>
+    <NoWarn>$(NoWarn);NU1510</NoWarn>
+    <IsPackable Condition="'$(IsPackable)' == ''">false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)../BannedSymbols.txt" Condition="Exists('$(MSBuildThisFileDirectory)../BannedSymbols.txt')" />
+  </ItemGroup>
+
+</Project>
