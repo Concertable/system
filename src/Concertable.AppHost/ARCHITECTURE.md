@@ -18,7 +18,7 @@ stand in for the data services it does *not* run. The umbrella runs **all** data
 - It does **not** register the seed simulators. They exist to supply events a *standalone* host is
   missing (B2B's events for Customer; seed payment events real Payment never emits). In the umbrella
   the real producers run and StripeCli drives real payments, so registering them would double-publish
-  (see the `*.Seed.Simulator/CLAUDE.md` files and `plans/PAYMENT_SEED_CATALOG.md`).
+  (see the `*.Seed.Simulator/AGENTS.md` files).
 
 ## Startup waits are not special to this host
 
