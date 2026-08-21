@@ -9,6 +9,7 @@
     <IsTestProject>false</IsTestProject>
     <IsPackable>false</IsPackable>
     <IsAspireHost>true</IsAspireHost>
+    <CompositionValidationExclusion>E2E-only orchestration harness whose production project resources have dedicated composition coverage.</CompositionValidationExclusion>
   </PropertyGroup>
 
   <ItemGroup>
