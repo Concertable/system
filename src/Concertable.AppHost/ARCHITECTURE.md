@@ -4,7 +4,7 @@ The umbrella host's one job: **run the whole fleet together — every data servi
 `Search`) plus the adapter services (`Auth`, `Payment`) and StripeCli — to model the fully-deployed
 system.** It is the integration view, not a service's dev experience. For what the project *is*
 (entry point, references, what doesn't belong here) see [`README.md`](./README.md); for the
-microservice premise and the adapter-vs-data-service rule see [`api/ARCHITECTURE.md`](../ARCHITECTURE.md).
+microservice premise and the adapter-vs-data-service rule see the `microservice-boundaries` skill.
 
 ## What makes it different from a standalone host
 
@@ -32,7 +32,7 @@ from a standalone host by *breadth* (all data services + StripeCli), not by wait
 ## Related
 
 - [`README.md`](./README.md) — what this project is and isn't.
-- [`api/ARCHITECTURE.md`](../ARCHITECTURE.md) — adapter-vs-data services and the microservice premise.
+- The `microservice-boundaries` skill — adapter-vs-data services and the microservice premise.
 - [`../Concertable.AppHost.Shared/`](../Concertable.AppHost.Shared/README.md) — shared helpers (references + adapter-service waits).
 - [`../Concertable.Frontend.Hosting/`](../Concertable.Frontend.Hosting/) — frontend-surface composition (web SPAs + mobile apps).
 - [`TECH_DEBT.md`](./TECH_DEBT.md).
