@@ -107,7 +107,8 @@ function Invoke-LocalPlatformRestore([string]$Project) {
         'restore', $Project,
         '--configfile', $configPath,
         "-p:ConcertablePlatformVersion=$version",
-        "-p:MinVerVersionOverride=$version"
+        "-p:MinVerVersionOverride=$version",
+        '-p:UseLocalPlatformPackages=true'
     )
 }
 
@@ -163,7 +164,8 @@ switch ($Command) {
             $Command, $Target,
             '--no-restore',
             "-p:ConcertablePlatformVersion=$version",
-            "-p:MinVerVersionOverride=$version"
+            "-p:MinVerVersionOverride=$version",
+            '-p:UseLocalPlatformPackages=true'
         ) + $Rest)
         Assert-DataAccessAssembly $Target $version $Rest
     }
