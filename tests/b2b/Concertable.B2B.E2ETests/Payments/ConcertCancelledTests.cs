@@ -1,7 +1,6 @@
 using System.Net;
 using Concertable.B2B.Concert.Application.DTOs;
 using Concertable.B2B.Concert.Api.Responses;
-using Concertable.B2B.Concert.Domain.Lifecycle;
 using Concertable.Payment.Client;
 using Concertable.Payment.Contracts;
 using Concertable.Payment.Contracts.Enums;
@@ -77,8 +76,8 @@ public sealed class ConcertCancelledTests : IAsyncLifetime
         await cancelResponse.ShouldBe(HttpStatusCode.NoContent);
 
         await fixture.Polling.UntilAsync(
-            () => fixture.DbFixture.Application.GetStateByIdAsync(appId),
-            state => state == (int)LifecycleState.Cancelled,
+            () => GetApplicationAsync(appId),
+            application => application.Status == ApplicationStatus.Cancelled,
             timeout: TimeSpan.FromSeconds(30));
 
         var refundId = await fixture.Polling.UntilAsync(
@@ -114,6 +113,15 @@ public sealed class ConcertCancelledTests : IAsyncLifetime
         var concert = await response.Content.ReadAsync<MyDetailsResponse>();
         Assert.NotNull(concert);
         return concert;
+    }
+
+    private async Task<ApplicationResponse> GetApplicationAsync(int appId)
+    {
+        var response = await venueManagerClient.GetAsync($"/api/application/{appId}");
+        await response.ShouldBe(HttpStatusCode.OK);
+        var application = await response.Content.ReadAsync<ApplicationResponse>();
+        Assert.NotNull(application);
+        return application;
     }
 
     private async Task AcceptAsync(int appId)
