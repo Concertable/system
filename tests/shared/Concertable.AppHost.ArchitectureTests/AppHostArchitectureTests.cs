@@ -1,9 +1,9 @@
 using Concertable.Composition.Testing;
 using Xunit;
 
-namespace Concertable.AppHost.CompositionTests;
+namespace Concertable.AppHost.ArchitectureTests;
 
-public sealed class AppHostCompositionTests
+public sealed class AppHostArchitectureTests
 {
     [Fact]
     public void Build_ProductionGraph_IsValid()
