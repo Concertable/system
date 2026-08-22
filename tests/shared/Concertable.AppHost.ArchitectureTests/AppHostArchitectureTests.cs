@@ -1,4 +1,4 @@
-using Concertable.Composition.Testing;
+using Concertable.Testing.Architecture;
 using Xunit;
 
 namespace Concertable.AppHost.ArchitectureTests;

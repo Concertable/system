@@ -14,6 +14,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Concertable.AppHost\Concertable.AppHost.csproj" />
-    <ProjectReference Include="..\..\Concertable.Shared\tests\Concertable.Composition.Testing\Concertable.Composition.Testing.csproj" />
+    <ProjectReference Include="..\..\Concertable.Shared\tests\Concertable.Testing.Architecture\Concertable.Testing.Architecture.csproj" />
   </ItemGroup>
 </Project>
