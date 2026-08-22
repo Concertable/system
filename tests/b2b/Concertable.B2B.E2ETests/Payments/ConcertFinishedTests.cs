@@ -1,6 +1,6 @@
+using System.Net;
 using Concertable.B2B.Concert.Api.Responses;
 using Concertable.B2B.Workers.Functions;
-using Concertable.B2B.Concert.Domain.Lifecycle;
 using Concertable.Testing;
 using Xunit;
 
@@ -9,33 +9,39 @@ namespace Concertable.B2B.E2ETests.Payments;
 [Collection("E2E")]
 public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
 {
-    public async Task InitializeAsync() => await fixture.ResetAsync();
+    private HttpClient venueManagerClient = null!;
+
+    public async Task InitializeAsync()
+    {
+        await fixture.ResetAsync();
+        venueManagerClient = await fixture.CreateAuthenticatedClientAsync(fixture.SeedState.VenueManager1.Email);
+    }
 
     public Task DisposeAsync() => Task.CompletedTask;
 
     [Fact]
-    public async Task ShouldCompleteBooking_WhenFlatFeeConcertFinishes()
+    public async Task ShouldCompleteConcert_WhenFlatFeeConcertFinishes()
     {
         // Act
         await TriggerConcertFinishedFunctionAsync();
 
         // Assert
         await fixture.Polling.UntilAsync(
-            () => fixture.DbFixture.Application.GetStateByIdAsync(fixture.SeedState.PastFlatFeeApp.Id),
-            state => state == (int)LifecycleState.Complete,
+            () => GetConcertByApplicationAsync(fixture.SeedState.PastFlatFeeApp.Id),
+            concert => concert.Actions.Invoice is not null,
             timeout: TimeSpan.FromSeconds(30));
     }
 
     [Fact]
-    public async Task ShouldCompleteBooking_WhenVenueHireConcertFinishes()
+    public async Task ShouldCompleteConcert_WhenVenueHireConcertFinishes()
     {
         // Act
         await TriggerConcertFinishedFunctionAsync();
 
         // Assert
         await fixture.Polling.UntilAsync(
-            () => fixture.DbFixture.Application.GetStateByIdAsync(fixture.SeedState.PastVenueHireApp.Id),
-            state => state == (int)LifecycleState.Complete,
+            () => GetConcertByApplicationAsync(fixture.SeedState.PastVenueHireApp.Id),
+            concert => concert.Actions.Invoice is not null,
             timeout: TimeSpan.FromSeconds(30));
     }
 
@@ -112,4 +118,13 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
 
     private Task TriggerConcertFinishedFunctionAsync() =>
         fixture.Workers.TriggerAsync(nameof(ConcertFinishedFunction));
+
+    private async Task<MyDetailsResponse> GetConcertByApplicationAsync(int applicationId)
+    {
+        var response = await venueManagerClient.GetAsync($"/api/concert/application/{applicationId}");
+        await response.ShouldBe(HttpStatusCode.OK);
+        var concert = await response.Content.ReadAsync<MyDetailsResponse>();
+        Assert.NotNull(concert);
+        return concert;
+    }
 }
