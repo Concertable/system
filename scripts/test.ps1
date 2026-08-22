@@ -132,9 +132,9 @@ function Show-Usage {
     Write-Host "  Usage: ./scripts/test.ps1 <command> [filter]" -ForegroundColor White
     Write-Host ""
     Write-Host "  Commands:" -ForegroundColor DarkGray
-    Write-Host "    all           Run unit + composition + integration + e2e, then a combined PASS/FAIL summary"
+    Write-Host "    all           Run unit + architecture + integration + e2e, then a combined PASS/FAIL summary"
     Write-Host "    unit [name]   Run unit tests        (optionally filter projects by name, e.g. b2b, concert)"
-    Write-Host "    composition   Run composition-validation tests (optionally filter projects by name)"
+    Write-Host "    architecture  Run architecture tests (host-graph + ArchUnit) (optionally filter projects by name)"
     Write-Host "    integration   Run integration tests (optionally filter projects by name)"
     Write-Host "    e2e [name]    Run E2E tests (API+UI) (headless; full logs to test.last.log)"
     Write-Host "    list          Show this help"
@@ -149,13 +149,13 @@ switch ($cmd) {
         & $localPlatform prepare
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         $unit = Run-Suite 'Unit'        '\.UnitTests$'        $null
-        $composition = Run-Suite 'Composition' '\.CompositionTests$' $null
+        $architecture = Run-Suite 'Architecture' '\.ArchitectureTests$' $null
         $intg = Run-Suite 'Integration' '\.IntegrationTests$' $null
         $env:HEADLESS = 'true'
         $e2e = Run-Suite 'E2E' '\.E2ETests(\.Ui)?$' $null
         Remove-Item Env:\HEADLESS -ErrorAction SilentlyContinue
-        Show-Summary @($unit, $composition, $intg, $e2e)
-        if (-not ($unit.Ok -and $composition.Ok -and $intg.Ok -and $e2e.Ok)) {
+        Show-Summary @($unit, $architecture, $intg, $e2e)
+        if (-not ($unit.Ok -and $architecture.Ok -and $intg.Ok -and $e2e.Ok)) {
             Write-Host "  TESTS FAILED -- at least one suite did not pass." -ForegroundColor Red
             exit 1
         }
@@ -169,10 +169,10 @@ switch ($cmd) {
         Show-Summary @($r)
         exit $(if ($r.Ok) { 0 } else { 1 })
     }
-    "composition" {
+    "architecture" {
         & $localPlatform prepare
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-        $r = Run-Suite 'Composition' '\.CompositionTests$' ($rest | Select-Object -First 1)
+        $r = Run-Suite 'Architecture' '\.ArchitectureTests$' ($rest | Select-Object -First 1)
         Show-Summary @($r)
         exit $(if ($r.Ok) { 0 } else { 1 })
     }
