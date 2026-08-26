@@ -1,0 +1,6 @@
+<Project>
+
+  <Import Project="$(MSBuildThisFileDirectory)../PlatformSourcePackages.targets"
+          Condition="Exists('$(MSBuildThisFileDirectory)../PlatformSourcePackages.targets')" />
+
+</Project>
