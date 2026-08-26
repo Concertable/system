@@ -28,6 +28,7 @@ using Concertable.Seed.Infrastructure;
 using Concertable.Seed.Shared.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Concertable.Shared.Blob.Infrastructure.Extensions;
+using Concertable.Shared.Imaging.Infrastructure.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -178,6 +179,7 @@ public sealed class AppFixture : IAsyncLifetime
                 services.AddScoped<SeedState>();
                 services.AddSingleton(new BlobServiceClient(blobConnectionString));
                 services.AddSharedBlob(b2bSeedConfig);
+                services.AddSharedImaging();
                 services.AddUserModule(b2bSeedConfig);
                 services.AddTenantModule(b2bSeedConfig);
                 services.AddArtistModule(b2bSeedConfig);
