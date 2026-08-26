@@ -1,5 +1,9 @@
 <Project>
 
+  <!-- This file shadows api/Directory.Build.targets for everything under api/tests/ — MSBuild imports only
+       the nearest Directory.Build.targets — so it must re-import what that file supplies. -->
+  <Import Project="$(MSBuildThisFileDirectory)../TestConventions.targets"
+          Condition="Exists('$(MSBuildThisFileDirectory)../TestConventions.targets')" />
   <Import Project="$(MSBuildThisFileDirectory)../PlatformSourcePackages.targets"
           Condition="Exists('$(MSBuildThisFileDirectory)../PlatformSourcePackages.targets')" />
 
