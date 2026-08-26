@@ -28,6 +28,8 @@ using Concertable.Seed.Infrastructure;
 using Concertable.Seed.Shared.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Concertable.Shared.Blob.Infrastructure.Extensions;
+using Concertable.Shared.Email.Infrastructure.Extensions;
+using Concertable.Shared.Geocoding.Infrastructure.Extensions;
 using Concertable.Shared.Imaging.Infrastructure.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -152,6 +154,7 @@ public sealed class AppFixture : IAsyncLifetime
                 ["BlobStorage:ContainerName"] = "images",
                 ["ExternalServices:UseRealBlob"] = "false",
                 ["Legal:PlatformTermsVersion"] = "2026-07",
+                ["GoogleApiKey"] = builder.Configuration["GoogleApiKey"],
             })
             .Build();
 
@@ -180,6 +183,8 @@ public sealed class AppFixture : IAsyncLifetime
                 services.AddSingleton(new BlobServiceClient(blobConnectionString));
                 services.AddSharedBlob(b2bSeedConfig);
                 services.AddSharedImaging();
+                services.AddSharedGeocoding();
+                services.AddSharedEmail(b2bSeedConfig);
                 services.AddUserModule(b2bSeedConfig);
                 services.AddTenantModule(b2bSeedConfig);
                 services.AddArtistModule(b2bSeedConfig);
