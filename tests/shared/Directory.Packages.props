@@ -2,9 +2,11 @@
 
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <ConcertablePlatformVersion>0.1.0-alpha.0.1206</ConcertablePlatformVersion>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageVersion Include="Concertable.Testing.Architecture" Version="$(ConcertablePlatformVersion)" />
     <PackageVersion Include="coverlet.collector" Version="6.0.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageVersion Include="xunit" Version="2.9.3" />
