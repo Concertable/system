@@ -6,9 +6,15 @@
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <UseFleetSourceProjects Condition="'$(UseFleetSourceProjects)' == ''">true</UseFleetSourceProjects>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Concertable.Payment.TestKit" />
+    <PackageReference Include="Concertable.B2B.TestKit" />
+    <PackageReference Include="Concertable.Auth.Hosting" />
+    <PackageReference Include="Concertable.B2B.Hosting" />
+    <PackageReference Include="Concertable.Payment.Hosting" />
     <PackageReference Include="Aspire.Hosting.Testing" />
     <PackageReference Include="coverlet.collector" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
@@ -19,26 +25,13 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Concertable.Shared\tests\Concertable.Testing.E2E\Concertable.Testing.E2E.csproj" />
     <ProjectReference Include="..\..\..\..\Concertable.Payment\tests\E2ETests\Concertable.Payment.E2ETests.Helpers\Concertable.Payment.E2ETests.Helpers.csproj" />
-    <ProjectReference Include="..\..\..\..\Concertable.Payment\tests\E2ETests\Concertable.Payment.E2ETests.Stripe\Concertable.Payment.E2ETests.Stripe.csproj" />
     <ProjectReference Include="..\..\..\..\Concertable.Search\tests\E2ETests\Concertable.Search.E2ETests.Helpers\Concertable.Search.E2ETests.Helpers.csproj" />
-    <ProjectReference Include="..\..\..\src\Concertable.B2B.AppHost\Concertable.B2B.AppHost.csproj" />
-    <ProjectReference Include="..\..\..\src\Concertable.B2B.Workers\Concertable.B2B.Workers.csproj" />
-    <ProjectReference Include="..\..\..\..\Concertable.Shared\src\Seed\Concertable.Seed.Shared\Concertable.Seed.Shared.csproj" />
-    <ProjectReference Include="..\..\..\..\Concertable.Shared\src\Seed\Concertable.Seed.Infrastructure\Concertable.Seed.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\..\src\Seed\Concertable.B2B.Seed.Infrastructure\Concertable.B2B.Seed.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\..\src\Concertable.B2B.Web\Concertable.B2B.Web.csproj" />
-    <ProjectReference Include="..\..\..\src\Modules\User\Concertable.B2B.User.Infrastructure\Concertable.B2B.User.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\..\src\Modules\Admin\Concertable.B2B.Admin.Infrastructure\Concertable.B2B.Admin.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\..\src\Modules\Artist\Concertable.B2B.Artist.Infrastructure\Concertable.B2B.Artist.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\..\src\Modules\Venue\Concertable.B2B.Venue.Infrastructure\Concertable.B2B.Venue.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\..\src\Modules\Deal\Concertable.B2B.Deal.Infrastructure\Concertable.B2B.Deal.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\..\src\Modules\Concert\Concertable.B2B.Concert.Infrastructure\Concertable.B2B.Concert.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\..\src\Modules\Conversations\Concertable.B2B.Conversations.Infrastructure\Concertable.B2B.Conversations.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\..\..\Concertable.Shared\src\Concertable.Shared.Blob\Concertable.Shared.Blob.Infrastructure\Concertable.Shared.Blob.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\..\tests\Concertable.Fleet.E2E.Source\Concertable.Fleet.E2E.Source.csproj"
+                      Condition="'$(UseFleetSourceProjects)' == 'true'" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\..\..\src\Concertable.B2B.Web\appsettings.E2E.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="appsettings.E2E.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
@@ -46,7 +39,6 @@
     <Using Include="Concertable.Testing" />
     <Using Include="Concertable.Testing.E2E" />
     <Using Include="Concertable.Payment.E2ETests.Helpers" />
-    <Using Include="Concertable.Payment.E2ETests.Stripe" />
   </ItemGroup>
 
 </Project>

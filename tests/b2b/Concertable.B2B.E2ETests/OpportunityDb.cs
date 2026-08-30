@@ -1,19 +1,16 @@
-using System.Data;
-using Dapper;
+using Concertable.B2B.TestKit;
 
 namespace Concertable.B2B.E2ETests;
 
 public sealed class OpportunityDb
 {
-    private readonly IDbConnection connection;
+    private readonly B2BTestClient client;
 
-    public OpportunityDb(IDbConnection connection)
+    public OpportunityDb(B2BTestClient client)
     {
-        this.connection = connection;
+        this.client = client;
     }
 
     public Task<int> GetNewestAsync(int venueId) =>
-        connection.QuerySingleAsync<int>(
-            "SELECT MAX(Id) FROM concert.Opportunities WHERE VenueId = @venueId",
-            new { venueId });
+        client.GetNewestOpportunityIdAsync(venueId);
 }

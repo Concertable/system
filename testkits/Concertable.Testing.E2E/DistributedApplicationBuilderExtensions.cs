@@ -7,31 +7,30 @@ using Microsoft.Extensions.Configuration;
 
 namespace Concertable.Testing.E2E;
 
-internal static class DistributedApplicationBuilderExtensions
+public static class DistributedApplicationBuilderExtensions
 {
-    internal const string B2BServiceAuthSecret = "concertable-e2e-b2b-service-secret";
-    internal const string CustomerServiceAuthSecret = "concertable-e2e-customer-service-secret";
     private const string AuthServiceAuthSecret = "concertable-e2e-auth-service-secret";
 
     internal static void PinPaymentWeb(
         this IDistributedApplicationTestingBuilder builder,
-        string paymentBaseUrl,
-        string authBaseUrl,
+        FleetRun run,
+        IFleetProjectProvider projects,
         StripeCustomerResolver stripeCustomers)
     {
         var paymentWeb = builder.Resources
             .OfType<ProjectResource>()
             .Single(r => r.Name == PaymentConstants.WebResource);
 
-        paymentWeb.LaunchAs(new Projects.Concertable_Payment_E2ETests_Web());
+        paymentWeb.LaunchAs(projects.PaymentWeb);
 
         var stripeSecretKey = builder.Configuration["Stripe:SecretKey"];
 
         paymentWeb.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
         {
             context.EnvironmentVariables["ASPNETCORE_ENVIRONMENT"] = "E2E";
-            context.EnvironmentVariables["ASPNETCORE_URLS"] = paymentBaseUrl;
-            context.EnvironmentVariables["Auth__Authority"] = authBaseUrl;
+            context.EnvironmentVariables["ASPNETCORE_URLS"] = run.Profile.Endpoints.PaymentApi;
+            context.EnvironmentVariables["Auth__Authority"] = run.Profile.Endpoints.Auth;
+            context.EnvironmentVariables["E2E__AdminKey"] = run.AdminKey;
             AddStripeCustomerConfiguration(context, stripeCustomers);
             if (!string.IsNullOrEmpty(stripeSecretKey))
                 context.EnvironmentVariables["Stripe__SecretKey"] = stripeSecretKey;
@@ -40,7 +39,7 @@ internal static class DistributedApplicationBuilderExtensions
 
     internal static void PinAuthService(
         this IDistributedApplicationTestingBuilder builder,
-        string authBaseUrl)
+        FleetRun run)
     {
         var auth = builder.Resources
             .OfType<ProjectResource>()
@@ -49,23 +48,24 @@ internal static class DistributedApplicationBuilderExtensions
         auth.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
         {
             context.EnvironmentVariables["ASPNETCORE_ENVIRONMENT"] = "E2E";
-            context.EnvironmentVariables["ASPNETCORE_URLS"] = authBaseUrl;
-            context.EnvironmentVariables["Auth__Authority"] = authBaseUrl;
-            context.EnvironmentVariables["ServiceAuth__B2BClientSecret"] = B2BServiceAuthSecret;
-            context.EnvironmentVariables["ServiceAuth__CustomerClientSecret"] = CustomerServiceAuthSecret;
+            context.EnvironmentVariables["ASPNETCORE_URLS"] = run.Profile.Endpoints.Auth;
+            context.EnvironmentVariables["Auth__Authority"] = run.Profile.Endpoints.Auth;
+            context.EnvironmentVariables["ServiceAuth__B2BClientSecret"] = FleetRun.B2BServiceAuthSecret;
+            context.EnvironmentVariables["ServiceAuth__CustomerClientSecret"] = FleetRun.CustomerServiceAuthSecret;
             context.EnvironmentVariables["ServiceAuth__AuthClientSecret"] = AuthServiceAuthSecret;
         }));
     }
 
     internal static void PinPaymentWorkers(
         this IDistributedApplicationTestingBuilder builder,
+        IFleetProjectProvider projects,
         StripeCustomerResolver stripeCustomers)
     {
         var paymentWorkers = builder.Resources
             .OfType<ProjectResource>()
             .Single(r => r.Name == PaymentConstants.WorkersResource);
 
-        paymentWorkers.LaunchAs(new Projects.Concertable_Payment_E2ETests_Workers());
+        paymentWorkers.LaunchAs(projects.PaymentWorkers);
 
         paymentWorkers.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
         {
@@ -91,7 +91,7 @@ internal static class DistributedApplicationBuilderExtensions
 
     internal static void PinStripeCli(
         this IDistributedApplicationTestingBuilder builder,
-        string paymentBaseUrl)
+        FleetRun run)
     {
         var stripeCli = builder.Resources
             .SingleOrDefault(r => r.Name == PaymentConstants.StripeCliResource);
@@ -100,7 +100,7 @@ internal static class DistributedApplicationBuilderExtensions
 
         var apiKey = builder.Configuration["Stripe:SecretKey"]
             ?? throw new InvalidOperationException("Stripe:SecretKey is not configured.");
-        var forwardTo = $"{paymentBaseUrl}/api/Webhook";
+        var forwardTo = $"{run.Profile.Endpoints.PaymentApi}/api/Webhook";
 
         foreach (var annotation in stripeCli.Annotations.OfType<CommandLineArgsCallbackAnnotation>().ToList())
             stripeCli.Annotations.Remove(annotation);

@@ -1,19 +1,16 @@
-using System.Data;
-using Dapper;
+using Concertable.B2B.TestKit;
 
 namespace Concertable.B2B.E2ETests;
 
 public sealed class ApplicationDb
 {
-    private readonly IDbConnection connection;
+    private readonly B2BTestClient client;
 
-    public ApplicationDb(IDbConnection connection)
+    public ApplicationDb(B2BTestClient client)
     {
-        this.connection = connection;
+        this.client = client;
     }
 
     public Task<int> GetStateByIdAsync(int applicationId) =>
-        connection.QuerySingleAsync<int>(
-            "SELECT State FROM concert.Applications WHERE Id = @applicationId",
-            new { applicationId });
+        client.GetApplicationStateAsync(applicationId);
 }

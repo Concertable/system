@@ -1,0 +1,22 @@
+using Concertable.Testing.E2E;
+using Aspire.Hosting.Testing;
+
+namespace Concertable.Fleet.E2E.Source;
+
+public sealed class SourceFleetProjectProvider : IFleetProjectProvider
+{
+    public Task<IDistributedApplicationTestingBuilder> CreateBuilderAsync(
+        FleetSurface surface,
+        CancellationToken cancellationToken = default) =>
+        surface switch
+        {
+            FleetSurface.B2B => DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_B2B_AppHost>(cancellationToken),
+            FleetSurface.Customer => DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_Customer_AppHost>(cancellationToken),
+            _ => throw new ArgumentOutOfRangeException(nameof(surface), surface, null),
+        };
+
+    public Aspire.Hosting.IProjectMetadata B2BWeb { get; } = new Projects.Concertable_B2B_E2ETests_Web();
+    public Aspire.Hosting.IProjectMetadata CustomerWeb { get; } = new Projects.Concertable_Customer_E2ETests_Web();
+    public Aspire.Hosting.IProjectMetadata PaymentWeb { get; } = new Projects.Concertable_Payment_E2ETests_Web();
+    public Aspire.Hosting.IProjectMetadata PaymentWorkers { get; } = new Projects.Concertable_Payment_E2ETests_Workers();
+}
