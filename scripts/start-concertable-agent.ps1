@@ -15,9 +15,13 @@ $repositoryRoot = Split-Path -Parent $PSScriptRoot
     -StandardsScope Concertable
 
 $command = $Harness.ToLowerInvariant()
-$executable = @(Get-Command $command -All -ErrorAction Stop |
+$executable = @(Get-Command $command -All -ErrorAction SilentlyContinue |
     Where-Object { $_.CommandType -notin @('Function', 'Alias') } |
     Select-Object -First 1).Source
+if (-not $executable -and $Harness -eq 'Codex') {
+    $bundled = Join-Path $env:USERPROFILE '.codex\plugins\.plugin-appserver\codex.exe'
+    if (Test-Path -LiteralPath $bundled) { $executable = $bundled }
+}
 if (-not $executable) {
     throw "$Harness CLI was not found after standards provisioning."
 }
