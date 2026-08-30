@@ -1,55 +1,55 @@
 [CmdletBinding()]
 param(
     [ValidateSet('All', 'Claude', 'Codex')][string]$Harness = 'All',
-    [string]$AgentStandardsSource = 'Concertable/agent-standards',
-    [string]$DotnetStandardsSource = 'tomjseery/dotagents',
-    [string]$ReactStandardsSource = 'tomjseery/react-agents',
+    [ValidateSet('Generic', 'Concertable')][string]$StandardsScope = 'Generic',
+    [string]$AgentStandardsSource,
+    [string]$DotnetStandardsSource,
+    [string]$ReactStandardsSource,
     [string]$Repository,
     [switch]$VerifyOnly
 )
 
 $ErrorActionPreference = 'Stop'
 
+# This script is vendored as a single executable bootstrap. It must not depend on files beside it:
+# a consumer needs it to install or refresh the plugin that owns every automatic hook.
 $marketplaces = @(
-    [pscustomobject]@{
-        Name = 'agent-standards'
-        Source = $AgentStandardsSource
-        Plugins = @('agent-process', 'dotnet', 'react')
-    }
-    [pscustomobject]@{
-        Name = 'dotagents'
-        Source = $DotnetStandardsSource
-        Plugins = @('dotnet-standards')
-    }
-    [pscustomobject]@{
-        Name = 'react-agents'
-        Source = $ReactStandardsSource
-        Plugins = @('react-standards')
-    }
+    [pscustomobject]@{ Name = 'dotagents'; Source = $DotnetStandardsSource; Plugins = @('dotnet-standards') }
+    [pscustomobject]@{ Name = 'react-agents'; Source = $ReactStandardsSource; Plugins = @('react-standards') }
 )
+if ($StandardsScope -eq 'Concertable') {
+    $marketplaces = @(
+        [pscustomobject]@{ Name = 'agent-standards'; Source = $AgentStandardsSource; Plugins = @('concertable', 'dotnet', 'react') }
+    ) + $marketplaces
+}
 
 function Invoke-Checked([string]$Executable, [string[]]$Arguments) {
     & $Executable @Arguments
-    if ($LASTEXITCODE -ne 0) {
-        throw "$Executable $($Arguments -join ' ') failed with exit code $LASTEXITCODE."
-    }
+    if ($LASTEXITCODE -ne 0) { throw "$Executable $($Arguments -join ' ') failed with exit code $LASTEXITCODE." }
 }
 
 function Get-CodexExecutable {
-    $command = Get-Command codex -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ($command) { return $command.Source }
-
+    $command = @(Get-Command codex -All -ErrorAction SilentlyContinue |
+        Where-Object { $_.CommandType -notin @('Function', 'Alias') } |
+        Select-Object -First 1)
+    if ($command.Count -gt 0) { return $command[0].Source }
     $bundled = Join-Path $env:USERPROFILE '.codex\plugins\.plugin-appserver\codex.exe'
     if (Test-Path -LiteralPath $bundled) { return $bundled }
+    throw 'Codex CLI was not found on PATH as an actual executable, or in the Codex desktop plugin runtime.'
+}
 
-    throw 'Codex CLI was not found on PATH or in the Codex desktop plugin runtime.'
+function Get-ClaudeExecutable {
+    $command = @(Get-Command claude -All -ErrorAction SilentlyContinue |
+        Where-Object { $_.CommandType -notin @('Function', 'Alias') } |
+        Select-Object -First 1)
+    if ($command.Count -gt 0) { return $command[0].Source }
+    throw 'Claude Code CLI was not found on PATH as an actual executable.'
 }
 
 function Install-ClaudeStandards {
-    $claude = (Get-Command claude -ErrorAction Stop | Select-Object -First 1).Source
+    $claude = Get-ClaudeExecutable
     $configured = (& $claude plugin marketplace list | Out-String)
     if ($LASTEXITCODE -ne 0) { throw 'Could not list Claude marketplaces.' }
-
     if (-not $VerifyOnly) {
         foreach ($marketplace in $marketplaces) {
             $pattern = "(?m)^\s+\S+\s+$([regex]::Escape($marketplace.Name))\s*$"
@@ -59,7 +59,6 @@ function Install-ClaudeStandards {
                 Invoke-Checked $claude @('plugin', 'marketplace', 'add', $marketplace.Source, '--scope', 'user')
             }
         }
-
         $installed = @(& $claude plugin list --json | ConvertFrom-Json)
         foreach ($marketplace in $marketplaces) {
             foreach ($plugin in $marketplace.Plugins) {
@@ -72,7 +71,6 @@ function Install-ClaudeStandards {
             }
         }
     }
-
     $actual = @(& $claude plugin list --json | ConvertFrom-Json)
     foreach ($marketplace in $marketplaces) {
         foreach ($plugin in $marketplace.Plugins) {
@@ -82,14 +80,12 @@ function Install-ClaudeStandards {
             }
         }
     }
-    Write-Host 'Claude standards verified: 5/5 plugins installed and enabled at user scope.'
 }
 
 function Install-CodexStandards {
     $codex = Get-CodexExecutable
     $configured = (& $codex plugin marketplace list --json | ConvertFrom-Json).marketplaces
     if ($LASTEXITCODE -ne 0) { throw 'Could not list Codex marketplaces.' }
-
     if (-not $VerifyOnly) {
         foreach ($marketplace in $marketplaces) {
             $existing = $configured | Where-Object { $_.name -eq $marketplace.Name }
@@ -101,14 +97,12 @@ function Install-CodexStandards {
                 Invoke-Checked $codex @('plugin', 'marketplace', 'add', $marketplace.Source)
             }
         }
-
         foreach ($marketplace in $marketplaces) {
             foreach ($plugin in $marketplace.Plugins) {
                 Invoke-Checked $codex @('plugin', 'add', "$plugin@$($marketplace.Name)")
             }
         }
     }
-
     $actual = @((& $codex plugin list --json | ConvertFrom-Json).installed)
     foreach ($marketplace in $marketplaces) {
         foreach ($plugin in $marketplace.Plugins) {
@@ -118,7 +112,6 @@ function Install-CodexStandards {
             }
         }
     }
-    Write-Host 'Codex standards verified: 5/5 plugins installed and enabled.'
 }
 
 if ($Harness -in @('All', 'Claude')) { Install-ClaudeStandards }
@@ -126,22 +119,16 @@ if ($Harness -in @('All', 'Codex')) { Install-CodexStandards }
 
 if ($Repository) {
     $repositoryRoot = (Resolve-Path -LiteralPath $Repository).Path
-    if (-not (Test-Path -LiteralPath (Join-Path $repositoryRoot '.agents\skill-routes.json'))) {
-        throw "$repositoryRoot has no .agents/skill-routes.json to verify."
-    }
-    $router = Join-Path (Split-Path -Parent $PSScriptRoot) '.agents\hooks\skill_router.py'
+    $router = Join-Path $repositoryRoot '.agents\hooks\skill_router.py'
+    if (-not (Test-Path -LiteralPath $router)) { throw "$repositoryRoot has no local skill router to verify." }
     $python = (Get-Command python -ErrorAction Stop | Select-Object -First 1).Source
     Push-Location $repositoryRoot
     try {
-        if ($Harness -in @('All', 'Claude')) {
-            Invoke-Checked $python @('-B', $router, '--verify-install', 'claude')
-        }
-        if ($Harness -in @('All', 'Codex')) {
-            Invoke-Checked $python @('-B', $router, '--verify-install', 'codex')
-        }
+        if ($Harness -in @('All', 'Claude')) { Invoke-Checked $python @('-B', $router, '--verify-install', 'claude') }
+        if ($Harness -in @('All', 'Codex')) { Invoke-Checked $python @('-B', $router, '--verify-install', 'codex') }
     } finally {
         Pop-Location
     }
 }
 
-Write-Host 'Start a new Claude or Codex session to load the refreshed skill catalogue.'
+Write-Host "Standards provisioning verified for $Harness ($StandardsScope scope). Start a new session to load the refreshed catalogue."
