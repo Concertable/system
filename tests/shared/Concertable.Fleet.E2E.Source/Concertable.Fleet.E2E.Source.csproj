@@ -14,9 +14,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Concertable.Fleet.E2E\Concertable.Fleet.E2E.csproj" IsAspireProjectResource="false" />
-    <ProjectReference Include="..\..\Concertable.B2B\src\Concertable.B2B.AppHost\Concertable.B2B.AppHost.csproj" />
+    <ProjectReference Include="..\..\Concertable.B2B\src\Concertable.B2B.AppHost\Concertable.B2B.AppHost.csproj" IsAspireProjectResource="false" />
     <ProjectReference Include="..\..\Concertable.B2B\tests\E2ETests\Concertable.B2B.E2ETests.Web\Concertable.B2B.E2ETests.Web.csproj" />
-    <ProjectReference Include="..\..\Concertable.Customer\src\Concertable.Customer.AppHost\Concertable.Customer.AppHost.csproj" />
+    <ProjectReference Include="..\..\Concertable.Customer\src\Concertable.Customer.AppHost\Concertable.Customer.AppHost.csproj" IsAspireProjectResource="false" />
     <ProjectReference Include="..\..\Concertable.Customer\tests\E2ETests\Concertable.Customer.E2ETests.Web\Concertable.Customer.E2ETests.Web.csproj" />
     <ProjectReference Include="..\..\Concertable.Payment\tests\E2ETests\Concertable.Payment.E2ETests.Web\Concertable.Payment.E2ETests.Web.csproj" />
     <ProjectReference Include="..\..\Concertable.Payment\tests\E2ETests\Concertable.Payment.E2ETests.Workers\Concertable.Payment.E2ETests.Workers.csproj" />
