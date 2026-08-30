@@ -1,4 +1,4 @@
-namespace Concertable.Testing.E2E;
+namespace Concertable.Fleet.E2E;
 
 public static class FleetProjectProviders
 {

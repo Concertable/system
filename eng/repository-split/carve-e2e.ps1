@@ -22,6 +22,7 @@ $paths = @(
     "api\BannedSymbols.txt",
     "api\BannedSymbols.UnitTests.txt",
     "api\tests\Concertable.Fleet.E2E.slnx",
+    "api\tests\Concertable.Fleet.E2E",
     "api\tests\nuget.config",
     "api\Concertable.Shared\Directory.Build.props",
     "api\Concertable.Shared\Directory.Packages.props",
