@@ -85,7 +85,8 @@ function Initialize-LocalPlatform {
         '--output', $packagesRoot,
         '--no-restore',
         '-p:UseLocalPlatformSources=true',
-        "-p:MinVerVersionOverride=$version"
+        "-p:MinVerVersionOverride=$version",
+        "-p:PackageVersion=$version"
     )
 
     $packableProjects = Get-ChildItem -LiteralPath (Join-Path $repoRoot 'api') -Recurse -Filter '*.csproj' |
