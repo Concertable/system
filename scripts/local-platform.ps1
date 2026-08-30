@@ -133,6 +133,18 @@ function Assert-DataAccessAssembly([string]$Project, [string]$Version, [string[]
 
     $projectPath = if ([System.IO.Path]::IsPathRooted($Project)) { $Project } else { Join-Path $repoRoot $Project }
     $projectDirectory = Split-Path ([System.IO.Path]::GetFullPath($projectPath)) -Parent
+    $assetsPath = Join-Path $projectDirectory 'obj/project.assets.json'
+    if (-not (Test-Path -LiteralPath $assetsPath)) {
+        throw "Expected restored assets at $assetsPath."
+    }
+
+    $assets = Get-Content -LiteralPath $assetsPath -Raw | ConvertFrom-Json
+    $dataAccessLibraries = @($assets.libraries.PSObject.Properties.Name | Where-Object { $_ -like 'Concertable.DataAccess.Infrastructure/*' })
+    if ($dataAccessLibraries.Count -eq 0) {
+        Write-Host "Skipped Concertable.DataAccess.Infrastructure.dll version check because $projectName does not resolve that package."
+        return
+    }
+
     $configuration = Get-Configuration $Arguments
     $assemblies = @(Get-ChildItem -LiteralPath (Join-Path $projectDirectory "bin/$configuration") -Recurse -Filter 'Concertable.DataAccess.Infrastructure.dll')
 
