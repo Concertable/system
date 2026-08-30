@@ -76,13 +76,15 @@ function Initialize-LocalPlatform {
     $solution = Join-Path $repoRoot 'api/Concertable.slnx'
     Invoke-DotNet @(
         'restore', $solution,
-        '--disable-parallel'
+        '--disable-parallel',
+        '-p:UseLocalPlatformSources=true'
     )
     Invoke-DotNet @(
         'pack', $solution,
         '--configuration', 'Release',
         '--output', $packagesRoot,
         '--no-restore',
+        '-p:UseLocalPlatformSources=true',
         "-p:MinVerVersionOverride=$version"
     )
 
