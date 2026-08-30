@@ -210,19 +210,20 @@ function AssertTarget {
 }
 
 function AssertLedger {
-    param([int] $Number, [string] $Head, [string] $DefaultRef)
-    $paths = (Gh @(
-        'api', '--paginate', "repos/{owner}/{repo}/pulls/$Number/files",
-        '--jq', '.[].filename'
-    )).Text -split "\r?\n"
-    $ledgers = @($paths | Where-Object { $_ -match '^plans/.+_PROGRESS\.md$' })
-    if ($ledgers.Count -eq 0) { throw "Plan-managed close requires a progress ledger in PR #$Number." }
-    foreach ($ledger in $ledgers) {
-        $headResult = Git @('cat-file', '-e', "$($Head):$ledger") -AllowFailure
-        $mainResult = Git @('cat-file', '-e', "$($DefaultRef):$ledger") -AllowFailure
-        if ($headResult.ExitCode -ne 0 -or $mainResult.ExitCode -ne 0) {
-            throw "Ledger is not durable at the PR head and $($DefaultRef): $ledger"
-        }
+    param([object] $Item)
+    $plans = Join-Path (Canonical $Item.Path) 'plans'
+    if (-not (Test-Path -LiteralPath $plans)) {
+        throw "Plan-managed close requires the owning worktree's plans directory: $plans"
+    }
+    $branchPattern = '(?m)^- Branch:\s*`?' + [regex]::Escape($Item.Branch) + '`?\s*$'
+    $worktreePattern = '(?m)^- Worktree:\s*`?' + [regex]::Escape((Canonical $Item.Path)) + '`?\s*$'
+    $matches = @(Get-ChildItem -LiteralPath $plans -Recurse -File -Filter '*_PROGRESS.md' |
+        Where-Object {
+            $text = [IO.File]::ReadAllText($_.FullName)
+            $text -match $branchPattern -and $text -match $worktreePattern
+        })
+    if ($matches.Count -ne 1) {
+        throw "Plan-managed close requires exactly one owning ledger for $($Item.Branch) at $($Item.Path); found $($matches.Count)."
     }
 }
 
@@ -366,7 +367,7 @@ function Close {
         throw "Worktree HEAD differs from PR head: $($item.Head) vs $($pr.headRefOid)."
     }
     if (-not (IsAncestor $item.Head $defaultRef)) { throw "PR head is not contained by $defaultRef." }
-    if ($PlanManaged) { AssertLedger $PullRequest $item.Head $defaultRef }
+    if ($PlanManaged) { AssertLedger $item }
     RemoveTarget $item "merged PR #$PullRequest"
 }
 
