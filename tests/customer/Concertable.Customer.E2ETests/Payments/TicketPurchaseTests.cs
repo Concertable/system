@@ -15,8 +15,8 @@ public sealed class TicketPurchaseTests(AppFixture fixture) : IAsyncLifetime
     public async Task ShouldCreateTicket_WhenPaymentSucceeds()
     {
         // Arrange
-        var client = await fixture.CreateAuthenticatedClientAsync(SeedCustomers.CustomerEmail(1));
-        var upcomingConcertId = fixture.Catalog.Concerts.First(c => c.Name == "Upcoming FlatFee Show").ConcertId;
+        var client = await fixture.CreateAuthenticatedClientAsync(fixture.SeedState.Customer1.Email);
+        var upcomingConcertId = fixture.SeedState.UpcomingFlatFeeConcert.Id;
 
         // Act
         var response = await client.PostAsync("/api/Ticket/purchase", new

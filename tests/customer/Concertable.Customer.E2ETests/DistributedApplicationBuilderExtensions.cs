@@ -11,20 +11,19 @@ internal static class DistributedApplicationBuilderExtensions
 {
     public static IDistributedApplicationTestingBuilder AddE2EStack(
         this IDistributedApplicationTestingBuilder builder,
-        string customerApiBaseUrl,
-        string searchApiBaseUrl,
-        string authBaseUrl,
-        string paymentBaseUrl,
+        FleetRun run,
+        IFleetProjectProvider projects,
         StripeCustomerResolver stripeCustomers)
     {
-        builder.PinAuthService(authBaseUrl);
-        builder.PinAuthApi(customerApiBaseUrl);
-        builder.PinWeb(customerApiBaseUrl, authBaseUrl, paymentBaseUrl);
-        builder.AddSearchService(searchApiBaseUrl, authBaseUrl);
-        builder.PinPaymentWeb(paymentBaseUrl, authBaseUrl, stripeCustomers);
-        builder.PinPaymentWorkers(stripeCustomers);
+        var endpoints = run.Profile.Endpoints;
+        builder.PinAuthService(run);
+        builder.PinAuthApi(endpoints.ServiceApi);
+        builder.PinWeb(run, projects);
+        builder.AddSearchService(endpoints.SearchApi, endpoints.Auth);
+        builder.PinPaymentWeb(run, projects, stripeCustomers);
+        builder.PinPaymentWorkers(projects, stripeCustomers);
         builder.AddEphemeralSql();
-        builder.PinStripeCli(paymentBaseUrl);
+        builder.PinStripeCli(run);
         return builder;
     }
 
@@ -44,21 +43,30 @@ internal static class DistributedApplicationBuilderExtensions
 
     private static void PinWeb(
         this IDistributedApplicationTestingBuilder builder,
-        string customerApiBaseUrl,
-        string authBaseUrl,
-        string paymentBaseUrl)
+        FleetRun run,
+        IFleetProjectProvider projects)
     {
         var customerWeb = builder.Resources
             .OfType<ProjectResource>()
             .Single(r => r.Name == CustomerConstants.WebResource);
 
+        customerWeb.LaunchAs(projects.CustomerWeb);
+
         customerWeb.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
         {
             context.EnvironmentVariables["ASPNETCORE_ENVIRONMENT"] = "E2E";
-            context.EnvironmentVariables["ASPNETCORE_URLS"] = customerApiBaseUrl;
-            context.EnvironmentVariables["Auth__Authority"] = authBaseUrl;
-            context.EnvironmentVariables["services__payment-web__https__0"] = paymentBaseUrl;
-            context.EnvironmentVariables["ServiceAuth__ClientSecret"] = Concertable.Testing.E2E.DistributedApplicationBuilderExtensions.CustomerServiceAuthSecret;
+            context.EnvironmentVariables["ASPNETCORE_URLS"] = run.Profile.Endpoints.ServiceApi;
+            context.EnvironmentVariables["Auth__Authority"] = run.Profile.Endpoints.Auth;
+            context.EnvironmentVariables["services__payment-web__https__0"] = run.Profile.Endpoints.PaymentApi;
+            context.EnvironmentVariables["ServiceAuth__ClientSecret"] = FleetRun.CustomerServiceAuthSecret;
+            context.EnvironmentVariables["E2E__AdminKey"] = run.AdminKey;
         }));
+    }
+
+    private static void LaunchAs(this ProjectResource resource, IProjectMetadata host)
+    {
+        foreach (var metadata in resource.Annotations.OfType<IProjectMetadata>().ToList())
+            resource.Annotations.Remove(metadata);
+        resource.Annotations.Add(host);
     }
 }
