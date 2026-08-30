@@ -1,7 +1,7 @@
 using Aspire.Hosting;
 using Aspire.Hosting.Testing;
 
-namespace Concertable.Testing.E2E;
+namespace Concertable.Fleet.E2E;
 
 public interface IFleetProjectProvider
 {
