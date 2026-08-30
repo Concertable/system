@@ -13,6 +13,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- The executable AppHost references are private so their published Concertable package
+         closures cannot leak into E2E consumers. Keep their external Aspire runtime extensions
+         explicit here because the testing host invokes those AppHost entry points in-process. -->
+    <PackageReference Include="Aspire.Hosting.DevTunnels" />
+    <PackageReference Include="Aspire.Hosting.NodeJs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Concertable.Fleet.E2E\Concertable.Fleet.E2E.csproj" IsAspireProjectResource="false" />
     <ProjectReference Include="..\..\Concertable.B2B\src\Concertable.B2B.AppHost\Concertable.B2B.AppHost.csproj"
                       IsAspireProjectResource="false"
