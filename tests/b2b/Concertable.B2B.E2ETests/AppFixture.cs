@@ -52,6 +52,7 @@ public sealed class AppFixture : IAsyncLifetime
     private readonly IConfiguration configuration;
     private readonly TestTokenMinter tokenMinter;
     private readonly string authUrl;
+    private readonly SemaphoreSlim resetGate = new(1, 1);
 
     public const string TestPaymentMethodId = "pm_card_visa";
 
@@ -212,10 +213,18 @@ public sealed class AppFixture : IAsyncLifetime
 
     public async Task ResetAsync()
     {
-        logger.ResettingTestState();
-        Stripe.Reset();
-        await DbFixture.ResetAsync();
-        await ReseedAsync();
+        await resetGate.WaitAsync();
+        try
+        {
+            logger.ResettingTestState();
+            Stripe.Reset();
+            await DbFixture.ResetAsync();
+            await ReseedAsync();
+        }
+        finally
+        {
+            resetGate.Release();
+        }
     }
 
     public async Task<HttpClient> CreateAuthenticatedClientAsync(string email)
@@ -260,6 +269,7 @@ public sealed class AppFixture : IAsyncLifetime
             }
             finally
             {
+                resetGate.Dispose();
                 loggerFactory.Dispose();
             }
         }
