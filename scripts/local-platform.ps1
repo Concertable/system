@@ -3,8 +3,8 @@ $Command = if ($invocationArguments.Count -gt 0) { [string]$invocationArguments[
 $Target = if ($invocationArguments.Count -gt 1) { [string]$invocationArguments[1] } else { $null }
 $Rest = if ($invocationArguments.Count -gt 2) { [string[]]$invocationArguments[2..($invocationArguments.Count - 1)] } else { @() }
 
-if ($Command -notin @('prepare', 'restore', 'build', 'test')) {
-    throw "Command must be one of: prepare, restore, build, test."
+if ($Command -notin @('prepare', 'restore', 'build', 'test', 'publish')) {
+    throw "Command must be one of: prepare, restore, build, test, publish."
 }
 
 $repoRoot = Split-Path $PSScriptRoot -Parent
@@ -76,14 +76,17 @@ function Initialize-LocalPlatform {
     $solution = Join-Path $repoRoot 'api/Concertable.slnx'
     Invoke-DotNet @(
         'restore', $solution,
-        '--disable-parallel'
+        '--disable-parallel',
+        '-p:UseLocalPlatformSources=true'
     )
     Invoke-DotNet @(
         'pack', $solution,
         '--configuration', 'Release',
         '--output', $packagesRoot,
         '--no-restore',
-        "-p:MinVerVersionOverride=$version"
+        '-p:UseLocalPlatformSources=true',
+        "-p:MinVerVersionOverride=$version",
+        "-p:PackageVersion=$version"
     )
 
     $packableProjects = Get-ChildItem -LiteralPath (Join-Path $repoRoot 'api') -Recurse -Filter '*.csproj' |
@@ -156,7 +159,7 @@ switch ($Command) {
         if ([string]::IsNullOrWhiteSpace($Target)) { throw 'restore requires a project or solution target.' }
         Invoke-LocalPlatformRestore $Target | Out-Null
     }
-    { $_ -in @('build', 'test') } {
+    { $_ -in @('build', 'test', 'publish') } {
         if ([string]::IsNullOrWhiteSpace($Target)) { throw "$Command requires a project or solution target." }
         Invoke-LocalPlatformRestore $Target
         $version = Get-LocalPlatformVersion
