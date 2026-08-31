@@ -47,7 +47,7 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
 
         // Arrange — the venue declares the external door take on top of Concertable's own sales
         await fixture.DbFixture.Concert.DeclareDoorRevenueAsync(
-            fixture.SeedState.ConcertFor(fixture.SeedState.PastDoorSplitBooking).Id,
+            fixture.SeedState.PastDoorSplitBooking.Concert.Id,
             100m);
 
         // Act
@@ -76,7 +76,7 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
 
         // Arrange — the venue declares the external door take (£0 here; all sales came through us)
         await fixture.DbFixture.Concert.DeclareDoorRevenueAsync(
-            fixture.SeedState.ConcertFor(fixture.SeedState.PastVersusBooking).Id,
+            fixture.SeedState.PastVersusBooking.Concert.Id,
             0m);
 
         // Act
