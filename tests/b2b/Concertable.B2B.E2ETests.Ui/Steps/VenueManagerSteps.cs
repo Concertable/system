@@ -217,7 +217,7 @@ public sealed class VenueManagerSteps
     [Given(@"an ended door split concert with (\d+) tickets sold through Concertable")]
     public Task AnEndedDoorSplitConcertWithConcertableSales(int ticketsSold)
     {
-        var concert = fixture.App.SeedState.ConcertFor(fixture.App.SeedState.PastDoorSplitBooking);
+        var concert = fixture.App.SeedState.PastDoorSplitBooking.Concert;
         Assert.Equal(ticketsSold, concert.TicketsSold);
         state.ConcertId = concert.Id;
         return Task.CompletedTask;
