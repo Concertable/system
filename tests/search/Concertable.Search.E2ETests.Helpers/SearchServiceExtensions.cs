@@ -21,6 +21,8 @@ public static class SearchServiceExtensions
 
     public static IDistributedApplicationTestingBuilder AddSearchService(
         this IDistributedApplicationTestingBuilder builder,
+        IProjectMetadata searchWebProject,
+        IProjectMetadata searchWorkersProject,
         string searchApiBaseUrl,
         string authBaseUrl)
     {
@@ -35,7 +37,7 @@ public static class SearchServiceExtensions
         var searchApiUri = new Uri(searchApiBaseUrl);
 
         var searchWeb = builder.AddResource(new ProjectResource(WebResource))
-            .WithAnnotation(new SearchWebProject(builder.AppHostDirectory))
+            .WithAnnotation(searchWebProject)
             .WithHttpsEndpoint(port: searchApiUri.Port, isProxied: false)
             .WithHttpHealthCheck("/health", endpointName: "https")
             .WithReference(searchDb)
@@ -46,7 +48,7 @@ public static class SearchServiceExtensions
             .WithEnvironment("Auth__Authority", authBaseUrl);
 
         builder.AddResource(new ProjectResource(WorkersResource))
-            .WithAnnotation(new SearchWorkersProject(builder.AppHostDirectory))
+            .WithAnnotation(searchWorkersProject)
             .WithReference(searchDb)
             .WaitFor(searchDb)
             .WithReference(asbBuilder)
@@ -56,31 +58,5 @@ public static class SearchServiceExtensions
             .WithEnvironment("DOTNET_ENVIRONMENT", "E2E");
 
         return builder;
-    }
-
-    private sealed class SearchWebProject : IProjectMetadata
-    {
-        private readonly string appHostDirectory;
-
-        public SearchWebProject(string appHostDirectory)
-        {
-            this.appHostDirectory = appHostDirectory;
-        }
-
-        public string ProjectPath => Path.GetFullPath(Path.Combine(
-            appHostDirectory, "..", "..", "..", "Concertable.Search", "src", "Concertable.Search.Web", "Concertable.Search.Web.csproj"));
-    }
-
-    private sealed class SearchWorkersProject : IProjectMetadata
-    {
-        private readonly string appHostDirectory;
-
-        public SearchWorkersProject(string appHostDirectory)
-        {
-            this.appHostDirectory = appHostDirectory;
-        }
-
-        public string ProjectPath => Path.GetFullPath(Path.Combine(
-            appHostDirectory, "..", "..", "..", "Concertable.Search", "src", "Concertable.Search.Workers", "Concertable.Search.Workers.csproj"));
     }
 }
