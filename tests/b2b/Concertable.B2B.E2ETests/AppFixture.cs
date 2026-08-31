@@ -1,43 +1,16 @@
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
-using Azure.Storage.Blobs;
-using Concertable.B2B.Artist.Infrastructure.Extensions;
 using Concertable.B2B.Hosting;
-using Concertable.B2B.Concert.Infrastructure.Extensions;
-using Concertable.B2B.DataAccess.Infrastructure;
-using Concertable.B2B.Deal.Infrastructure.Extensions;
-using Concertable.B2B.Conversations.Infrastructure.Extensions;
-using Concertable.B2B.Tenant.Infrastructure.Extensions;
-using Concertable.B2B.Seed.Infrastructure;
-using Concertable.B2B.Seed.Contracts;
-using Concertable.B2B.User.Infrastructure.Extensions;
-using Concertable.B2B.Venue.Infrastructure.Extensions;
-using Concertable.DataAccess.Application;
-using Concertable.DataAccess.Infrastructure.Data;
-using Concertable.Kernel;
-using Concertable.Kernel.Events;
-using Concertable.Kernel.Extensions;
-using Concertable.Kernel.Identity;
-using Concertable.Messaging.Infrastructure.Extensions;
-using Concertable.Messaging.Infrastructure.Inbox;
-using Concertable.Messaging.Infrastructure.Outbox;
+using Concertable.B2B.TestKit;
+using Concertable.Fleet.E2E;
 using Concertable.Payment.Hosting;
-using Concertable.Seed.Shared;
-using Concertable.Seed.Infrastructure;
-using Concertable.Seed.Shared.Extensions;
-using Microsoft.EntityFrameworkCore;
-using Concertable.Shared.Blob.Infrastructure.Extensions;
-using Concertable.Shared.Email.Infrastructure.Extensions;
-using Concertable.Shared.Geocoding.Infrastructure.Extensions;
-using Concertable.Shared.Imaging.Infrastructure.Extensions;
+using Concertable.Payment.TestKit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Stripe;
 using System.Net.Http.Headers;
-using B2BDevDbInitializer = Concertable.B2B.Web.DevDbInitializer;
 
 namespace Concertable.B2B.E2ETests;
 
@@ -45,8 +18,10 @@ public sealed class AppFixture : IAsyncLifetime
 {
     private DistributedApplication app = null!;
     private AspireResourceLogger resourceLogger = null!;
-    private IHost host = null!;
     private HealthWaiter healthWaiter = null!;
+    private HttpClient b2bAdminClient = null!;
+    private HttpClient paymentAdminClient = null!;
+    private B2BTestClient b2bTestClient = null!;
     private readonly ILoggerFactory loggerFactory;
     private readonly ILogger<AppFixture> logger;
     private readonly IConfiguration configuration;
@@ -108,14 +83,15 @@ public sealed class AppFixture : IAsyncLifetime
         logger.InitializingE2ETestFixture();
 
         healthWaiter = new HealthWaiter(loggerFactory.CreateLogger<HealthWaiter>());
-        var builder = await DistributedApplicationTestingBuilder
-            .CreateAsync<Projects.Concertable_B2B_AppHost>();
+        var projectProvider = FleetProjectProviders.Source();
+        var builder = await projectProvider.CreateBuilderAsync(FleetSurface.B2B);
         var stripeSecretKey = builder.Configuration["Stripe:SecretKey"]
             ?? throw new InvalidOperationException("Stripe:SecretKey is not configured for the B2B E2E fixture.");
         var stripeClient = new StripeClient(stripeSecretKey);
         StripeCustomerResolver = await Concertable.Testing.E2E.StripeCustomerResolver.CreateAsync(stripeClient);
+        var fleetRun = FleetRun.Create(FleetProfile.B2B(B2BWebUrl, SearchWebUrl, authUrl, PaymentWebUrl));
 
-        builder.AddE2EStack(B2BWebUrl, SearchWebUrl, authUrl, PaymentWebUrl, StripeCustomerResolver);
+        builder.AddE2EStack(fleetRun, projectProvider, StripeCustomerResolver);
         StripePaymentIntents = new PaymentIntentService(stripeClient);
         Stripe = new StripeFixture(stripeClient);
 
@@ -139,74 +115,17 @@ public sealed class AppFixture : IAsyncLifetime
             ?? throw new InvalidOperationException("Payment connection string is missing.");
         await healthWaiter.WaitForPayoutAccountsAsync(paymentConnectionString, 4, TimeSpan.FromMinutes(3));
 
-        DbFixture = new DbFixture(app);
-        await DbFixture.InitializeAsync();
+        b2bAdminClient = new HttpClient { BaseAddress = new Uri(B2BWebUrl) };
+        paymentAdminClient = new HttpClient { BaseAddress = new Uri(PaymentWebUrl) };
+        b2bTestClient = new B2BTestClient(
+            b2bAdminClient,
+            fleetRun.AdminKey);
+        var paymentTestClient = new PaymentTestClient(
+            paymentAdminClient,
+            fleetRun.AdminKey);
+        DbFixture = new DbFixture(b2bTestClient, paymentTestClient);
         await DbFixture.ResetAsync();
-
-        var b2bConnectionString = await app.GetConnectionStringAsync(B2BConstants.Database);
-        var blobConnectionString = await app.GetConnectionStringAsync("blobs");
-        var asbConnectionString = await app.GetConnectionStringAsync("asb")
-            ?? throw new InvalidOperationException("ASB connection string is missing.");
-
-        var b2bSeedConfig = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                [$"ConnectionStrings:{B2BConstants.Database}"] = b2bConnectionString,
-                ["BlobStorage:ContainerName"] = "images",
-                ["ExternalServices:UseRealBlob"] = "false",
-                ["Legal:PlatformTermsVersion"] = "2026-07",
-                ["GoogleApiKey"] = builder.Configuration["GoogleApiKey"],
-            })
-            .Build();
-
-        host = Host.CreateDefaultBuilder()
-            .ConfigureServices((_, services) =>
-            {
-                services.AddSingleton<IConfiguration>(b2bSeedConfig);
-                services.AddLogging(b => b
-                    .AddSimpleConsole(o => o.SingleLine = true)
-                    .SetMinimumLevel(LogLevel.Warning)
-                    .AddFilter("Concertable.B2B.Web.DevDbInitializer", LogLevel.Information));
-                services.AddSingleton(TimeProvider.System);
-                services.AddSingleton<SeedCatalog>();
-                services.AddCurrentUser();
-                services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
-                services.AddScoped<AuditInterceptor>();
-                services.AddScoped<TenantInterceptor>();
-                services.AddScoped<VenueArtistTenantInterceptor>();
-                services.AddScoped<IDomainEventDispatchInterceptor, SeedingDomainEventDispatchInterceptor>();
-                services.AddGeometry();
-                services.AddOutbox(opt => opt.UseSqlServer(b2bConnectionString), runDispatcher: false);
-                services.AddInProcessEventDispatch();
-                services.AddInbox(opt => opt.UseSqlServer(b2bConnectionString));
-                services.AddSeedingInfrastructure();
-                services.AddScoped<SeedState>();
-                services.AddSingleton(new BlobServiceClient(blobConnectionString));
-                services.AddSharedBlob(b2bSeedConfig);
-                services.AddSharedImaging();
-                services.AddSharedGeocoding();
-                services.AddSharedEmail(b2bSeedConfig);
-                services.AddUserModule(b2bSeedConfig);
-                services.AddTenantModule(b2bSeedConfig);
-                services.AddArtistModule(b2bSeedConfig);
-                services.AddVenueModule(b2bSeedConfig);
-                services.AddDealModule(b2bSeedConfig);
-                services.AddConcertModule(b2bSeedConfig);
-                services.AddConversationsModule(b2bSeedConfig);
-                services.AddBlobDevSeeder();
-                services.AddUserDevSeeder();
-                services.AddTenantDevSeeder();
-                services.AddArtistDevSeeder();
-                services.AddVenueDevSeeder();
-                services.AddDealDevSeeder();
-                services.AddConcertDevSeeder();
-                services.AddConversationsDevSeeder();
-                services.AddScoped<IDbInitializer, B2BDevDbInitializer>();
-            })
-            .Build();
-
-        await host.StartAsync();
-        await ReseedAsync();
+        SeedState = await b2bTestClient.GetSeedStateAsync();
 
         logger.E2ETestFixtureReady();
     }
@@ -219,7 +138,7 @@ public sealed class AppFixture : IAsyncLifetime
             logger.ResettingTestState();
             Stripe.Reset();
             await DbFixture.ResetAsync();
-            await ReseedAsync();
+            SeedState = await b2bTestClient.GetSeedStateAsync();
         }
         finally
         {
@@ -245,16 +164,11 @@ public sealed class AppFixture : IAsyncLifetime
             B2BClient?.Dispose();
             SearchClient?.Dispose();
             PaymentClient?.Dispose();
+            b2bAdminClient?.Dispose();
+            paymentAdminClient?.Dispose();
             Workers?.Dispose();
             tokenMinter.Dispose();
             healthWaiter?.Dispose();
-            if (DbFixture is not null)
-                await DbFixture.DisposeAsync();
-            if (host is not null)
-            {
-                await host.StopAsync();
-                host.Dispose();
-            }
             if (app is not null)
                 await app.DisposeAsync();
             if (resourceLogger is not null)
@@ -283,11 +197,4 @@ public sealed class AppFixture : IAsyncLifetime
     public Task WaitForSpasServingAsync(TimeSpan timeout) =>
         healthWaiter.WaitForAllServingAsync([VenueSpaUrl, ArtistSpaUrl, BusinessSpaUrl], timeout);
 
-    private async Task ReseedAsync()
-    {
-        await using var scope = host.Services.CreateAsyncScope();
-        var initializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
-        await initializer.InitializeAsync();
-        SeedState = scope.ServiceProvider.GetRequiredService<SeedState>();
-    }
 }

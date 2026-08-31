@@ -37,7 +37,7 @@
     <Using Include="Concertable.Testing.E2E" />
     <Using Include="Concertable.Payment.E2ETests.Helpers" />
     <Using Include="Concertable.Testing" />
-    <Using Include="Concertable.Customer.Seed.Infrastructure" />
+    <Using Include="Concertable.Customer.TestKit" />
     <Using Include="Concertable.Kernel.Identity" />
     <Using Include="Concertable.Testing.E2E.Ui" />
     <Using Include="Concertable.Payment.E2ETests.Helpers.Ui" />

@@ -1,19 +1,16 @@
-using System.Data;
-using Dapper;
+using Concertable.B2B.TestKit;
 
 namespace Concertable.B2B.E2ETests;
 
 public sealed class BookingDb
 {
-    private readonly IDbConnection connection;
+    private readonly B2BTestClient client;
 
-    public BookingDb(IDbConnection connection)
+    public BookingDb(B2BTestClient client)
     {
-        this.connection = connection;
+        this.client = client;
     }
 
     public Task<int> GetIdByApplicationIdAsync(int applicationId) =>
-        connection.QuerySingleAsync<int>(
-            "SELECT Id FROM concert.Bookings WHERE ApplicationId = @applicationId",
-            new { applicationId });
+        client.GetBookingIdAsync(applicationId);
 }

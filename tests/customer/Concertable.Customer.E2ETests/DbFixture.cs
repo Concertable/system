@@ -1,57 +1,25 @@
-using Aspire.Hosting;
-using Concertable.Customer.Hosting;
-using Respawn;
-using Respawn.Graph;
-using ConcertSchema = Concertable.Customer.Concert.Infrastructure.Schema;
-using ArtistSchema = Concertable.Customer.Artist.Infrastructure.Schema;
-using VenueSchema = Concertable.Customer.Venue.Infrastructure.Schema;
-using UserSchema = Concertable.Customer.User.Infrastructure.Schema;
-using MessagingSchema = Concertable.Messaging.Infrastructure.Schema;
+using Concertable.Customer.TestKit;
+using Concertable.Payment.TestKit;
 
 namespace Concertable.Customer.E2ETests;
 
 public sealed class DbFixture
 {
-    private readonly DistributedApplication app;
-    private readonly RespawnableDb customer = new();
-    private readonly PaymentDbFixture payment = new();
+    private readonly CustomerTestClient customer;
+    private readonly PaymentTestClient payment;
 
-    public PaymentDb Payment => payment.Payment;
+    public PaymentDb Payment { get; }
 
-    public DbFixture(DistributedApplication app) => this.app = app;
-
-    public async Task InitializeAsync()
+    public DbFixture(CustomerTestClient customer, PaymentTestClient payment)
     {
-        await customer.InitializeAsync(app, CustomerConstants.Database, new RespawnerOptions
-        {
-            TablesToIgnore = [
-                "__EFMigrationsHistory",
-                new Table(ConcertSchema.Name, ConcertSchema.Tables.Concerts),
-                new Table(ConcertSchema.Name, ConcertSchema.Tables.ConcertGenres),
-                new Table(ConcertSchema.Name, ConcertSchema.Tables.VenueReadModels),
-                new Table(ConcertSchema.Name, ConcertSchema.Tables.ArtistReadModels),
-                new Table(ConcertSchema.Name, ConcertSchema.Tables.ArtistReadModelGenres),
-                new Table(ArtistSchema.Name, ArtistSchema.Tables.Artists),
-                new Table(ArtistSchema.Name, ArtistSchema.Tables.ArtistGenres),
-                new Table(VenueSchema.Name, VenueSchema.Tables.Venues),
-                new Table(UserSchema.Name, UserSchema.Tables.Users),
-                new Table(MessagingSchema.Name, MessagingSchema.Tables.Inbox),
-            ],
-            DbAdapter = DbAdapter.SqlServer,
-            WithReseed = true
-        });
-        await payment.InitializeAsync(app);
+        this.customer = customer;
+        this.payment = payment;
+        Payment = new PaymentDb(payment);
     }
 
     public async Task ResetAsync()
     {
-        await customer.ResetAsync();
         await payment.ResetAsync();
-    }
-
-    public async Task DisposeAsync()
-    {
-        await customer.DisposeAsync();
-        await payment.DisposeAsync();
+        await customer.ResetAsync();
     }
 }

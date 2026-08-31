@@ -35,7 +35,7 @@ public sealed class PaymentSteps
     public async Task StripeTransferMade(decimal amount)
     {
         var transfer = await fixture.App.Stripe.FindTransferAsync(
-            StripeAccountResolver.AccountIds[fixture.App.SeedState.VenueManager1.Id], amount);
+            Concertable.Payment.TestKit.StripeTestAccounts.BySeedUserId[fixture.App.SeedState.VenueManager1.Id], amount);
 
         Assert.NotNull(transfer);
     }
