@@ -19,9 +19,9 @@ public static class SearchServiceExtensions
     private const string WorkersResource = "search-workers";
     private const string ServiceName = "concertable-search";
 
-    extension(IDistributedApplicationTestingBuilder builder)
+    extension(IDistributedApplicationBuilder builder)
     {
-        public IDistributedApplicationTestingBuilder AddSearchService(
+        public IDistributedApplicationBuilder AddSearchService(
             IProjectMetadata searchWebProject,
             IProjectMetadata searchWorkersProject,
             string searchApiBaseUrl,
