@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsTestProject>false</IsTestProject>
-    <IsPackable>false</IsPackable>
+    <IsPackable>true</IsPackable>
     <IsAspireHost>true</IsAspireHost>
     <CompositionValidationExclusion>E2E-only orchestration harness whose production project resources have dedicated composition coverage.</CompositionValidationExclusion>
   </PropertyGroup>
@@ -15,6 +15,11 @@
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.SqlServer" />
     <PackageReference Include="Aspire.Hosting.Testing" />
+    <PackageReference Include="Concertable.AppHost.Shared" />
+    <PackageReference Include="Concertable.Auth.Hosting" />
+    <PackageReference Include="Concertable.Payment.Hosting" />
+    <PackageReference Include="Concertable.Seed.Identity" />
+    <PackageReference Include="Concertable.Testing" />
     <PackageReference Include="Microsoft.Data.SqlClient" />
     <PackageReference Include="Dapper" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
@@ -23,17 +28,6 @@
     <PackageReference Include="Reqnroll" />
     <PackageReference Include="Stripe.net" />
     <PackageReference Include="xunit" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\Concertable.AppHost.Shared\Concertable.AppHost.Shared.csproj" IsAspireProjectResource="false" />
-    <ProjectReference Include="..\..\..\Concertable.Auth\src\Concertable.Auth.Hosting\Concertable.Auth.Hosting.csproj" IsAspireProjectResource="false" />
-    <ProjectReference Include="..\..\..\Concertable.Payment\src\Concertable.Payment.Hosting\Concertable.Payment.Hosting.csproj" IsAspireProjectResource="false" />
-    <!-- Aspire project resources: the E2E stack launches these Payment hosts (production + Stripe adapter) in place of the E2E-agnostic production hosts. -->
-    <ProjectReference Include="..\..\..\Concertable.Payment\tests\E2ETests\Concertable.Payment.E2ETests.Web\Concertable.Payment.E2ETests.Web.csproj" />
-    <ProjectReference Include="..\..\..\Concertable.Payment\tests\E2ETests\Concertable.Payment.E2ETests.Workers\Concertable.Payment.E2ETests.Workers.csproj" />
-    <ProjectReference Include="..\..\src\Seed\Concertable.Seed.Identity\Concertable.Seed.Identity.csproj" IsAspireProjectResource="false" />
-    <ProjectReference Include="..\Concertable.Testing\Concertable.Testing.csproj" IsAspireProjectResource="false" />
   </ItemGroup>
 
   <ItemGroup>

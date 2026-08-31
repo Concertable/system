@@ -38,7 +38,7 @@
     <Using Include="Concertable.Payment.E2ETests.Helpers" />
     <Using Include="Concertable.Testing" />
     <Using Include="Concertable.Customer.E2ETests" />
-    <Using Include="Concertable.Customer.Seed.Infrastructure" />
+    <Using Include="Concertable.Customer.TestKit" />
     <Using Include="OpenQA.Selenium" />
     <Using Include="OpenQA.Selenium.Appium" />
     <Using Include="OpenQA.Selenium.Appium.Android" />

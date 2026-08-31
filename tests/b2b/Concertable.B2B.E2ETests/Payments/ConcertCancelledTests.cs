@@ -1,8 +1,5 @@
 using System.Net;
-using Concertable.B2B.Concert.Application.DTOs;
-using Concertable.B2B.Concert.Api.Responses;
-using Concertable.B2B.Concert.Domain.Lifecycle;
-using Concertable.Payment.Client;
+using Concertable.B2B.TestKit;
 using Concertable.Payment.Contracts;
 using Concertable.Payment.Contracts.Enums;
 using Concertable.Testing;
@@ -78,7 +75,7 @@ public sealed class ConcertCancelledTests : IAsyncLifetime
 
         await fixture.Polling.UntilAsync(
             () => fixture.DbFixture.Application.GetStateByIdAsync(appId),
-            state => state == (int)LifecycleState.Cancelled,
+            state => state == B2BLifecycleStates.Cancelled,
             timeout: TimeSpan.FromSeconds(30));
 
         var refundId = await fixture.Polling.UntilAsync(
@@ -107,11 +104,11 @@ public sealed class ConcertCancelledTests : IAsyncLifetime
             timeout: TimeSpan.FromSeconds(30));
     }
 
-    private async Task<MyDetailsResponse> GetConcertByApplicationAsync(int appId)
+    private async Task<B2BConcertState> GetConcertByApplicationAsync(int appId)
     {
         var response = await venueManagerClient.GetAsync($"/api/concert/application/{appId}");
         await response.ShouldBe(HttpStatusCode.OK);
-        var concert = await response.Content.ReadAsync<MyDetailsResponse>();
+        var concert = await response.Content.ReadAsync<B2BConcertState>();
         Assert.NotNull(concert);
         return concert;
     }
@@ -126,10 +123,8 @@ public sealed class ConcertCancelledTests : IAsyncLifetime
     {
         var response = await venueManagerClient.PostAsync($"/api/application/{applicationId}/checkout");
         await response.ShouldBe(HttpStatusCode.OK);
-        var checkout = await response.Content.ReadAsync<CheckoutResult>();
+        var checkout = await response.Content.ReadAsync<B2BCheckoutState>();
         Assert.NotNull(checkout);
         return checkout.Session.ClientSecret;
     }
-
-    private sealed record CheckoutResult(CheckoutSession Session);
 }

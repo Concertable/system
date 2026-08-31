@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Sdk Name="Aspire.AppHost.Sdk" Version="13.3.2" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>false</IsTestProject>
+    <IsAspireHost>true</IsAspireHost>
+    <CompositionValidationExclusion>Monorepo-only source provider for the fleet E2E harness.</CompositionValidationExclusion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The executable AppHost references are private so their published Concertable package
+         closures cannot leak into E2E consumers. Keep their external Aspire runtime extensions
+         explicit here because the testing host invokes those AppHost entry points in-process. -->
+    <PackageReference Include="Aspire.Hosting.DevTunnels" />
+    <PackageReference Include="Aspire.Hosting.NodeJs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Concertable.Fleet.E2E\Concertable.Fleet.E2E.csproj" IsAspireProjectResource="false" />
+    <ProjectReference Include="..\..\Concertable.B2B\src\Concertable.B2B.AppHost\Concertable.B2B.AppHost.csproj"
+                      IsAspireProjectResource="false"
+                      PrivateAssets="all" />
+    <ProjectReference Include="..\..\Concertable.B2B\tests\E2ETests\Concertable.B2B.E2ETests.Web\Concertable.B2B.E2ETests.Web.csproj" />
+    <ProjectReference Include="..\..\Concertable.Customer\src\Concertable.Customer.AppHost\Concertable.Customer.AppHost.csproj"
+                      IsAspireProjectResource="false"
+                      PrivateAssets="all" />
+    <ProjectReference Include="..\..\Concertable.Customer\tests\E2ETests\Concertable.Customer.E2ETests.Web\Concertable.Customer.E2ETests.Web.csproj" />
+    <ProjectReference Include="..\..\Concertable.Payment\tests\E2ETests\Concertable.Payment.E2ETests.Web\Concertable.Payment.E2ETests.Web.csproj" />
+    <ProjectReference Include="..\..\Concertable.Payment\tests\E2ETests\Concertable.Payment.E2ETests.Workers\Concertable.Payment.E2ETests.Workers.csproj" />
+  </ItemGroup>
+
+</Project>
