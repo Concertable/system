@@ -29,36 +29,87 @@ public static class DistributedApplicationBuilderExtensions
         {
             var sql = builder.Resources.OfType<SqlServerServerResource>().Single();
             var asb = builder.Resources.OfType<AzureServiceBusResource>().Single();
-            var auth = builder.Resources.OfType<ProjectResource>()
+            var auth = builder.Resources
                 .Single(r => r.Name == AuthConstants.Resource);
 
             var searchDb = builder.CreateResourceBuilder(sql).AddDatabase(Database);
-            var authBuilder = builder.CreateResourceBuilder(auth);
+            var authBuilder = builder.CreateResourceBuilder((IResourceWithServiceDiscovery)auth);
             var asbBuilder = builder.CreateResourceBuilder(asb);
             var searchApiUri = new Uri(searchApiBaseUrl);
 
-            var searchWeb = builder.AddResource(new ProjectResource(WebResource))
-                .WithAnnotation(searchWebProject)
-                .WithHttpsEndpoint(port: searchApiUri.Port, isProxied: false)
-                .WithHttpHealthCheck("/health", endpointName: "https")
-                .WithReference(searchDb)
-                .WaitFor(searchDb)
-                .WaitFor(authBuilder)
-                .WithEnvironment("ASPNETCORE_ENVIRONMENT", "E2E")
-                .WithEnvironment("ASPNETCORE_URLS", searchApiBaseUrl)
-                .WithEnvironment("Auth__Authority", authBaseUrl);
+            var searchWeb = builder.Resources.SingleOrDefault(resource => resource.Name == WebResource);
+            if (searchWeb is null)
+            {
+                searchWeb = builder.AddResource(new ProjectResource(WebResource))
+                    .WithAnnotation(searchWebProject)
+                    .WithReference(searchDb)
+                    .WaitFor(searchDb)
+                    .WaitFor(authBuilder)
+                    .Resource;
+            }
+            else
+            {
+                LaunchAs(searchWeb, searchWebProject);
+            }
 
-            builder.AddResource(new ProjectResource(WorkersResource))
-                .WithAnnotation(searchWorkersProject)
-                .WithReference(searchDb)
-                .WaitFor(searchDb)
-                .WithReference(asbBuilder)
-                .WaitFor(asbBuilder)
-                .WaitFor(searchWeb)
-                .WithEnvironment(AzureServiceBusOptions.ServiceNameEnvVar, ServiceName)
-                .WithEnvironment("DOTNET_ENVIRONMENT", "E2E");
+            PinHttpsEndpoint(builder, searchWeb, searchApiUri.Port);
+            searchWeb.Annotations.Add(new HealthCheckAnnotation("/health", "https"));
+            searchWeb.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
+            {
+                context.EnvironmentVariables["ASPNETCORE_ENVIRONMENT"] = "E2E";
+                context.EnvironmentVariables["ASPNETCORE_URLS"] = searchApiBaseUrl;
+                context.EnvironmentVariables["Auth__Authority"] = authBaseUrl;
+            }));
+
+            var searchWorkers = builder.Resources.SingleOrDefault(resource => resource.Name == WorkersResource);
+            if (searchWorkers is null)
+            {
+                searchWorkers = builder.AddResource(new ProjectResource(WorkersResource))
+                    .WithAnnotation(searchWorkersProject)
+                    .WithReference(searchDb)
+                    .WaitFor(searchDb)
+                    .WithReference(asbBuilder)
+                    .WaitFor(asbBuilder)
+                    .WaitFor(builder.CreateResourceBuilder((IResourceWithWaitSupport)searchWeb))
+                    .Resource;
+            }
+            else
+            {
+                LaunchAs(searchWorkers, searchWorkersProject);
+            }
+
+            searchWorkers.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
+            {
+                context.EnvironmentVariables[AzureServiceBusOptions.ServiceNameEnvVar] = ServiceName;
+                context.EnvironmentVariables["DOTNET_ENVIRONMENT"] = "E2E";
+            }));
 
             return builder;
         }
+    }
+
+    private static void LaunchAs(IResource resource, IProjectMetadata project)
+    {
+        if (resource is not ProjectResource)
+            return;
+
+        foreach (var metadata in resource.Annotations.OfType<IProjectMetadata>().ToList())
+            resource.Annotations.Remove(metadata);
+        resource.Annotations.Add(project);
+    }
+
+    private static void PinHttpsEndpoint(
+        IDistributedApplicationBuilder builder,
+        IResource resource,
+        int port)
+    {
+        foreach (var endpoint in resource.Annotations
+                     .OfType<EndpointAnnotation>()
+                     .Where(endpoint => endpoint.Name == "https")
+                     .ToList())
+            resource.Annotations.Remove(endpoint);
+
+        builder.CreateResourceBuilder((IResourceWithEndpoints)resource)
+            .WithHttpsEndpoint(port: port, isProxied: false);
     }
 }

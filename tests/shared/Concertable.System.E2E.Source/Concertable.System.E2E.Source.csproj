@@ -9,7 +9,7 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>false</IsTestProject>
     <IsAspireHost>true</IsAspireHost>
-    <CompositionValidationExclusion>Monorepo-only source provider for the fleet E2E harness.</CompositionValidationExclusion>
+    <CompositionValidationExclusion>Monorepo-only source provider for the system E2E harness.</CompositionValidationExclusion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Concertable.Fleet.E2E\Concertable.Fleet.E2E.csproj" IsAspireProjectResource="false" />
+    <ProjectReference Include="..\Concertable.System.E2E\Concertable.System.E2E.csproj" IsAspireProjectResource="false" />
     <ProjectReference Include="..\..\Concertable.B2B\src\Concertable.B2B.AppHost\Concertable.B2B.AppHost.csproj"
                       IsAspireProjectResource="false"
                       PrivateAssets="all" />

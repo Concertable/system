@@ -18,9 +18,7 @@ public static class DistributedApplicationBuilderExtensions
             string adminKey,
             StripeCustomerResolver stripeCustomers)
         {
-            var paymentWeb = builder.Resources
-                .OfType<ProjectResource>()
-                .Single(r => r.Name == PaymentConstants.WebResource);
+            var paymentWeb = builder.GetRequiredResource(PaymentConstants.WebResource);
 
             LaunchAs(paymentWeb, project);
 
@@ -42,9 +40,7 @@ public static class DistributedApplicationBuilderExtensions
             string authEndpoint,
             IReadOnlyDictionary<string, string> environmentVariables)
         {
-            var auth = builder.Resources
-                .OfType<ProjectResource>()
-                .Single(r => r.Name == AuthConstants.Resource);
+            var auth = builder.GetRequiredResource(AuthConstants.Resource);
 
             auth.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
             {
@@ -60,9 +56,7 @@ public static class DistributedApplicationBuilderExtensions
             IProjectMetadata project,
             StripeCustomerResolver stripeCustomers)
         {
-            var paymentWorkers = builder.Resources
-                .OfType<ProjectResource>()
-                .Single(r => r.Name == PaymentConstants.WorkersResource);
+            var paymentWorkers = builder.GetRequiredResource(PaymentConstants.WorkersResource);
 
             LaunchAs(paymentWorkers, project);
 
@@ -122,8 +116,16 @@ public static class DistributedApplicationBuilderExtensions
         }
     }
 
-    private static void LaunchAs(ProjectResource resource, IProjectMetadata host)
+    internal static IResource GetRequiredResource(
+        this IDistributedApplicationBuilder builder,
+        string name) =>
+        builder.Resources.Single(resource => resource.Name == name);
+
+    private static void LaunchAs(IResource resource, IProjectMetadata host)
     {
+        if (resource is not ProjectResource)
+            return;
+
         foreach (var metadata in resource.Annotations.OfType<IProjectMetadata>().ToList())
             resource.Annotations.Remove(metadata);
         resource.Annotations.Add(host);

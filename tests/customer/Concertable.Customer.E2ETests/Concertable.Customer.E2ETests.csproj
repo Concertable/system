@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
-    <UseFleetSourceProjects Condition="'$(UseFleetSourceProjects)' == ''">true</UseFleetSourceProjects>
+    <UseSystemSourceProjects Condition="'$(UseSystemSourceProjects)' == ''">true</UseSystemSourceProjects>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,11 +23,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Concertable.Shared\tests\Concertable.Testing.E2E\Concertable.Testing.E2E.csproj" />
-    <ProjectReference Include="..\..\..\..\tests\Concertable.Fleet.E2E\Concertable.Fleet.E2E.csproj" />
+    <ProjectReference Include="..\..\..\..\tests\Concertable.System.E2E\Concertable.System.E2E.csproj" />
     <ProjectReference Include="..\..\..\..\Concertable.Payment\tests\E2ETests\Concertable.Payment.E2ETests.Helpers\Concertable.Payment.E2ETests.Helpers.csproj" />
     <ProjectReference Include="..\..\..\..\Concertable.Search\tests\E2ETests\Concertable.Search.E2ETests.Helpers\Concertable.Search.E2ETests.Helpers.csproj" />
-    <ProjectReference Include="..\..\..\..\tests\Concertable.Fleet.E2E.Source\Concertable.Fleet.E2E.Source.csproj"
-                      Condition="'$(UseFleetSourceProjects)' == 'true'" />
+    <ProjectReference Include="..\..\..\..\tests\Concertable.System.E2E.Source\Concertable.System.E2E.Source.csproj"
+                      Condition="'$(UseSystemSourceProjects)' == 'true'" />
   </ItemGroup>
 
   <ItemGroup>

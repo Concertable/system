@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Concertable.Search.E2ETests.Helpers\Concertable.Search.E2ETests.Helpers.csproj" />
+    <ProjectReference Include="..\..\..\..\Concertable.Shared\tests\Concertable.Testing.E2E\Concertable.Testing.E2E.csproj" />
   </ItemGroup>
 
   <ItemGroup>
