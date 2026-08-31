@@ -3,7 +3,7 @@ using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
 using Concertable.Auth.Hosting;
 using Concertable.Customer.Hosting;
-using Concertable.Fleet.E2E;
+using Concertable.System.E2E;
 using Concertable.Search.E2ETests.Helpers;
 
 namespace Concertable.Customer.E2ETests;
@@ -13,26 +13,26 @@ internal static class DistributedApplicationBuilderExtensions
     extension(IDistributedApplicationTestingBuilder builder)
     {
         public IDistributedApplicationTestingBuilder AddE2EStack(
-            FleetRun run,
-            IFleetProjectProvider projects,
+            SystemRun run,
+            ISystemAppHostFactory appHostFactory,
             StripeCustomerResolver stripeCustomers)
         {
             var endpoints = run.Profile.Endpoints;
-            builder.PinAuthService(endpoints.Auth, FleetRun.AuthEnvironmentVariables());
+            builder.PinAuthService(endpoints.Auth, SystemRun.AuthEnvironmentVariables());
             builder.PinAuthApi(endpoints.ServiceApi);
-            builder.PinWeb(run, projects);
+            builder.PinWeb(run, appHostFactory);
             builder.AddSearchService(
-                projects.SearchWeb,
-                projects.SearchWorkers,
+                appHostFactory.SearchWeb,
+                appHostFactory.SearchWorkers,
                 endpoints.SearchApi,
                 endpoints.Auth);
             builder.PinPaymentWeb(
-                projects.PaymentWeb,
+                appHostFactory.PaymentWeb,
                 endpoints.PaymentApi,
                 endpoints.Auth,
                 run.AdminKey,
                 stripeCustomers);
-            builder.PinPaymentWorkers(projects.PaymentWorkers, stripeCustomers);
+            builder.PinPaymentWorkers(appHostFactory.PaymentWorkers, stripeCustomers);
             builder.AddEphemeralSql();
             builder.PinStripeCli(endpoints.PaymentApi);
             return builder;
@@ -41,7 +41,6 @@ internal static class DistributedApplicationBuilderExtensions
         private void PinAuthApi(string customerApiBaseUrl)
         {
             var auth = builder.Resources
-                .OfType<ProjectResource>()
                 .Single(r => r.Name == AuthConstants.Resource);
 
             auth.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
@@ -51,14 +50,14 @@ internal static class DistributedApplicationBuilderExtensions
         }
 
         private void PinWeb(
-            FleetRun run,
-            IFleetProjectProvider projects)
+            SystemRun run,
+            ISystemAppHostFactory appHostFactory)
         {
             var customerWeb = builder.Resources
                 .OfType<ProjectResource>()
                 .Single(r => r.Name == CustomerConstants.WebResource);
 
-            LaunchAs(customerWeb, projects.CustomerWeb);
+            LaunchAs(customerWeb, appHostFactory.CustomerWeb);
 
             customerWeb.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
             {
@@ -66,7 +65,7 @@ internal static class DistributedApplicationBuilderExtensions
                 context.EnvironmentVariables["ASPNETCORE_URLS"] = run.Profile.Endpoints.ServiceApi;
                 context.EnvironmentVariables["Auth__Authority"] = run.Profile.Endpoints.Auth;
                 context.EnvironmentVariables["services__payment-web__https__0"] = run.Profile.Endpoints.PaymentApi;
-                context.EnvironmentVariables["ServiceAuth__ClientSecret"] = FleetRun.CustomerServiceAuthSecret;
+                context.EnvironmentVariables["ServiceAuth__ClientSecret"] = SystemRun.CustomerServiceAuthSecret;
                 context.EnvironmentVariables["E2E__AdminKey"] = run.AdminKey;
             }));
         }

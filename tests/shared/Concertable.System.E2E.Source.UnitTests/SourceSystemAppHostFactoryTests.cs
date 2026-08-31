@@ -1,14 +1,14 @@
-using Concertable.Fleet.E2E.Source;
+using Concertable.System.E2E.Source;
 
-namespace Concertable.Fleet.E2E.Source.UnitTests;
+namespace Concertable.System.E2E.Source.UnitTests;
 
-public sealed class SourceFleetProjectProviderTests
+public sealed class SourceSystemAppHostFactoryTests
 {
-    private readonly SourceFleetProjectProvider provider;
+    private readonly SourceSystemAppHostFactory factory;
 
-    public SourceFleetProjectProviderTests()
+    public SourceSystemAppHostFactoryTests()
     {
-        this.provider = new SourceFleetProjectProvider();
+        this.factory = new SourceSystemAppHostFactory();
     }
 
     [Fact]
@@ -16,7 +16,7 @@ public sealed class SourceFleetProjectProviderTests
     {
         Assert.EndsWith(
             Path.Combine("Concertable.Search", "src", "Concertable.Search.Web", "Concertable.Search.Web.csproj"),
-            this.provider.SearchWeb.ProjectPath,
+            this.factory.SearchWeb.ProjectPath,
             StringComparison.OrdinalIgnoreCase);
     }
 
@@ -25,7 +25,7 @@ public sealed class SourceFleetProjectProviderTests
     {
         Assert.EndsWith(
             Path.Combine("Concertable.Search", "src", "Concertable.Search.Workers", "Concertable.Search.Workers.csproj"),
-            this.provider.SearchWorkers.ProjectPath,
+            this.factory.SearchWorkers.ProjectPath,
             StringComparison.OrdinalIgnoreCase);
     }
 }
