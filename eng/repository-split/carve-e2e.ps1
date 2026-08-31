@@ -53,6 +53,7 @@ $paths = @(
     "api\Concertable.Search\Directory.Build.targets",
     "api\Concertable.Search\Directory.Packages.props",
     "api\Concertable.Search\tests\E2ETests\Concertable.Search.E2ETests.Helpers"
+    "api\Concertable.Search\tests\E2ETests\Concertable.Search.E2ETests.Helpers.UnitTests"
 )
 
 foreach ($relativePath in $paths) {
