@@ -53,7 +53,8 @@ public static class DistributedApplicationBuilderExtensions
             }
 
             PinHttpsEndpoint(builder, searchWeb, searchApiUri.Port);
-            searchWeb.Annotations.Add(new HealthCheckAnnotation("/health", "https"));
+            builder.CreateResourceBuilder((IResourceWithEndpoints)searchWeb)
+                .WithHttpHealthCheck("/health", endpointName: "https");
             searchWeb.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
             {
                 context.EnvironmentVariables["ASPNETCORE_ENVIRONMENT"] = "E2E";

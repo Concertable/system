@@ -1,7 +1,7 @@
 using Aspire.Hosting.Testing;
-using Concertable.System.E2E;
+using Concertable.SystemTesting.E2E;
 
-namespace Concertable.System.E2E.Source;
+namespace Concertable.SystemTesting.E2E.Source;
 
 public sealed class SourceSystemAppHostFactory : ISystemAppHostFactory
 {

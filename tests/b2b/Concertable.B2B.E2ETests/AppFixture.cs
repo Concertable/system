@@ -3,7 +3,7 @@ using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
 using Concertable.B2B.Hosting;
 using Concertable.B2B.TestKit;
-using Concertable.System.E2E;
+using Concertable.SystemTesting.E2E;
 using Concertable.Payment.Hosting;
 using Concertable.Payment.TestKit;
 using Microsoft.Extensions.Configuration;

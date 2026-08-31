@@ -1,7 +1,7 @@
 using Aspire.Hosting;
 using Aspire.Hosting.Testing;
 
-namespace Concertable.System.E2E;
+namespace Concertable.SystemTesting.E2E;
 
 public interface ISystemAppHostFactory
 {

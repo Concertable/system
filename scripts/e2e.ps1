@@ -193,6 +193,14 @@ function Show-Summary([object[]]$summaries) {
     Write-Host ""
 }
 
+function Complete-TestRun([object[]]$summaries) {
+    Show-Summary $summaries
+    $failed = ($summaries | Measure-Object Failed -Sum).Sum
+    $total = ($summaries | Measure-Object Total -Sum).Sum
+    if ($failed -gt 0 -or $total -eq 0) { exit 1 }
+    exit 0
+}
+
 function Assert-DockerHealthy {
     # Structural gate: `docker ps` answering is NOT proof Docker is healthy (a
     # half-started engine forwards old containers' ports while new ones are dead).
@@ -248,15 +256,15 @@ function Invoke-UiCommand([string]$cmd) {
         "run" {
             $b2b  = Invoke-PrettyTest 'B2B'      "$b2bUi/Concertable.B2B.E2ETests.Ui.csproj"
             $cust = Invoke-PrettyTest 'Customer' "$customerUi/Concertable.Customer.E2ETests.Ui.csproj"
-            Show-Summary @($b2b, $cust)
+            Complete-TestRun @($b2b, $cust)
         }
         "b2b" {
             $b2b = Invoke-PrettyTest 'B2B' "$b2bUi/Concertable.B2B.E2ETests.Ui.csproj"
-            Show-Summary @($b2b)
+            Complete-TestRun @($b2b)
         }
         "customer" {
             $cust = Invoke-PrettyTest 'Customer' "$customerUi/Concertable.Customer.E2ETests.Ui.csproj"
-            Show-Summary @($cust)
+            Complete-TestRun @($cust)
         }
         "regress" {
             $b2bOk  = Invoke-Regress 'B2B'      "$b2bUi/Concertable.B2B.E2ETests.Ui.csproj"
@@ -272,7 +280,7 @@ function Invoke-UiCommand([string]$cmd) {
         }
         "3ds" {
             $r = Invoke-PrettyTest '3DS' "$b2bUi/Concertable.B2B.E2ETests.Ui.csproj" @('--filter', 'DisplayName~3DS')
-            Show-Summary @($r)
+            Complete-TestRun @($r)
         }
         "trace" { & (Join-Path $repoRoot "api/Concertable.Shared/tests/Concertable.Testing.E2E/ui-trace.ps1") }
         default { Show-Usage }
@@ -291,19 +299,15 @@ function Invoke-ApiCommand([string]$cmd) {
         "run" {
             $b2b  = Invoke-PrettyTest 'B2B API'      "$b2bApi/Concertable.B2B.E2ETests.csproj"           $settings 'api-tests.last.log'
             $cust = Invoke-PrettyTest 'Customer API' "$customerApi/Concertable.Customer.E2ETests.csproj" $settings 'api-tests.last.log'
-            $summaries = @($b2b, $cust)
-            Show-Summary $summaries
-            if ((($summaries | Measure-Object Failed -Sum).Sum) -gt 0) { exit 1 } else { exit 0 }
+            Complete-TestRun @($b2b, $cust)
         }
         "b2b" {
             $b2b = Invoke-PrettyTest 'B2B API' "$b2bApi/Concertable.B2B.E2ETests.csproj" $settings 'api-tests.last.log'
-            Show-Summary @($b2b)
-            if ($b2b.Failed -gt 0) { exit 1 } else { exit 0 }
+            Complete-TestRun @($b2b)
         }
         "customer" {
             $cust = Invoke-PrettyTest 'Customer API' "$customerApi/Concertable.Customer.E2ETests.csproj" $settings 'api-tests.last.log'
-            Show-Summary @($cust)
-            if ($cust.Failed -gt 0) { exit 1 } else { exit 0 }
+            Complete-TestRun @($cust)
         }
         default { Show-Usage }
     }
