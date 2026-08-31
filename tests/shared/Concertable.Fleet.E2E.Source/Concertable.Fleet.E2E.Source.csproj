@@ -32,6 +32,10 @@
     <ProjectReference Include="..\..\Concertable.Customer\tests\E2ETests\Concertable.Customer.E2ETests.Web\Concertable.Customer.E2ETests.Web.csproj" />
     <ProjectReference Include="..\..\Concertable.Payment\tests\E2ETests\Concertable.Payment.E2ETests.Web\Concertable.Payment.E2ETests.Web.csproj" />
     <ProjectReference Include="..\..\Concertable.Payment\tests\E2ETests\Concertable.Payment.E2ETests.Workers\Concertable.Payment.E2ETests.Workers.csproj" />
+    <ProjectReference Include="..\..\Concertable.Search\src\Concertable.Search.Web\Concertable.Search.Web.csproj"
+                      PrivateAssets="all" />
+    <ProjectReference Include="..\..\Concertable.Search\src\Concertable.Search.Workers\Concertable.Search.Workers.csproj"
+                      PrivateAssets="all" />
   </ItemGroup>
 
 </Project>

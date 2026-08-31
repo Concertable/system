@@ -13,4 +13,6 @@ public interface IFleetProjectProvider
     IProjectMetadata CustomerWeb { get; }
     IProjectMetadata PaymentWeb { get; }
     IProjectMetadata PaymentWorkers { get; }
+    IProjectMetadata SearchWeb { get; }
+    IProjectMetadata SearchWorkers { get; }
 }

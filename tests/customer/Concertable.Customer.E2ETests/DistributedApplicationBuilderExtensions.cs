@@ -21,7 +21,11 @@ internal static class DistributedApplicationBuilderExtensions
             builder.PinAuthService(endpoints.Auth, FleetRun.AuthEnvironmentVariables());
             builder.PinAuthApi(endpoints.ServiceApi);
             builder.PinWeb(run, projects);
-            builder.AddSearchService(endpoints.SearchApi, endpoints.Auth);
+            builder.AddSearchService(
+                projects.SearchWeb,
+                projects.SearchWorkers,
+                endpoints.SearchApi,
+                endpoints.Auth);
             builder.PinPaymentWeb(
                 projects.PaymentWeb,
                 endpoints.PaymentApi,
