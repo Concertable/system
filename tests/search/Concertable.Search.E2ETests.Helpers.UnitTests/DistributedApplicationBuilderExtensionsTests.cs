@@ -5,7 +5,7 @@ using Concertable.Auth.Hosting;
 
 namespace Concertable.Search.E2ETests.Helpers.UnitTests;
 
-public sealed class SearchServiceExtensionsTests
+public sealed class DistributedApplicationBuilderExtensionsTests
 {
     [Fact]
     public void AddSearchService_DistinctProjectMetadata_AttachesToMatchingResources()

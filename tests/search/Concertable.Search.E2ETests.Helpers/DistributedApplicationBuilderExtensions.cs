@@ -12,7 +12,7 @@ namespace Concertable.Search.E2ETests.Helpers;
 /// run Search (data services never run their peers), but both surfaces' find pages are Search-backed
 /// (B2B's /find/venue, Customer's find page), so the E2E suites that drive them run it themselves.
 /// </summary>
-public static class SearchServiceExtensions
+public static class DistributedApplicationBuilderExtensions
 {
     private const string Database = "SearchDb";
     private const string WebResource = "search-web";
