@@ -1,56 +1,33 @@
-using Aspire.Hosting;
-using Concertable.B2B.Hosting;
-using Respawn;
-using Respawn.Graph;
-using UserSchema = Concertable.B2B.User.Infrastructure.Schema;
-using AdminSchema = Concertable.B2B.Admin.Infrastructure.Schema;
-using MessagingSchema = Concertable.Messaging.Infrastructure.Schema;
+using Concertable.B2B.TestKit;
+using Concertable.Payment.TestKit;
 
 namespace Concertable.B2B.E2ETests;
 
 public sealed class DbFixture
 {
-    private readonly DistributedApplication app;
-    private readonly RespawnableDb b2b = new();
-    private readonly PaymentDbFixture payment = new();
+    private readonly B2BTestClient b2b;
+    private readonly PaymentTestClient payment;
 
-    public OpportunityDb Opportunity { get; private set; } = null!;
-    public BookingDb Booking { get; private set; } = null!;
-    public ConcertDb Concert { get; private set; } = null!;
-    public PaymentDb Payment => payment.Payment;
+    public OpportunityDb Opportunity { get; }
+    public ApplicationDb Application { get; }
+    public BookingDb Booking { get; }
+    public ConcertDb Concert { get; }
+    public PaymentDb Payment { get; }
 
-    public DbFixture(DistributedApplication app) => this.app = app;
-
-    public async Task InitializeAsync()
+    public DbFixture(B2BTestClient b2b, PaymentTestClient payment)
     {
-        await b2b.InitializeAsync(app, B2BConstants.Database, new RespawnerOptions
-        {
-            TablesToIgnore =
-            [
-                "__EFMigrationsHistory",
-                new Table(UserSchema.Name, UserSchema.Tables.Users),
-                new Table(AdminSchema.Name, AdminSchema.Tables.AdminProfiles),
-                new Table(MessagingSchema.Name, MessagingSchema.Tables.Inbox),
-            ],
-            DbAdapter = DbAdapter.SqlServer,
-            WithReseed = true
-        });
-        await payment.InitializeAsync(app);
-        Opportunity = new OpportunityDb(b2b.Connection);
-        Booking = new BookingDb(b2b.Connection);
-        Concert = new ConcertDb(b2b.Connection);
+        this.b2b = b2b;
+        this.payment = payment;
+        Opportunity = new OpportunityDb(b2b);
+        Application = new ApplicationDb(b2b);
+        Booking = new BookingDb(b2b);
+        Concert = new ConcertDb(b2b);
+        Payment = new PaymentDb(payment);
     }
 
     public async Task ResetAsync()
     {
-        await b2b.ResetAsync();
         await payment.ResetAsync();
+        await b2b.ResetAsync();
     }
-
-    public async Task DisposeAsync()
-    {
-        await b2b.DisposeAsync();
-        await payment.DisposeAsync();
-    }
-
 }

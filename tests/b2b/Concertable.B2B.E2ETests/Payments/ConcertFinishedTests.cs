@@ -1,6 +1,5 @@
-using System.Net;
-using Concertable.B2B.Concert.Api.Responses;
-using Concertable.B2B.Workers.Functions;
+using Concertable.B2B.TestKit;
+using Concertable.Payment.TestKit;
 using Concertable.Testing;
 using Xunit;
 
@@ -9,13 +8,7 @@ namespace Concertable.B2B.E2ETests.Payments;
 [Collection("E2E")]
 public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
 {
-    private HttpClient venueManagerClient = null!;
-
-    public async Task InitializeAsync()
-    {
-        await fixture.ResetAsync();
-        venueManagerClient = await fixture.CreateAuthenticatedClientAsync(fixture.SeedState.VenueManager1.Email);
-    }
+    public async Task InitializeAsync() => await fixture.ResetAsync();
 
     public Task DisposeAsync() => Task.CompletedTask;
 
@@ -27,8 +20,8 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
 
         // Assert
         await fixture.Polling.UntilAsync(
-            () => GetConcertByApplicationAsync(fixture.SeedState.PastFlatFeeApp.Id),
-            concert => concert.Actions.Invoice is not null,
+            () => fixture.DbFixture.Application.GetStateByIdAsync(fixture.SeedState.PastFlatFeeApp.Id),
+            state => state == B2BLifecycleStates.Complete,
             timeout: TimeSpan.FromSeconds(30));
     }
 
@@ -40,8 +33,8 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
 
         // Assert
         await fixture.Polling.UntilAsync(
-            () => GetConcertByApplicationAsync(fixture.SeedState.PastVenueHireApp.Id),
-            concert => concert.Actions.Invoice is not null,
+            () => fixture.DbFixture.Application.GetStateByIdAsync(fixture.SeedState.PastVenueHireApp.Id),
+            state => state == B2BLifecycleStates.Complete,
             timeout: TimeSpan.FromSeconds(30));
     }
 
@@ -67,7 +60,7 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
             timeout: TimeSpan.FromSeconds(30));
 
         var intent = await fixture.StripePaymentIntents.GetAsync(paymentIntentId);
-        Assert.Equal(StripeAccountResolver.AccountIds[fixture.SeedState.ArtistManager1.Id], intent.TransferData.DestinationId);
+        Assert.Equal(StripeTestAccounts.BySeedUserId[fixture.SeedState.ArtistManager1.Id], intent.TransferData.DestinationId);
         Assert.Equal(22000L, intent.Amount);
         Assert.Equal(21000L, intent.TransferData.Amount);
 
@@ -96,7 +89,7 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
             timeout: TimeSpan.FromSeconds(30));
 
         var intent = await fixture.StripePaymentIntents.GetAsync(paymentIntentId);
-        Assert.Equal(StripeAccountResolver.AccountIds[fixture.SeedState.ArtistManager1.Id], intent.TransferData.DestinationId);
+        Assert.Equal(StripeTestAccounts.BySeedUserId[fixture.SeedState.ArtistManager1.Id], intent.TransferData.DestinationId);
         Assert.Equal(12400L, intent.Amount);
         Assert.Equal(11400L, intent.TransferData.Amount);
 
@@ -117,14 +110,5 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
     }
 
     private Task TriggerConcertFinishedFunctionAsync() =>
-        fixture.Workers.TriggerAsync(nameof(ConcertFinishedFunction));
-
-    private async Task<MyDetailsResponse> GetConcertByApplicationAsync(int applicationId)
-    {
-        var response = await venueManagerClient.GetAsync($"/api/concert/application/{applicationId}");
-        await response.ShouldBe(HttpStatusCode.OK);
-        var concert = await response.Content.ReadAsync<MyDetailsResponse>();
-        Assert.NotNull(concert);
-        return concert;
-    }
+        fixture.Workers.TriggerAsync(B2BTestFunctions.ConcertFinished);
 }

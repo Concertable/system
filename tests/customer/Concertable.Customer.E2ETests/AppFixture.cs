@@ -1,33 +1,14 @@
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
-using Concertable.B2B.Seed.Contracts;
-using Concertable.Customer.Artist.Infrastructure.Extensions;
-using Concertable.Customer.Concert.Infrastructure.Extensions;
-using Concertable.Customer.Hosting;
-using Concertable.Customer.Preference.Infrastructure.Extensions;
-using Concertable.Customer.Seed.Infrastructure;
-using Concertable.Customer.Venue.Infrastructure.Extensions;
-using Concertable.DataAccess.Application;
-using Concertable.DataAccess.Infrastructure.Data;
-using Concertable.Kernel;
-using Concertable.Kernel.Events;
-using Concertable.Kernel.Extensions;
-using Concertable.Kernel.Identity;
-using Concertable.Messaging.Infrastructure.Extensions;
-using Concertable.Messaging.Infrastructure.Inbox;
-using Concertable.Messaging.Infrastructure.Outbox;
-using Concertable.Seed.Shared;
-using Concertable.Seed.Infrastructure;
-using Concertable.Seed.Shared.Extensions;
-using Microsoft.EntityFrameworkCore;
+using Concertable.Customer.TestKit;
+using Concertable.Fleet.E2E;
+using Concertable.Payment.TestKit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Stripe;
 using System.Net.Http.Headers;
-using CustomerDevDbInitializer = Concertable.Customer.Web.DevDbInitializer;
 
 namespace Concertable.Customer.E2ETests;
 
@@ -35,8 +16,10 @@ public sealed class AppFixture : IAsyncLifetime
 {
     private DistributedApplication app = null!;
     private AspireResourceLogger resourceLogger = null!;
-    private IHost host = null!;
     private HealthWaiter healthWaiter = null!;
+    private HttpClient customerAdminClient = null!;
+    private HttpClient paymentAdminClient = null!;
+    private CustomerTestClient customerTestClient = null!;
     private readonly ILoggerFactory loggerFactory;
     private readonly ILogger<AppFixture> logger;
     private readonly IConfiguration configuration;
@@ -53,7 +36,6 @@ public sealed class AppFixture : IAsyncLifetime
     public HttpClient CustomerClient { get; private set; } = null!;
     public IPollingService Polling { get; private set; } = null!;
     public SeedState SeedState { get; private set; } = null!;
-    public SeedCatalog Catalog { get; private set; } = null!;
     public DbFixture DbFixture { get; private set; } = null!;
     public StripeCustomerResolver StripeCustomerResolver { get; private set; } = null!;
     public string AuthUrl => authUrl;
@@ -92,14 +74,15 @@ public sealed class AppFixture : IAsyncLifetime
         logger.InitializingE2ETestFixture();
 
         healthWaiter = new HealthWaiter(loggerFactory.CreateLogger<HealthWaiter>());
-        var builder = await DistributedApplicationTestingBuilder
-            .CreateAsync<Projects.Concertable_Customer_AppHost>();
+        var projectProvider = FleetProjectProviders.Source();
+        var builder = await projectProvider.CreateBuilderAsync(FleetSurface.Customer);
         var stripeSecretKey = builder.Configuration["Stripe:SecretKey"]
             ?? throw new InvalidOperationException("Stripe:SecretKey is not configured for the Customer E2E fixture.");
         var stripeClient = new StripeClient(stripeSecretKey);
         StripeCustomerResolver = await Concertable.Testing.E2E.StripeCustomerResolver.CreateAsync(stripeClient);
+        var fleetRun = FleetRun.Create(FleetProfile.Customer(customerWebUrl, searchWebUrl, authUrl, paymentWebUrl));
 
-        builder.AddE2EStack(customerWebUrl, searchWebUrl, authUrl, paymentWebUrl, StripeCustomerResolver);
+        builder.AddE2EStack(fleetRun, projectProvider, StripeCustomerResolver);
 
         app = await builder.BuildAsync();
         resourceLogger = new AspireResourceLogger(
@@ -114,49 +97,17 @@ public sealed class AppFixture : IAsyncLifetime
             [customerWebUrl, searchWebUrl, paymentWebUrl],
             TimeSpan.FromMinutes(12));
 
-        DbFixture = new DbFixture(app);
-        await DbFixture.InitializeAsync();
+        customerAdminClient = new HttpClient { BaseAddress = new Uri(customerWebUrl) };
+        paymentAdminClient = new HttpClient { BaseAddress = new Uri(paymentWebUrl) };
+        customerTestClient = new CustomerTestClient(
+            customerAdminClient,
+            fleetRun.AdminKey);
+        var paymentTestClient = new PaymentTestClient(
+            paymentAdminClient,
+            fleetRun.AdminKey);
+        DbFixture = new DbFixture(customerTestClient, paymentTestClient);
         await DbFixture.ResetAsync();
-
-        var customerConnectionString = await app.GetConnectionStringAsync(CustomerConstants.Database)
-            ?? throw new InvalidOperationException("Customer DB connection string is missing.");
-
-        var customerSeedConfig = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                [$"ConnectionStrings:{CustomerConstants.Database}"] = customerConnectionString,
-            })
-            .Build();
-
-        host = Host.CreateDefaultBuilder()
-            .ConfigureServices((_, services) =>
-            {
-                services.AddSingleton<IConfiguration>(customerSeedConfig);
-                services.AddLogging(b => b
-                    .AddSimpleConsole(o => o.SingleLine = true)
-                    .SetMinimumLevel(LogLevel.Warning)
-                    .AddFilter("Concertable.Customer.Web.DevDbInitializer", LogLevel.Information));
-                services.AddSingleton(TimeProvider.System);
-                services.AddSingleton<SeedCatalog>();
-                services.AddCurrentUser();
-                services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
-                services.AddScoped<AuditInterceptor>();
-                services.AddScoped<IDomainEventDispatchInterceptor, SeedingDomainEventDispatchInterceptor>();
-                services.AddOutbox(opt => opt.UseSqlServer(customerConnectionString), runDispatcher: false);
-                services.AddInbox(opt => opt.UseSqlServer(customerConnectionString));
-                services.AddSeedingInfrastructure();
-                services.AddScoped<SeedState>();
-                services.AddVenueModule(customerSeedConfig);
-                services.AddArtistModule(customerSeedConfig);
-                services.AddConcertModule(customerSeedConfig);
-                services.AddPreferenceModule(customerSeedConfig);
-                services.AddPreferenceDevSeeder();
-                services.AddScoped<IDbInitializer, CustomerDevDbInitializer>();
-            })
-            .Build();
-
-        await host.StartAsync();
-        await ReseedAsync();
+        SeedState = await customerTestClient.GetSeedStateAsync();
 
         logger.E2ETestFixtureReady();
     }
@@ -165,7 +116,7 @@ public sealed class AppFixture : IAsyncLifetime
     {
         logger.ResettingTestState();
         await DbFixture.ResetAsync();
-        await ReseedAsync();
+        SeedState = await customerTestClient.GetSeedStateAsync();
     }
 
     public async Task<HttpClient> CreateAuthenticatedClientAsync(string email)
@@ -184,15 +135,10 @@ public sealed class AppFixture : IAsyncLifetime
         try
         {
             CustomerClient?.Dispose();
+            customerAdminClient?.Dispose();
+            paymentAdminClient?.Dispose();
             tokenMinter.Dispose();
             healthWaiter?.Dispose();
-            if (DbFixture is not null)
-                await DbFixture.DisposeAsync();
-            if (host is not null)
-            {
-                await host.StopAsync();
-                host.Dispose();
-            }
             if (app is not null)
                 await app.DisposeAsync();
             if (resourceLogger is not null)
@@ -214,12 +160,4 @@ public sealed class AppFixture : IAsyncLifetime
 
     public ResourceNotificationService ResourceNotifications => app.ResourceNotifications;
 
-    private async Task ReseedAsync()
-    {
-        await using var scope = host.Services.CreateAsyncScope();
-        var initializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
-        await initializer.InitializeAsync();
-        SeedState = scope.ServiceProvider.GetRequiredService<SeedState>();
-        Catalog = scope.ServiceProvider.GetRequiredService<SeedCatalog>();
-    }
 }

@@ -26,7 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\..\..\src\Concertable.B2B.Web\appsettings.E2E.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\Concertable.B2B.E2ETests\appsettings.E2E.json" CopyToOutputDirectory="PreserveNewest" />
     <None Update="reqnroll.json" CopyToOutputDirectory="PreserveNewest" />
     <None Update="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
     <None Update="Fixtures\*.png" CopyToOutputDirectory="PreserveNewest" />
@@ -37,11 +37,8 @@
     <Using Include="Concertable.B2B.E2ETests" />
     <Using Include="Concertable.Testing.E2E" />
     <Using Include="Concertable.Payment.E2ETests.Helpers" />
-    <Using Include="Concertable.Payment.E2ETests.Stripe" />
     <Using Include="Concertable.Testing" />
-    <Using Include="Concertable.B2B.User.Domain" />
-    <Using Include="Concertable.B2B.Seed.Infrastructure" />
-    <Using Include="Concertable.Kernel.Identity" />
+    <Using Include="Concertable.B2B.TestKit" />
     <Using Include="Concertable.Testing.E2E.Ui" />
     <Using Include="Concertable.Payment.E2ETests.Helpers.Ui" />
     <Using Include="Microsoft.Playwright" />
