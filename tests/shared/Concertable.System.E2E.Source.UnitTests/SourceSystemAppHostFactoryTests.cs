@@ -1,6 +1,6 @@
-using Concertable.System.E2E.Source;
+using Concertable.SystemTesting.E2E.Source;
 
-namespace Concertable.System.E2E.Source.UnitTests;
+namespace Concertable.SystemTesting.E2E.Source.UnitTests;
 
 public sealed class SourceSystemAppHostFactoryTests
 {

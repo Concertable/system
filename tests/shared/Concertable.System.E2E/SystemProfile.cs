@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 
-namespace Concertable.System.E2E;
+namespace Concertable.SystemTesting.E2E;
 
 public enum SystemSurface
 {
