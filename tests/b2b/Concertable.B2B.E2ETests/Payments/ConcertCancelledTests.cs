@@ -1,7 +1,5 @@
 using System.Net;
-using Concertable.B2B.Concert.Application.DTOs;
-using Concertable.B2B.Concert.Api.Responses;
-using Concertable.Payment.Client;
+using Concertable.B2B.TestKit;
 using Concertable.Payment.Contracts;
 using Concertable.Payment.Contracts.Enums;
 using Concertable.Testing;
@@ -76,8 +74,8 @@ public sealed class ConcertCancelledTests : IAsyncLifetime
         await cancelResponse.ShouldBe(HttpStatusCode.NoContent);
 
         await fixture.Polling.UntilAsync(
-            () => GetApplicationAsync(appId),
-            application => application.Status == ApplicationStatus.Cancelled,
+            () => fixture.DbFixture.Application.GetStateByIdAsync(appId),
+            state => state == B2BLifecycleStates.Cancelled,
             timeout: TimeSpan.FromSeconds(30));
 
         var refundId = await fixture.Polling.UntilAsync(
@@ -106,22 +104,13 @@ public sealed class ConcertCancelledTests : IAsyncLifetime
             timeout: TimeSpan.FromSeconds(30));
     }
 
-    private async Task<MyDetailsResponse> GetConcertByApplicationAsync(int appId)
+    private async Task<B2BConcertState> GetConcertByApplicationAsync(int appId)
     {
         var response = await venueManagerClient.GetAsync($"/api/concert/application/{appId}");
         await response.ShouldBe(HttpStatusCode.OK);
-        var concert = await response.Content.ReadAsync<MyDetailsResponse>();
+        var concert = await response.Content.ReadAsync<B2BConcertState>();
         Assert.NotNull(concert);
         return concert;
-    }
-
-    private async Task<ApplicationResponse> GetApplicationAsync(int appId)
-    {
-        var response = await venueManagerClient.GetAsync($"/api/application/{appId}");
-        await response.ShouldBe(HttpStatusCode.OK);
-        var application = await response.Content.ReadAsync<ApplicationResponse>();
-        Assert.NotNull(application);
-        return application;
     }
 
     private async Task AcceptAsync(int appId)
@@ -134,10 +123,8 @@ public sealed class ConcertCancelledTests : IAsyncLifetime
     {
         var response = await venueManagerClient.PostAsync($"/api/application/{applicationId}/checkout");
         await response.ShouldBe(HttpStatusCode.OK);
-        var checkout = await response.Content.ReadAsync<CheckoutResult>();
+        var checkout = await response.Content.ReadAsync<B2BCheckoutState>();
         Assert.NotNull(checkout);
         return checkout.Session.ClientSecret;
     }
-
-    private sealed record CheckoutResult(CheckoutSession Session);
 }

@@ -1,4 +1,3 @@
-using Concertable.Kernel.ValueObjects;
 using Stripe;
 
 namespace Concertable.Payment.E2ETests.Helpers;
@@ -72,7 +71,7 @@ public sealed class StripeFixture
     {
         var paymentIntent = await paymentIntents.GetAsync(paymentIntentId, cancellationToken: ct);
 
-        return paymentIntent.Amount == Money.Gbp(amount).ToMinorUnits()
+        return paymentIntent.Amount == ToMinorUnits(amount)
             && paymentIntent.Status == "succeeded"
                 ? paymentIntent
                 : null;
@@ -85,7 +84,9 @@ public sealed class StripeFixture
             Destination = stripeAccountId,
             Created = new DateRangeOptions { GreaterThanOrEqual = LastReset }
         });
-        return results.Data.SingleOrDefault(t => t.Amount == Money.Gbp(amount).ToMinorUnits());
+        return results.Data.SingleOrDefault(t => t.Amount == ToMinorUnits(amount));
     }
+
+    private static long ToMinorUnits(decimal amount) => decimal.ToInt64(amount * 100m);
 
 }
