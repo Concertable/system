@@ -38,17 +38,15 @@ public sealed class FindPage
         await page.GetByRole(AriaRole.Option, new() { Name = type }).ClickAsync();
     }
 
-    public async Task ApplyFiltersAsync()
-    {
-        await page.RunAndWaitForResponseAsync(
+    public Task ApplyFiltersAsync() =>
+        page.RunAndWaitForOkResponseAsync(
             async () =>
             {
                 await ApplyButton.ClickAsync();
                 await FilterPanel.WaitForAsync(new() { State = WaitForSelectorState.Hidden });
             },
-            resp => resp.Url.Contains("/header?") && resp.Ok,
-            new() { Timeout = 30_000 });
-    }
+            resp => resp.Url.Contains("/header?"),
+            timeoutMs: 30_000);
 
     public async Task AddGenreFilterAsync(string genre)
     {

@@ -1,8 +1,8 @@
 # B2B UI E2E (Reqnroll + Playwright) — service-specific authoring notes
 
 **The scenario-authoring rules that apply to every suite** — test one behaviour, start at the nearest
-already-verified state, fast-forward via seeded state (never UI replay), what can't be seeded, baseline
-discipline — are the **`e2e-scenarios` skill**; this repo's baseline path and run script are in
+already-verified state, fast-forward via seeded state (never UI replay), what can't be seeded — are the
+**`e2e-scenarios` skill**; this repo's run script is in
 [`Concertable.Testing.E2E`](../../../../Concertable.Shared/tests/Concertable.Testing.E2E/AGENTS.md).
 
 This file only adds the B2B-specific mechanics.
