@@ -20,7 +20,8 @@ public static class DistributedApplicationBuilderExtensions
         {
             var paymentWeb = builder.GetRequiredResource(PaymentConstants.WebResource);
 
-            LaunchAs(paymentWeb, project);
+            paymentWeb = LaunchAs(builder, paymentWeb, project);
+            PinHttpsEndpoint(builder, paymentWeb, new Uri(paymentApiEndpoint).Port);
 
             var stripeSecretKey = builder.Configuration["Stripe:SecretKey"];
 
@@ -58,7 +59,7 @@ public static class DistributedApplicationBuilderExtensions
         {
             var paymentWorkers = builder.GetRequiredResource(PaymentConstants.WorkersResource);
 
-            LaunchAs(paymentWorkers, project);
+            paymentWorkers = LaunchAs(builder, paymentWorkers, project);
 
             paymentWorkers.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
             {
@@ -121,13 +122,67 @@ public static class DistributedApplicationBuilderExtensions
         string name) =>
         builder.Resources.Single(resource => resource.Name == name);
 
-    private static void LaunchAs(IResource resource, IProjectMetadata host)
+    internal static IResource LaunchAs(
+        IDistributedApplicationBuilder builder,
+        IResource resource,
+        IProjectMetadata host)
     {
-        if (resource is not ProjectResource)
-            return;
+        if (resource is ProjectResource)
+        {
+            foreach (var metadata in resource.Annotations.OfType<IProjectMetadata>().ToList())
+                resource.Annotations.Remove(metadata);
+            resource.Annotations.Add(host);
+            return resource;
+        }
 
-        foreach (var metadata in resource.Annotations.OfType<IProjectMetadata>().ToList())
-            resource.Annotations.Remove(metadata);
-        resource.Annotations.Add(host);
+        if (resource is not ContainerResource)
+            throw new InvalidOperationException(
+                $"E2E host pinning does not support resource '{resource.Name}' of type '{resource.GetType().Name}'.");
+
+        // A production Payment image intentionally has no TestKit routes or Stripe adapter. Keep
+        // the foreign image in the imported graph, but do not start it; run the Payment-owned E2E
+        // project beside it and retarget waits to that host. This preserves the service boundary
+        // while making image-backed umbrella AppHosts exercise the same E2E behavior as source ones.
+        builder.CreateResourceBuilder(resource).WithExplicitStart();
+        var e2eProject = builder.AddResource(new ProjectResource($"{resource.Name}-e2e"))
+            .WithAnnotation(host)
+            .Resource;
+
+        foreach (var annotation in resource.Annotations.OfType<EnvironmentCallbackAnnotation>())
+            e2eProject.Annotations.Add(annotation);
+        foreach (var annotation in resource.Annotations.OfType<WaitAnnotation>())
+            e2eProject.Annotations.Add(annotation);
+
+        var e2eProjectBuilder = builder.CreateResourceBuilder((IResource)e2eProject);
+        foreach (var dependent in builder.Resources.Where(candidate => !ReferenceEquals(candidate, resource)))
+        {
+            var waits = dependent.Annotations
+                .OfType<WaitAnnotation>()
+                .Where(annotation => ReferenceEquals(annotation.Resource, resource))
+                .ToList();
+            if (waits.Count == 0)
+                continue;
+
+            foreach (var wait in waits)
+                dependent.Annotations.Remove(wait);
+            builder.CreateResourceBuilder((IResourceWithWaitSupport)dependent).WaitFor(e2eProjectBuilder);
+        }
+
+        return e2eProject;
+    }
+
+    private static void PinHttpsEndpoint(
+        IDistributedApplicationBuilder builder,
+        IResource resource,
+        int port)
+    {
+        foreach (var endpoint in resource.Annotations
+                     .OfType<EndpointAnnotation>()
+                     .Where(endpoint => endpoint.Name == "https")
+                     .ToList())
+            resource.Annotations.Remove(endpoint);
+
+        builder.CreateResourceBuilder((IResourceWithEndpoints)resource)
+            .WithHttpsEndpoint(port: port, isProxied: false);
     }
 }

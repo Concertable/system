@@ -151,10 +151,11 @@ function Invoke-PrettyTest([string]$suite, [string]$csproj, [string[]]$extra, [s
         '--logger', 'console;verbosity=normal'
     ) + $extra
     & $localPlatform test @testArgs *> $log
+    $processExitCode = $LASTEXITCODE
 
     if (-not (Test-Path $trx)) {
         Write-Host "  No results -- build or run failed. Full log: $log" -ForegroundColor Red
-        return [pscustomobject]@{ Suite = $suite; Passed = 0; Failed = 0; Total = 0 }
+        return [pscustomobject]@{ Suite = $suite; Passed = 0; Failed = 0; Total = 0; ExitCode = $processExitCode }
     }
 
     [xml]$xml = Get-Content $trx
@@ -173,7 +174,7 @@ function Invoke-PrettyTest([string]$suite, [string]$csproj, [string[]]$extra, [s
             $failed++
         }
     }
-    return [pscustomobject]@{ Suite = $suite; Passed = $passed; Failed = $failed; Total = ($passed + $failed) }
+    return [pscustomobject]@{ Suite = $suite; Passed = $passed; Failed = $failed; Total = ($passed + $failed); ExitCode = $processExitCode }
 }
 
 function Show-Summary([object[]]$summaries) {
@@ -197,7 +198,8 @@ function Complete-TestRun([object[]]$summaries) {
     Show-Summary $summaries
     $failed = ($summaries | Measure-Object Failed -Sum).Sum
     $emptySuites = @($summaries | Where-Object Total -eq 0).Count
-    if ($failed -gt 0 -or $emptySuites -gt 0) { exit 1 }
+    $abortedSuites = @($summaries | Where-Object ExitCode -ne 0).Count
+    if ($failed -gt 0 -or $emptySuites -gt 0 -or $abortedSuites -gt 0) { exit 1 }
     exit 0
 }
 
