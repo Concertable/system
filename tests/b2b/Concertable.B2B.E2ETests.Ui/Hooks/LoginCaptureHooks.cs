@@ -11,28 +11,28 @@ public static class LoginCaptureHooks
     // rather than handed out to expire mid-scenario.
     private static readonly TimeSpan RemainingLifetimeRequired = TimeSpan.FromMinutes(5);
 
-    private static readonly Dictionary<LoginPersona, string> storageStateByPersona = [];
+    private static readonly Dictionary<SeededUser, string> storageStateByUser = [];
 
-    public static void Reset() => storageStateByPersona.Clear();
+    public static void Reset() => storageStateByUser.Clear();
 
-    public static async Task<string> GetOrCaptureAsync(UiFixture fixture, LoginPersona persona)
+    public static async Task<string> GetOrCaptureAsync(UiFixture fixture, SeededUser user)
     {
-        if (storageStateByPersona.TryGetValue(persona, out var state) && IsUsable(state))
+        if (storageStateByUser.TryGetValue(user, out var state) && IsUsable(state))
             return state;
 
         var seed = fixture.App.SeedState;
-        var (email, password, spaUrl) = persona switch
+        var (email, password, spaUrl) = user switch
         {
-            LoginPersona.VenueManager  => (seed.VenueManager1.Email,  SeedState.TestPassword, fixture.App.VenueSpaUrl),
-            LoginPersona.ArtistManager => (seed.ArtistManager1.Email, SeedState.TestPassword, fixture.App.ArtistSpaUrl),
-            _ => throw new ArgumentOutOfRangeException(nameof(persona))
+            SeededUser.VenueManager  => (seed.VenueManager1.Email,  SeedState.TestPassword, fixture.App.VenueSpaUrl),
+            SeededUser.ArtistManager => (seed.ArtistManager1.Email, SeedState.TestPassword, fixture.App.ArtistSpaUrl),
+            _ => throw new ArgumentOutOfRangeException(nameof(user))
         };
 
-        await CaptureAsync(fixture, persona, email, password, spaUrl);
-        return storageStateByPersona[persona];
+        await CaptureAsync(fixture, user, email, password, spaUrl);
+        return storageStateByUser[user];
     }
 
-    private static async Task CaptureAsync(UiFixture fixture, LoginPersona persona, string email, string password, string spaUrl)
+    private static async Task CaptureAsync(UiFixture fixture, SeededUser user, string email, string password, string spaUrl)
     {
         await using var context = await fixture.Browser.NewContextAsync(new() { IgnoreHTTPSErrors = true });
         var page = await context.NewPageAsync();
@@ -42,7 +42,7 @@ public static class LoginCaptureHooks
         await login.SignInAsync(email, password);
         await page.WaitForURLAsync($"{spaUrl}/");
 
-        storageStateByPersona[persona] = await context.StorageStateAsync();
+        storageStateByUser[user] = await context.StorageStateAsync();
     }
 
     // The SPA keeps its oidc-client-ts session in localStorage, and silent renew fires once the access
