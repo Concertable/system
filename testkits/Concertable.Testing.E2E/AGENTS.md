@@ -20,11 +20,11 @@ This rule has been violated and reverted before. Don't relitigate it: if a suite
 ## Scenario-authoring rules
 
 How to author a UI E2E scenario — one behaviour, start at the nearest already-verified state, fast-forward
-via seeded state never UI replay, what cannot be seeded, baseline discipline, headless by default — is the
+via seeded state never UI replay, what cannot be seeded, headless by default — is the
 **`e2e-scenarios` skill**. It applies to every suite here (B2B, Customer; Reqnroll + Playwright). The
 mechanics that are ours:
 
-- **The baseline is [`E2E_BASELINE.md`](./E2E_BASELINE.md)**, and `./scripts/e2e.ps1 ui regress` trusts it.
+- **CI is the only trusted pass/fail record** — the pipeline runs the whole suite, so read job history rather than any checked-in list. There is deliberately no local baseline file.
 - **Run through `./scripts/e2e.ps1 ui <cmd>`** — never `dotnet test` directly; the script owns the mandatory
   Docker health gate. `-Headed` only when a human is watching.
 - **A fast-forward `Given` reads `fixture.App.SeedState…`** and sets the id on scenario state. Each suite's
