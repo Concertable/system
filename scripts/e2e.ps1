@@ -16,124 +16,10 @@ $customerUi = Join-Path $repoRoot "api/Concertable.Customer/tests/E2ETests/Conce
 $b2bApi      = Join-Path $repoRoot "api/Concertable.B2B/tests/E2ETests/Concertable.B2B.E2ETests"
 $customerApi = Join-Path $repoRoot "api/Concertable.Customer/tests/E2ETests/Concertable.Customer.E2ETests"
 $runsettings = Join-Path $repoRoot "api/Concertable.runsettings"
-$baselineMd = Join-Path $repoRoot "api/Concertable.Shared/tests/Concertable.Testing.E2E/E2E_BASELINE.md"
 
 $quiet = @('--nologo', '--verbosity', 'quiet')
 
 if (-not $Headed) { $env:HEADLESS = "true" }
-
-function Get-BaselinePassing([string]$suite) {
-    $md = Get-Content -Raw $baselineMd
-    $marker = '<!-- BASELINE-DATA-START -->'
-    $markerIdx = $md.IndexOf($marker)
-    if ($markerIdx -lt 0) {
-        throw "BASELINE FORMAT ERROR: missing '$marker' sentinel in $baselineMd. The regress parser only reads content below this marker."
-    }
-    $data = $md.Substring($markerIdx + $marker.Length)
-
-    $pattern = "(?ms)### $suite passing \((\d+)\)\s*``````text\s*(.+?)\s*``````"
-    $match = [regex]::Match($data, $pattern)
-    if (-not $match.Success) {
-        throw "BASELINE FORMAT ERROR: couldn't find '### $suite passing (N)' section followed by a ``````text block in $baselineMd. See editing rules at the top of that file."
-    }
-
-    $declared = [int]$match.Groups[1].Value
-    $scenarios = $match.Groups[2].Value.Split([string[]]@("`r`n","`n"), [StringSplitOptions]::RemoveEmptyEntries) | ForEach-Object { $_.Trim() } | Where-Object { $_ }
-
-    if ($scenarios.Count -ne $declared) {
-        throw "BASELINE FORMAT ERROR: '### $suite passing ($declared)' but the fenced block has $($scenarios.Count) scenarios. Update either the (N) in the heading or the line count."
-    }
-
-    foreach ($s in $scenarios) {
-        if ($s -match '^[-*•]\s' -or $s -match '^["''`]') {
-            throw "BASELINE FORMAT ERROR: '$suite passing' contains a bulleted/quoted scenario: '$s'. Plain text only -- see editing rules."
-        }
-    }
-    return $scenarios
-}
-
-function Invoke-Regress([string]$suite, [string]$csproj) {
-    Write-Host ""
-    Write-Host "=== Regress: $suite ===" -ForegroundColor Cyan
-
-    $expected = Get-BaselinePassing $suite
-    Write-Host "Baseline says $($expected.Count) $suite scenarios must pass." -ForegroundColor Gray
-    $filter = ($expected | ForEach-Object { "DisplayName=$_" }) -join '|'
-
-    # Preflight: confirm each baseline scenario resolves to a real test
-    $list = & $localPlatform test $csproj --list-tests --filter $filter @quiet 2>&1
-    $discovered = $list | Where-Object { $_ -match '^\s{4}\S' } | ForEach-Object { $_.Trim() }
-    if ($discovered.Count -ne $expected.Count) {
-        $missing = $expected | Where-Object { $discovered -notcontains $_ }
-        Write-Host "BASELINE DRIFT: dotnet test --list-tests discovered $($discovered.Count) of $($expected.Count) expected $suite scenarios." -ForegroundColor Red
-        Write-Host "Missing (renamed in .feature, or typo'd in baseline?):" -ForegroundColor Red
-        $missing | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
-        throw "Baseline drift -- fix $baselineMd or the .feature file."
-    }
-    Write-Host "Preflight OK: all $($expected.Count) baseline scenarios resolve to real tests." -ForegroundColor Gray
-
-    # Run them
-    $logPath = (Join-Path (Split-Path $csproj -Parent) 'regress.last.log')
-    & $localPlatform test $csproj --filter $filter @quiet --logger "console;verbosity=normal" 2>&1 | Tee-Object -FilePath $logPath | Out-Host
-
-    # Parse pass/fail totals (Tee writes UTF-16 on Windows)
-    $logBytes = [System.IO.File]::ReadAllBytes($logPath)
-    $logText = if ($logBytes.Length -ge 2 -and $logBytes[0] -eq 0xFF -and $logBytes[1] -eq 0xFE) {
-        [System.Text.Encoding]::Unicode.GetString($logBytes)
-    } else {
-        [System.Text.Encoding]::UTF8.GetString($logBytes)
-    }
-    # dotnet test prints "Failed: N" only when N > 0
-    $passedMatch = [regex]::Match($logText, '(?m)^\s*Passed:\s*(\d+)')
-    $failedMatch = [regex]::Match($logText, '(?m)^\s*Failed:\s*(\d+)')
-    if (-not $passedMatch.Success) {
-        throw "Couldn't parse 'Passed: N' from $logPath -- did the run complete?"
-    }
-    $passed = [int]$passedMatch.Groups[1].Value
-    $failed = if ($failedMatch.Success) { [int]$failedMatch.Groups[1].Value } else { 0 }
-
-    if ($passed -eq $expected.Count -and $failed -eq 0) {
-        Write-Host "  $suite OK: $passed/$($expected.Count) passed." -ForegroundColor Green
-        return $true
-    }
-
-    $failedNames = [regex]::Matches($logText, '(?m)^\s+Failed\s+(.+?)\s+\[') | ForEach-Object { $_.Groups[1].Value }
-    Write-Host "  ${suite}: $failed scenario(s) failed on the first pass:" -ForegroundColor Yellow
-    $failedNames | ForEach-Object { Write-Host "    - $_" -ForegroundColor Yellow }
-
-    # Retry ONLY the failures once, together on a single freshly-booted stack (separate from the full run's).
-    # The UI suite is flaky on a loaded
-    # Docker host -- the ASB emulator drops connections under the sustained load of the full run, tripping
-    # different bus-heavy scenarios each time -- so a scenario that fails in the full run but passes alone
-    # is an environment blip, not a regression. Re-running just the failures is far cheaper than the whole
-    # baseline and is what makes a green verdict reliable on a flaky host. A scenario that fails BOTH times
-    # is a real regression.
-    Write-Host "  Retrying $($failedNames.Count) failed scenario(s) in isolation (flaky-stack guard)..." -ForegroundColor Cyan
-    $retryFilter = ($failedNames | ForEach-Object { "DisplayName=$_" }) -join '|'
-    $retryLog = (Join-Path (Split-Path $csproj -Parent) 'regress.retry.last.log')
-    & $localPlatform test $csproj --filter $retryFilter @quiet --logger "console;verbosity=normal" 2>&1 | Tee-Object -FilePath $retryLog | Out-Host
-
-    $retryBytes = [System.IO.File]::ReadAllBytes($retryLog)
-    $retryText = if ($retryBytes.Length -ge 2 -and $retryBytes[0] -eq 0xFF -and $retryBytes[1] -eq 0xFE) {
-        [System.Text.Encoding]::Unicode.GetString($retryBytes)
-    } else {
-        [System.Text.Encoding]::UTF8.GetString($retryBytes)
-    }
-    $retryPassedMatch = [regex]::Match($retryText, '(?m)^\s*Passed:\s*(\d+)')
-    $retryFailedMatch = [regex]::Match($retryText, '(?m)^\s*Failed:\s*(\d+)')
-    $retryPassed = if ($retryPassedMatch.Success) { [int]$retryPassedMatch.Groups[1].Value } else { 0 }
-    $retryFailed = if ($retryFailedMatch.Success) { [int]$retryFailedMatch.Groups[1].Value } else { 0 }
-
-    if ($retryFailed -eq 0 -and $retryPassed -eq $failedNames.Count) {
-        Write-Host "  $suite OK: $passed/$($expected.Count) on first pass; the $($failedNames.Count) flaked scenario(s) passed on isolated retry (environment blip, not a regression)." -ForegroundColor Green
-        return $true
-    }
-
-    $stillFailing = [regex]::Matches($retryText, '(?m)^\s+Failed\s+(.+?)\s+\[') | ForEach-Object { $_.Groups[1].Value }
-    Write-Host "  $suite REGRESSED: $retryFailed scenario(s) failed again on isolated retry (real regression):" -ForegroundColor Red
-    $stillFailing | ForEach-Object { Write-Host "    - $_" -ForegroundColor Red }
-    return $false
-}
 
 function Invoke-PrettyTest([string]$suite, [string]$csproj, [string[]]$extra, [string]$logName = 'ui-tests.last.log') {
     $dir = Split-Path $csproj -Parent
@@ -216,13 +102,82 @@ function Assert-HostCapacity {
     }
 }
 
+function Assert-SpaDependencies {
+    # The UI stack boots the SPAs through `npm run dev`, so a checkout without an installed
+    # workspace fails as `'vite' is not recognized` and every scenario dies waiting for readiness.
+    # NEVER run `npm ci` over an existing app/node_modules: npm links workspace packages as NTFS
+    # junctions, and ci's recursive wipe follows them and deletes the real sources under app/shared,
+    # app/web/shared and their siblings. Only ci into an absent node_modules; repair an incomplete
+    # one with `npm install`, which does not wipe the tree.
+    $app = Join-Path $repoRoot 'app'
+    $modules = Join-Path $app 'node_modules'
+    if (Test-Path (Join-Path $modules '.bin/vite.cmd')) { return }
+
+    $command = if (Test-Path $modules) { 'install' } else { 'ci' }
+    Write-Host "Installing SPA workspace dependencies (npm $command)..." -ForegroundColor Gray
+    Push-Location $app
+    try { & npm $command } finally { Pop-Location }
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "npm $command failed in app/ -- the SPAs cannot start." -ForegroundColor Red
+        Remove-Item Env:\HEADLESS -ErrorAction SilentlyContinue
+        exit $LASTEXITCODE
+    }
+}
+
+function Assert-SpaPackagesBuilt {
+    # The shared workspace packages resolve through their exports map to dist/, which npm ci does not
+    # produce -- their build is wired to prepack, not prepare. Without it the SPAs serve but every
+    # page dies on "Failed to resolve import @concertable/web/...", so readiness passes and the
+    # scenarios fail instead. dist/ on the widest shared package is the marker for the whole set.
+    $app = Join-Path $repoRoot 'app'
+    if (Test-Path (Join-Path $app 'web/shared/dist')) { return }
+
+    Write-Host "Building shared SPA workspace packages (app/web/shared/dist is missing)..." -ForegroundColor Gray
+    Push-Location $app
+    try { & npm run build:web-packages } finally { Pop-Location }
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "npm run build:web-packages failed -- the SPAs cannot resolve their shared imports." -ForegroundColor Red
+        Remove-Item Env:\HEADLESS -ErrorAction SilentlyContinue
+        exit $LASTEXITCODE
+    }
+}
+
+function Assert-PlaywrightBrowsers {
+    # Playwright pins its browser build to the Microsoft.Playwright package version, so a package
+    # bump leaves the machine without the matching binary and every scenario dies in BeforeRun with
+    # "Executable doesn't exist". playwright.ps1 is generated into the build output, so the project
+    # has to be built before it can be reached. Both UI suites pin the same version, so one install
+    # covers both, and the install is a no-op once the build is present.
+    $csproj = "$b2bUi/Concertable.B2B.E2ETests.Ui.csproj"
+    & $localPlatform build $csproj @quiet
+    if ($LASTEXITCODE -ne 0) {
+        Remove-Item Env:\HEADLESS -ErrorAction SilentlyContinue
+        exit $LASTEXITCODE
+    }
+
+    $script = Get-ChildItem -Path (Join-Path $b2bUi 'bin') -Filter 'playwright.ps1' -Recurse -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    if (-not $script) {
+        Write-Host "Could not find playwright.ps1 under $b2bUi/bin after building -- cannot verify browsers." -ForegroundColor Red
+        Remove-Item Env:\HEADLESS -ErrorAction SilentlyContinue
+        exit 1
+    }
+
+    $shell = if (Get-Command pwsh -ErrorAction SilentlyContinue) { 'pwsh' } else { 'powershell' }
+    & $shell -NoProfile -File $script.FullName install chromium
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Playwright browser install failed." -ForegroundColor Red
+        Remove-Item Env:\HEADLESS -ErrorAction SilentlyContinue
+        exit $LASTEXITCODE
+    }
+}
+
 function Show-Usage {
     Write-Host ""
     Write-Host "  Usage: ./scripts/e2e.ps1 <ui|api> <command> [-Headed]" -ForegroundColor White
     Write-Host ""
     Write-Host "  UI E2E (Reqnroll + Playwright, real browser):" -ForegroundColor DarkGray
     Write-Host "    ui run       Run all UI scenarios (B2B + Customer)"
-    Write-Host "    ui regress   Run only baseline-passing scenarios; fail on any regression (~3 min)"
     Write-Host "    ui b2b       Run B2B UI scenarios only"
     Write-Host "    ui customer  Run Customer UI scenarios only"
     Write-Host "    ui 3ds       Run 3DS scenarios (B2B only)"
@@ -238,11 +193,14 @@ function Show-Usage {
 }
 
 function Invoke-UiCommand([string]$cmd) {
-    if ($cmd -in @('run', 'regress', 'b2b', 'customer', '3ds')) {
+    if ($cmd -in @('run', 'b2b', 'customer', '3ds')) {
         Assert-DockerHealthy
         Assert-HostCapacity
         & $localPlatform prepare
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        Assert-SpaDependencies
+        Assert-SpaPackagesBuilt
+        Assert-PlaywrightBrowsers
     }
     switch ($cmd) {
         "run" {
@@ -257,18 +215,6 @@ function Invoke-UiCommand([string]$cmd) {
         "customer" {
             $cust = Invoke-PrettyTest 'Customer' "$customerUi/Concertable.Customer.E2ETests.Ui.csproj"
             Show-Summary @($cust)
-        }
-        "regress" {
-            $b2bOk  = Invoke-Regress 'B2B'      "$b2bUi/Concertable.B2B.E2ETests.Ui.csproj"
-            $custOk = Invoke-Regress 'Customer' "$customerUi/Concertable.Customer.E2ETests.Ui.csproj"
-            Write-Host ""
-            if ($b2bOk -and $custOk) {
-                Write-Host "REGRESS PASSED -- every baseline-passing scenario still passes." -ForegroundColor Green
-                exit 0
-            } else {
-                Write-Host "REGRESS FAILED -- at least one baseline-passing scenario regressed." -ForegroundColor Red
-                exit 1
-            }
         }
         "3ds" {
             $r = Invoke-PrettyTest '3DS' "$b2bUi/Concertable.B2B.E2ETests.Ui.csproj" @('--filter', 'DisplayName~3DS')
