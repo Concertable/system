@@ -75,6 +75,7 @@ function Invoke-Regress([string]$suite, [string]$csproj) {
     # Run them
     $logPath = (Join-Path (Split-Path $csproj -Parent) 'regress.last.log')
     & $localPlatform test $csproj --filter $filter @quiet --logger "console;verbosity=normal" 2>&1 | Tee-Object -FilePath $logPath | Out-Host
+    $processExitCode = $LASTEXITCODE
 
     # Parse pass/fail totals (Tee writes UTF-16 on Windows)
     $logBytes = [System.IO.File]::ReadAllBytes($logPath)
@@ -92,7 +93,7 @@ function Invoke-Regress([string]$suite, [string]$csproj) {
     $passed = [int]$passedMatch.Groups[1].Value
     $failed = if ($failedMatch.Success) { [int]$failedMatch.Groups[1].Value } else { 0 }
 
-    if ($passed -eq $expected.Count -and $failed -eq 0) {
+    if ($processExitCode -eq 0 -and $passed -eq $expected.Count -and $failed -eq 0) {
         Write-Host "  $suite OK: $passed/$($expected.Count) passed." -ForegroundColor Green
         return $true
     }
@@ -112,6 +113,7 @@ function Invoke-Regress([string]$suite, [string]$csproj) {
     $retryFilter = ($failedNames | ForEach-Object { "DisplayName=$_" }) -join '|'
     $retryLog = (Join-Path (Split-Path $csproj -Parent) 'regress.retry.last.log')
     & $localPlatform test $csproj --filter $retryFilter @quiet --logger "console;verbosity=normal" 2>&1 | Tee-Object -FilePath $retryLog | Out-Host
+    $retryProcessExitCode = $LASTEXITCODE
 
     $retryBytes = [System.IO.File]::ReadAllBytes($retryLog)
     $retryText = if ($retryBytes.Length -ge 2 -and $retryBytes[0] -eq 0xFF -and $retryBytes[1] -eq 0xFE) {
@@ -124,7 +126,7 @@ function Invoke-Regress([string]$suite, [string]$csproj) {
     $retryPassed = if ($retryPassedMatch.Success) { [int]$retryPassedMatch.Groups[1].Value } else { 0 }
     $retryFailed = if ($retryFailedMatch.Success) { [int]$retryFailedMatch.Groups[1].Value } else { 0 }
 
-    if ($retryFailed -eq 0 -and $retryPassed -eq $failedNames.Count) {
+    if ($retryProcessExitCode -eq 0 -and $retryFailed -eq 0 -and $retryPassed -eq $failedNames.Count) {
         Write-Host "  $suite OK: $passed/$($expected.Count) on first pass; the $($failedNames.Count) flaked scenario(s) passed on isolated retry (environment blip, not a regression)." -ForegroundColor Green
         return $true
     }

@@ -144,6 +144,11 @@ public static class DistributedApplicationBuilderExtensions
         // project beside it and retarget waits to that host. This preserves the service boundary
         // while making image-backed umbrella AppHosts exercise the same E2E behavior as source ones.
         builder.CreateResourceBuilder(resource).WithExplicitStart();
+        foreach (var endpoint in resource.Annotations
+                     .OfType<EndpointAnnotation>()
+                     .Where(endpoint => endpoint.Name == "https" && endpoint.Port is not null))
+            endpoint.Port = null;
+
         var e2eProject = builder.AddResource(new ProjectResource($"{resource.Name}-e2e"))
             .WithAnnotation(host)
             .Resource;
@@ -171,7 +176,7 @@ public static class DistributedApplicationBuilderExtensions
         return e2eProject;
     }
 
-    private static void PinHttpsEndpoint(
+    internal static void PinHttpsEndpoint(
         IDistributedApplicationBuilder builder,
         IResource resource,
         int port)

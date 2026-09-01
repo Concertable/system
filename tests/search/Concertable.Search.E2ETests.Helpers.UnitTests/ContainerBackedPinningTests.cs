@@ -14,6 +14,7 @@ public sealed class ContainerBackedPinningTests
     {
         var builder = DistributedApplication.CreateBuilder();
         var payment = builder.AddContainer(PaymentConstants.WebResource, "test-image")
+            .WithHttpsEndpoint(port: 7098, targetPort: 8080)
             .WithEnvironment("ConnectionStrings__PaymentDb", "test-connection")
             .Resource;
         var dependent = builder.AddResource(new ProjectResource("dependent"))
@@ -23,11 +24,19 @@ public sealed class ContainerBackedPinningTests
 
         var e2ePayment = Concertable.Testing.E2E.DistributedApplicationBuilderExtensions
             .LaunchAs(builder, payment, metadata);
+        Concertable.Testing.E2E.DistributedApplicationBuilderExtensions
+            .PinHttpsEndpoint(builder, e2ePayment, 7098);
 
         var project = Assert.IsType<ProjectResource>(e2ePayment);
         Assert.Equal("payment-web-e2e", project.Name);
         Assert.Same(metadata, Assert.Single(project.Annotations.OfType<IProjectMetadata>()));
         Assert.Single(payment.Annotations.OfType<ExplicitStartupAnnotation>());
+        Assert.DoesNotContain(
+            payment.Annotations.OfType<EndpointAnnotation>(),
+            annotation => annotation.Port == 7098);
+        Assert.Single(
+            builder.Resources.SelectMany(resource => resource.Annotations.OfType<EndpointAnnotation>()),
+            annotation => annotation.Port == 7098);
         Assert.Equal("test-connection", Environment(project)["ConnectionStrings__PaymentDb"]);
         Assert.DoesNotContain(
             dependent.Annotations.OfType<WaitAnnotation>(),
