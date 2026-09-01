@@ -196,8 +196,8 @@ function Show-Summary([object[]]$summaries) {
 function Complete-TestRun([object[]]$summaries) {
     Show-Summary $summaries
     $failed = ($summaries | Measure-Object Failed -Sum).Sum
-    $total = ($summaries | Measure-Object Total -Sum).Sum
-    if ($failed -gt 0 -or $total -eq 0) { exit 1 }
+    $emptySuites = @($summaries | Where-Object Total -eq 0).Count
+    if ($failed -gt 0 -or $emptySuites -gt 0) { exit 1 }
     exit 0
 }
 
