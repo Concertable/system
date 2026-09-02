@@ -20,8 +20,8 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
 
         // Assert
         await fixture.Polling.UntilAsync(
-            () => fixture.DbFixture.Application.GetStateByIdAsync(fixture.SeedState.PastFlatFeeApp.Id),
-            state => state == B2BLifecycleStates.Complete,
+            () => fixture.DbFixture.Concert.GetStateByApplicationIdAsync(fixture.SeedState.PastFlatFeeApp.Id),
+            state => state == B2BConcertLifecycleState.Complete,
             timeout: TimeSpan.FromSeconds(30));
     }
 
@@ -33,8 +33,8 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
 
         // Assert
         await fixture.Polling.UntilAsync(
-            () => fixture.DbFixture.Application.GetStateByIdAsync(fixture.SeedState.PastVenueHireApp.Id),
-            state => state == B2BLifecycleStates.Complete,
+            () => fixture.DbFixture.Concert.GetStateByApplicationIdAsync(fixture.SeedState.PastVenueHireApp.Id),
+            state => state == B2BConcertLifecycleState.Complete,
             timeout: TimeSpan.FromSeconds(30));
     }
 
