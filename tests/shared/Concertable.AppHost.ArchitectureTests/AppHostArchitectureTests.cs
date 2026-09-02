@@ -1,3 +1,4 @@
+using Aspire.Hosting.Testing;
 using Concertable.Testing.Architecture;
 using Xunit;
 
@@ -6,17 +7,18 @@ namespace Concertable.AppHost.ArchitectureTests;
 public sealed class AppHostArchitectureTests
 {
     [Fact]
-    public void Build_ProductionGraph_IsValid()
+    public async Task Build_ProductionGraph_IsValid()
     {
-        using var app = ConcertableAppHost.CreateBuilder([]).Build();
+        using var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_AppHost>();
+        await using var app = await builder.BuildAsync();
     }
 
     [Fact]
-    public void Build_InvalidLifetimeGraph_IsRejected()
+    public async Task Build_InvalidLifetimeGraph_IsRejected()
     {
-        var builder = ConcertableAppHost.CreateBuilder([]);
+        using var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_AppHost>();
         builder.Services.AddInvalidLifetimeGraph();
-        Assert.ThrowsAny<Exception>(() => builder.Build());
+        await Assert.ThrowsAnyAsync<Exception>(async () => await builder.BuildAsync());
     }
 
     [Fact]

@@ -37,10 +37,11 @@ function Invoke-PrettyTest([string]$suite, [string]$csproj, [string[]]$extra, [s
         '--logger', 'console;verbosity=normal'
     ) + $extra
     & $localPlatform test @testArgs *> $log
+    $processExitCode = $LASTEXITCODE
 
     if (-not (Test-Path $trx)) {
         Write-Host "  No results -- build or run failed. Full log: $log" -ForegroundColor Red
-        return [pscustomobject]@{ Suite = $suite; Passed = 0; Failed = 0; Total = 0 }
+        return [pscustomobject]@{ Suite = $suite; Passed = 0; Failed = 0; Total = 0; ExitCode = $processExitCode }
     }
 
     [xml]$xml = Get-Content $trx
@@ -59,7 +60,7 @@ function Invoke-PrettyTest([string]$suite, [string]$csproj, [string[]]$extra, [s
             $failed++
         }
     }
-    return [pscustomobject]@{ Suite = $suite; Passed = $passed; Failed = $failed; Total = ($passed + $failed) }
+    return [pscustomobject]@{ Suite = $suite; Passed = $passed; Failed = $failed; Total = ($passed + $failed); ExitCode = $processExitCode }
 }
 
 function Show-Summary([object[]]$summaries) {
@@ -77,6 +78,15 @@ function Show-Summary([object[]]$summaries) {
     $totalColor = if ($tf -gt 0) { 'Red' } else { 'Green' }
     Write-Host ("  {0,-14}{1,8}{2,8}{3,8}" -f 'TOTAL', $tp, $tf, $tt) -ForegroundColor $totalColor
     Write-Host ""
+}
+
+function Complete-TestRun([object[]]$summaries) {
+    Show-Summary $summaries
+    $failed = ($summaries | Measure-Object Failed -Sum).Sum
+    $emptySuites = @($summaries | Where-Object Total -eq 0).Count
+    $abortedSuites = @($summaries | Where-Object ExitCode -ne 0).Count
+    if ($failed -gt 0 -or $emptySuites -gt 0 -or $abortedSuites -gt 0) { exit 1 }
+    exit 0
 }
 
 function Assert-DockerHealthy {
@@ -206,19 +216,19 @@ function Invoke-UiCommand([string]$cmd) {
         "run" {
             $b2b  = Invoke-PrettyTest 'B2B'      "$b2bUi/Concertable.B2B.E2ETests.Ui.csproj"
             $cust = Invoke-PrettyTest 'Customer' "$customerUi/Concertable.Customer.E2ETests.Ui.csproj"
-            Show-Summary @($b2b, $cust)
+            Complete-TestRun @($b2b, $cust)
         }
         "b2b" {
             $b2b = Invoke-PrettyTest 'B2B' "$b2bUi/Concertable.B2B.E2ETests.Ui.csproj"
-            Show-Summary @($b2b)
+            Complete-TestRun @($b2b)
         }
         "customer" {
             $cust = Invoke-PrettyTest 'Customer' "$customerUi/Concertable.Customer.E2ETests.Ui.csproj"
-            Show-Summary @($cust)
+            Complete-TestRun @($cust)
         }
         "3ds" {
             $r = Invoke-PrettyTest '3DS' "$b2bUi/Concertable.B2B.E2ETests.Ui.csproj" @('--filter', 'DisplayName~3DS')
-            Show-Summary @($r)
+            Complete-TestRun @($r)
         }
         "trace" { & (Join-Path $repoRoot "api/Concertable.Shared/tests/Concertable.Testing.E2E/ui-trace.ps1") }
         default { Show-Usage }
@@ -237,19 +247,15 @@ function Invoke-ApiCommand([string]$cmd) {
         "run" {
             $b2b  = Invoke-PrettyTest 'B2B API'      "$b2bApi/Concertable.B2B.E2ETests.csproj"           $settings 'api-tests.last.log'
             $cust = Invoke-PrettyTest 'Customer API' "$customerApi/Concertable.Customer.E2ETests.csproj" $settings 'api-tests.last.log'
-            $summaries = @($b2b, $cust)
-            Show-Summary $summaries
-            if ((($summaries | Measure-Object Failed -Sum).Sum) -gt 0) { exit 1 } else { exit 0 }
+            Complete-TestRun @($b2b, $cust)
         }
         "b2b" {
             $b2b = Invoke-PrettyTest 'B2B API' "$b2bApi/Concertable.B2B.E2ETests.csproj" $settings 'api-tests.last.log'
-            Show-Summary @($b2b)
-            if ($b2b.Failed -gt 0) { exit 1 } else { exit 0 }
+            Complete-TestRun @($b2b)
         }
         "customer" {
             $cust = Invoke-PrettyTest 'Customer API' "$customerApi/Concertable.Customer.E2ETests.csproj" $settings 'api-tests.last.log'
-            Show-Summary @($cust)
-            if ($cust.Failed -gt 0) { exit 1 } else { exit 0 }
+            Complete-TestRun @($cust)
         }
         default { Show-Usage }
     }
