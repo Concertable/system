@@ -1,4 +1,5 @@
 using System.Net;
+using Concertable.B2B.Application.Application.DTOs;
 using Concertable.B2B.TestKit;
 using Concertable.Testing;
 using Xunit;
@@ -51,9 +52,9 @@ public sealed class ConcertDraftTests : IAsyncLifetime
             {
                 var response = await venueManagerClient.GetAsync($"/api/application/{fixture.SeedState.FlatFeeApp.Id}");
                 await response.ShouldBe(HttpStatusCode.OK);
-                return await response.Content.ReadAsync<B2BApplicationState>();
+                return await response.Content.ReadAsync<ApplicationResponse>();
             },
-            app => app?.Status == B2BApplicationStatus.Accepted,
+            app => app?.Status == ApplicationStatus.Accepted,
             timeout: TimeSpan.FromSeconds(15));
     }
 
@@ -77,9 +78,9 @@ public sealed class ConcertDraftTests : IAsyncLifetime
             {
                 var response = await venueManagerClient.GetAsync($"/api/application/{fixture.SeedState.VenueHireApp.Id}");
                 await response.ShouldBe(HttpStatusCode.OK);
-                return await response.Content.ReadAsync<B2BApplicationState>();
+                return await response.Content.ReadAsync<ApplicationResponse>();
             },
-            app => app?.Status == B2BApplicationStatus.Accepted,
+            app => app?.Status == ApplicationStatus.Accepted,
             timeout: TimeSpan.FromSeconds(15));
     }
 
@@ -93,8 +94,8 @@ public sealed class ConcertDraftTests : IAsyncLifetime
 
         var applicationResponse = await venueManagerClient.GetAsync($"/api/application/{fixture.SeedState.DoorSplitApp.Id}");
         await applicationResponse.ShouldBe(HttpStatusCode.OK);
-        var application = await applicationResponse.Content.ReadAsync<B2BApplicationState>();
-        Assert.Equal(B2BApplicationStatus.Accepted, application!.Status);
+        var application = await applicationResponse.Content.ReadAsync<ApplicationResponse>();
+        Assert.Equal(ApplicationStatus.Accepted, application!.Status);
     }
 
     [Fact]
@@ -107,8 +108,8 @@ public sealed class ConcertDraftTests : IAsyncLifetime
 
         var applicationResponse = await venueManagerClient.GetAsync($"/api/application/{fixture.SeedState.VersusApp.Id}");
         await applicationResponse.ShouldBe(HttpStatusCode.OK);
-        var application = await applicationResponse.Content.ReadAsync<B2BApplicationState>();
-        Assert.Equal(B2BApplicationStatus.Accepted, application!.Status);
+        var application = await applicationResponse.Content.ReadAsync<ApplicationResponse>();
+        Assert.Equal(ApplicationStatus.Accepted, application!.Status);
     }
 
     private async Task<string> PlaceAcceptHoldAsync(int applicationId)
