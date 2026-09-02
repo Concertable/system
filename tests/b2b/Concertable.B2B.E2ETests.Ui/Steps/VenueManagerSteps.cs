@@ -47,7 +47,7 @@ public sealed class VenueManagerSteps
 
     private async Task AcceptWithSavedCardAsync(bool verify)
     {
-        await browser.UsePersonaAsync(LoginPersona.VenueManager);
+        await browser.UseUserAsync(SeededUser.VenueManager);
 
         var applicationsPage = new ApplicationsPage(browser.Page, fixture.App.VenueSpaUrl);
         await applicationsPage.GotoAsync(state.OpportunityId);
@@ -107,7 +107,7 @@ public sealed class VenueManagerSteps
     [When(@"the venue manager accepts the application")]
     public async Task AcceptsApplication()
     {
-        await browser.UsePersonaAsync(LoginPersona.VenueManager);
+        await browser.UseUserAsync(SeededUser.VenueManager);
 
         var applicationsPage = new ApplicationsPage(browser.Page, fixture.App.VenueSpaUrl);
         await applicationsPage.GotoAsync(state.OpportunityId);
@@ -226,7 +226,7 @@ public sealed class VenueManagerSteps
     [When(@"the venue manager enters £(\d+) of external door takings")]
     public async Task EntersExternalDoorTakings(decimal externalTake)
     {
-        await browser.UsePersonaAsync(LoginPersona.VenueManager);
+        await browser.UseUserAsync(SeededUser.VenueManager);
         myConcertPage = new MyConcertPage(browser.Page, fixture.App.VenueSpaUrl);
         await myConcertPage.GotoAsync(state.ConcertId!.Value);
         await myConcertPage.EnterDoorTakingsAsync(externalTake);

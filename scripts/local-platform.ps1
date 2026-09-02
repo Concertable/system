@@ -10,6 +10,7 @@ if ($Command -notin @('prepare', 'restore', 'build', 'test', 'publish')) {
 $repoRoot = Split-Path $PSScriptRoot -Parent
 $platformRoot = Join-Path $repoRoot 'artifacts/local-platform'
 $packagesRoot = Join-Path $platformRoot 'packages'
+$buildRoot = Join-Path $repoRoot 'artifacts/local-platform-build'
 $configPath = Join-Path $platformRoot 'nuget.config'
 $versionPath = Join-Path $platformRoot 'version.txt'
 
@@ -66,8 +67,11 @@ function Initialize-LocalPlatform {
         $version = "0.1.0-local.$([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())"
     }
 
-    if (Test-Path -LiteralPath $platformRoot) {
-        Remove-Item -LiteralPath $platformRoot -Recurse -Force
+    if (Test-Path -LiteralPath $packagesRoot) {
+        Remove-Item -LiteralPath $packagesRoot -Recurse -Force
+    }
+    if (Test-Path -LiteralPath $buildRoot) {
+        Remove-Item -LiteralPath $buildRoot -Recurse -Force
     }
     New-Item -ItemType Directory -Path $packagesRoot -Force | Out-Null
     Write-NuGetConfig
@@ -77,6 +81,8 @@ function Initialize-LocalPlatform {
     Invoke-DotNet @(
         'restore', $solution,
         '--disable-parallel',
+        '-p:UseArtifactsOutput=true',
+        "-p:ArtifactsPath=$buildRoot",
         '-p:UseLocalPlatformSources=true'
     )
     Invoke-DotNet @(
@@ -84,6 +90,10 @@ function Initialize-LocalPlatform {
         '--configuration', 'Release',
         '--output', $packagesRoot,
         '--no-restore',
+        '-m:1',
+        '-nodeReuse:false',
+        '-p:UseArtifactsOutput=true',
+        "-p:ArtifactsPath=$buildRoot",
         '-p:UseLocalPlatformSources=true',
         "-p:MinVerVersionOverride=$version",
         "-p:PackageVersion=$version"
@@ -178,6 +188,8 @@ switch ($Command) {
         Invoke-DotNet (@(
             $Command, $Target,
             '--no-restore',
+            '-m:1',
+            '-nodeReuse:false',
             "-p:ConcertablePlatformVersion=$version",
             "-p:MinVerVersionOverride=$version",
             '-p:UseLocalPlatformPackages=true'

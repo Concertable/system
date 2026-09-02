@@ -2,12 +2,13 @@
 
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <ConcertablePlatformVersion>0.1.0-alpha.0.1281</ConcertablePlatformVersion>
+    <ConcertablePlatformVersion>0.1.0-alpha.0.1307</ConcertablePlatformVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageVersion Include="Aspire.Hosting.DevTunnels" Version="13.3.2" />
     <PackageVersion Include="Aspire.Hosting.NodeJs" Version="9.5.2" />
+    <PackageVersion Include="Aspire.Hosting.Testing" Version="13.3.2" />
     <PackageVersion Include="Concertable.Testing.Architecture" Version="$(ConcertablePlatformVersion)" />
     <PackageVersion Include="coverlet.collector" Version="6.0.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />

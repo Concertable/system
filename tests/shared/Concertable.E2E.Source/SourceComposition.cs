@@ -1,17 +1,17 @@
 using Aspire.Hosting.Testing;
-using Concertable.Fleet.E2E;
+using Concertable.E2E;
 
-namespace Concertable.Fleet.E2E.Source;
+namespace Concertable.E2E.Source;
 
-public sealed class SourceFleetProjectProvider : IFleetProjectProvider
+public sealed class SourceComposition : IComposition
 {
     public Task<IDistributedApplicationTestingBuilder> CreateBuilderAsync(
-        FleetSurface surface,
+        Surface surface,
         CancellationToken cancellationToken = default) =>
         surface switch
         {
-            FleetSurface.B2B => DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_B2B_AppHost>(cancellationToken),
-            FleetSurface.Customer => DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_Customer_AppHost>(cancellationToken),
+            Surface.B2B => DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_B2B_AppHost>(cancellationToken),
+            Surface.Customer => DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_Customer_AppHost>(cancellationToken),
             _ => throw new ArgumentOutOfRangeException(nameof(surface), surface, null),
         };
 
@@ -19,4 +19,6 @@ public sealed class SourceFleetProjectProvider : IFleetProjectProvider
     public Aspire.Hosting.IProjectMetadata CustomerWeb { get; } = new Projects.Concertable_Customer_E2ETests_Web();
     public Aspire.Hosting.IProjectMetadata PaymentWeb { get; } = new Projects.Concertable_Payment_E2ETests_Web();
     public Aspire.Hosting.IProjectMetadata PaymentWorkers { get; } = new Projects.Concertable_Payment_E2ETests_Workers();
+    public Aspire.Hosting.IProjectMetadata SearchWeb { get; } = new Projects.Concertable_Search_Web();
+    public Aspire.Hosting.IProjectMetadata SearchWorkers { get; } = new Projects.Concertable_Search_Workers();
 }

@@ -2,7 +2,7 @@
   A customer uses the search filter to find a concert, purchases a ticket, waits
   for confirmation, and then opens their QR code from the upcoming tickets page.
 
-  @Customer @quarantine
+  @Customer
   Scenario: Customer searches for concerts, purchases a ticket, and views the QR code
     When the customer opens the filter panel on the find page
     And the customer selects the header type "Concert"
@@ -12,7 +12,7 @@
     And the customer applies the filters
     Then concert results should be visible
     And the find URL should contain "headerType=concert"
-    And the find URL should contain "genres=Rock,Indie"
+    And the find URL should contain "genres=rock,indie"
     And the find URL should contain "radius=20"
     And at least 2 concert result cards should be visible
     When the customer clicks the first concert result

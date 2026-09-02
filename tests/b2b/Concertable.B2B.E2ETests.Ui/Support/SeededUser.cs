@@ -1,6 +1,6 @@
 namespace Concertable.B2B.E2ETests.Ui.Support;
 
-public enum LoginPersona
+public enum SeededUser
 {
     VenueManager,
     ArtistManager,
