@@ -1,12 +1,5 @@
+using Concertable.B2B.Application.Application.DTOs;
+
 namespace Concertable.B2B.E2ETests;
 
-public sealed record ApplicationResponse(ApplicationStatus Status);
-
-public enum ApplicationStatus
-{
-    Pending,
-    Rejected,
-    Withdrawn,
-    Accepted,
-    Cancelled
-}
+internal sealed record ApplicationResponse(ApplicationStatus Status);
