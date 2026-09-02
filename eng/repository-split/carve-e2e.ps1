@@ -21,8 +21,8 @@ $paths = @(
     "api\TestConventions.targets",
     "api\BannedSymbols.txt",
     "api\BannedSymbols.UnitTests.txt",
-    "api\tests\Concertable.Fleet.E2E.slnx",
-    "api\tests\Concertable.Fleet.E2E",
+    "api\tests\Concertable.E2E.slnx",
+    "api\tests\Concertable.E2E",
     "api\tests\nuget.config",
     "api\Concertable.Shared\Directory.Build.props",
     "api\Concertable.Shared\Directory.Packages.props",
@@ -52,7 +52,8 @@ $paths = @(
     "api\Concertable.Search\Directory.Build.props",
     "api\Concertable.Search\Directory.Build.targets",
     "api\Concertable.Search\Directory.Packages.props",
-    "api\Concertable.Search\tests\E2ETests\Concertable.Search.E2ETests.Helpers"
+    "api\Concertable.Search\tests\E2ETests\Concertable.Search.E2ETests.Helpers",
+    "api\Concertable.Search\tests\E2ETests\Concertable.Search.E2ETests.Helpers.UnitTests"
 )
 
 foreach ($relativePath in $paths) {

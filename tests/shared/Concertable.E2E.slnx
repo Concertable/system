@@ -8,11 +8,12 @@
     <Project Path="../Concertable.Customer/tests/E2ETests/Concertable.Customer.E2ETests.Mobile/Concertable.Customer.E2ETests.Mobile.csproj" />
     <Project Path="../Concertable.Customer/tests/E2ETests/Concertable.Customer.E2ETests.Ui/Concertable.Customer.E2ETests.Ui.csproj" />
   </Folder>
-  <Folder Name="/Fleet/">
-    <Project Path="Concertable.Fleet.E2E/Concertable.Fleet.E2E.csproj" />
+  <Folder Name="/E2E/">
+    <Project Path="Concertable.E2E/Concertable.E2E.csproj" />
     <Project Path="../Concertable.Shared/tests/Concertable.Testing.E2E/Concertable.Testing.E2E.csproj" />
     <Project Path="../Concertable.Payment/tests/E2ETests/Concertable.Payment.E2ETests.Helpers/Concertable.Payment.E2ETests.Helpers.csproj" />
     <Project Path="../Concertable.Payment/tests/E2ETests/Concertable.Payment.E2ETests.Helpers.UnitTests/Concertable.Payment.E2ETests.Helpers.UnitTests.csproj" />
     <Project Path="../Concertable.Search/tests/E2ETests/Concertable.Search.E2ETests.Helpers/Concertable.Search.E2ETests.Helpers.csproj" />
+    <Project Path="../Concertable.Search/tests/E2ETests/Concertable.Search.E2ETests.Helpers.UnitTests/Concertable.Search.E2ETests.Helpers.UnitTests.csproj" />
   </Folder>
 </Solution>
