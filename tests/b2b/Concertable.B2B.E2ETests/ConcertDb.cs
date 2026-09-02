@@ -1,3 +1,4 @@
+using Concertable.B2B.Concert.Domain.Lifecycle;
 using Concertable.B2B.TestKit;
 
 namespace Concertable.B2B.E2ETests;
@@ -13,8 +14,8 @@ public sealed class ConcertDb
 
     /* Models the venue declaring the night's door take. Until the declare endpoint lands (Phase 2)
        the E2E arrange writes it straight to the column the endpoint will set. */
-    public Task<B2BConcertLifecycleState> GetStateByApplicationIdAsync(int applicationId) =>
-        client.GetConcertStateByApplicationAsync(applicationId);
+    public async Task<ConcertState> GetStateByApplicationIdAsync(int applicationId) =>
+        (ConcertState)await client.GetConcertStateByApplicationAsync(applicationId);
 
     public Task DeclareDoorRevenueAsync(int concertId, decimal doorRevenue) =>
         client.DeclareDoorRevenueAsync(concertId, doorRevenue);

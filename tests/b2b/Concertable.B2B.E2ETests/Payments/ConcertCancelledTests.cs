@@ -1,4 +1,5 @@
 using System.Net;
+using Concertable.B2B.Concert.Domain.Lifecycle;
 using Concertable.B2B.TestKit;
 using Concertable.Payment.Contracts;
 using Concertable.Payment.Contracts.Enums;
@@ -75,7 +76,7 @@ public sealed class ConcertCancelledTests : IAsyncLifetime
 
         await fixture.Polling.UntilAsync(
             () => fixture.DbFixture.Concert.GetStateByApplicationIdAsync(appId),
-            state => state == B2BConcertLifecycleState.Cancelled,
+            state => state == ConcertState.Cancelled,
             timeout: TimeSpan.FromSeconds(30));
 
         var refundId = await fixture.Polling.UntilAsync(
