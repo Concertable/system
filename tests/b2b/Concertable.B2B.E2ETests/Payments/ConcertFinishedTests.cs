@@ -1,3 +1,4 @@
+using Concertable.B2B.Concert.Domain.Lifecycle;
 using Concertable.B2B.TestKit;
 using Concertable.Payment.TestKit;
 using Concertable.Testing;
@@ -21,7 +22,7 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
         // Assert
         await fixture.Polling.UntilAsync(
             () => fixture.DbFixture.Concert.GetStateByApplicationIdAsync(fixture.SeedState.PastFlatFeeApp.Id),
-            state => state == B2BConcertLifecycleState.Complete,
+            state => state == ConcertState.Complete,
             timeout: TimeSpan.FromSeconds(30));
     }
 
@@ -34,7 +35,7 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
         // Assert
         await fixture.Polling.UntilAsync(
             () => fixture.DbFixture.Concert.GetStateByApplicationIdAsync(fixture.SeedState.PastVenueHireApp.Id),
-            state => state == B2BConcertLifecycleState.Complete,
+            state => state == ConcertState.Complete,
             timeout: TimeSpan.FromSeconds(30));
     }
 

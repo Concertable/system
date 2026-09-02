@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Modules\Concert\Concertable.B2B.Concert.Domain\Concertable.B2B.Concert.Domain.csproj" />
     <ProjectReference Include="..\..\..\..\Concertable.Shared\tests\Concertable.Testing.E2E\Concertable.Testing.E2E.csproj" />
     <ProjectReference Include="..\..\..\..\tests\Concertable.E2E\Concertable.E2E.csproj" />
     <ProjectReference Include="..\..\..\..\Concertable.Payment\tests\E2ETests\Concertable.Payment.E2ETests.Helpers\Concertable.Payment.E2ETests.Helpers.csproj" />
