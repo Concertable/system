@@ -2,7 +2,7 @@
 
 **Executable umbrella Aspire host.** Runs every service in the system at once for "I want everything wired up" dev sessions.
 
-This project has a `Program.cs` and an entry point. It references each service's generated `Projects.Concertable_*` metadata (B2B, Customer, Search, Auth, Payment — Web + Workers) plus the Aspire SDK, and composes them into a single `DistributedApplication`.
+This project uses the project-based Aspire convention: top-level composition in `AppHost.cs`. It references each service's generated `Projects.Concertable_*` metadata (B2B, Customer, Search, Auth, Payment — Web + Workers) plus the Aspire SDK, and composes them into a single `DistributedApplication`.
 
 ## What it is, what it isn't
 
