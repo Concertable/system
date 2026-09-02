@@ -1,8 +1,6 @@
 using Concertable.Testing.Architecture;
 using Xunit;
 
-using CompositionAppHost = Concertable.Hosting.AppHost;
-
 namespace Concertable.AppHost.ArchitectureTests;
 
 public sealed class AppHostArchitectureTests
@@ -10,13 +8,13 @@ public sealed class AppHostArchitectureTests
     [Fact]
     public void Build_ProductionGraph_IsValid()
     {
-        using var app = CompositionAppHost.CreateBuilder([]).Build();
+        using var app = AppHostFactory.CreateBuilder([]).Build();
     }
 
     [Fact]
     public void Build_InvalidLifetimeGraph_IsRejected()
     {
-        var builder = CompositionAppHost.CreateBuilder([]);
+        var builder = AppHostFactory.CreateBuilder([]);
         builder.Services.AddInvalidLifetimeGraph();
         Assert.ThrowsAny<Exception>(() => builder.Build());
     }
