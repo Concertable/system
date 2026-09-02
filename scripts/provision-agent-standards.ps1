@@ -23,6 +23,13 @@ if ($StandardsScope -eq 'Concertable') {
     ) + $marketplaces
 }
 
+function ConvertFrom-JsonArray([string[]]$Lines) {
+    # ConvertFrom-Json emits a top-level JSON array as ONE object on PS 5.1, so @(...) yields a single
+    # row whose every property is a 32-element array. `-eq` against that filters instead of comparing,
+    # which silently turns the install/verify guards below into no-ops. ForEach-Object unrolls it.
+    return @($Lines | ConvertFrom-Json | ForEach-Object { $_ })
+}
+
 function Invoke-Checked([string]$Executable, [string[]]$Arguments) {
     & $Executable @Arguments
     if ($LASTEXITCODE -ne 0) { throw "$Executable $($Arguments -join ' ') failed with exit code $LASTEXITCODE." }
@@ -59,7 +66,7 @@ function Install-ClaudeStandards {
                 Invoke-Checked $claude @('plugin', 'marketplace', 'add', $marketplace.Source, '--scope', 'user')
             }
         }
-        $installed = @(& $claude plugin list --json | ConvertFrom-Json)
+        $installed = ConvertFrom-JsonArray (& $claude plugin list --json)
         foreach ($marketplace in $marketplaces) {
             foreach ($plugin in $marketplace.Plugins) {
                 $id = "$plugin@$($marketplace.Name)"
@@ -71,7 +78,7 @@ function Install-ClaudeStandards {
             }
         }
     }
-    $actual = @(& $claude plugin list --json | ConvertFrom-Json)
+    $actual = ConvertFrom-JsonArray (& $claude plugin list --json)
     foreach ($marketplace in $marketplaces) {
         foreach ($plugin in $marketplace.Plugins) {
             $id = "$plugin@$($marketplace.Name)"
