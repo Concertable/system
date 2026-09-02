@@ -1,14 +1,21 @@
-using Concertable.SystemTesting.E2E.Source;
+using Concertable.E2E;
+using Concertable.E2E.Source;
 
-namespace Concertable.SystemTesting.E2E.Source.UnitTests;
+namespace Concertable.E2E.Source.UnitTests;
 
-public sealed class SourceSystemAppHostFactoryTests
+public sealed class SourceCompositionTests
 {
-    private readonly SourceSystemAppHostFactory factory;
+    private readonly SourceComposition composition;
 
-    public SourceSystemAppHostFactoryTests()
+    public SourceCompositionTests()
     {
-        this.factory = new SourceSystemAppHostFactory();
+        this.composition = new SourceComposition();
+    }
+
+    [Fact]
+    public void Source_ResolvesSourceCompositionByAssemblyName()
+    {
+        Assert.IsType<SourceComposition>(Compositions.Source());
     }
 
     [Fact]
@@ -16,7 +23,7 @@ public sealed class SourceSystemAppHostFactoryTests
     {
         Assert.EndsWith(
             Path.Combine("Concertable.Search", "src", "Concertable.Search.Web", "Concertable.Search.Web.csproj"),
-            this.factory.SearchWeb.ProjectPath,
+            this.composition.SearchWeb.ProjectPath,
             StringComparison.OrdinalIgnoreCase);
     }
 
@@ -25,7 +32,7 @@ public sealed class SourceSystemAppHostFactoryTests
     {
         Assert.EndsWith(
             Path.Combine("Concertable.Search", "src", "Concertable.Search.Workers", "Concertable.Search.Workers.csproj"),
-            this.factory.SearchWorkers.ProjectPath,
+            this.composition.SearchWorkers.ProjectPath,
             StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -1,22 +1,22 @@
 using Concertable.Testing.Architecture;
 using Xunit;
 
-using Concertable.System.AppHost;
+using CompositionAppHost = Concertable.Hosting.AppHost;
 
-namespace Concertable.System.AppHost.ArchitectureTests;
+namespace Concertable.AppHost.ArchitectureTests;
 
 public sealed class AppHostArchitectureTests
 {
     [Fact]
     public void Build_ProductionGraph_IsValid()
     {
-        using var app = AppHost.CreateBuilder([]).Build();
+        using var app = CompositionAppHost.CreateBuilder([]).Build();
     }
 
     [Fact]
     public void Build_InvalidLifetimeGraph_IsRejected()
     {
-        var builder = AppHost.CreateBuilder([]);
+        var builder = CompositionAppHost.CreateBuilder([]);
         builder.Services.AddInvalidLifetimeGraph();
         Assert.ThrowsAny<Exception>(() => builder.Build());
     }
@@ -26,7 +26,7 @@ public sealed class AppHostArchitectureTests
     {
         var root = ExecutableHostInventory.FindRepositoryRoot();
         ExecutableHostInventory.Validate(Path.Combine(root, "api"),
-            "Concertable.System.AppHost/Concertable.System.AppHost.csproj",
+            "Concertable.AppHost/Concertable.AppHost.csproj",
             "Concertable.Auth/src/Concertable.Auth.AppHost/Concertable.Auth.AppHost.csproj",
             "Concertable.Auth/src/Concertable.Auth/Concertable.Auth.csproj",
             "Concertable.B2B/src/Concertable.B2B.AppHost/Concertable.B2B.AppHost.csproj",

@@ -10,7 +10,7 @@ namespace Concertable.Search.E2ETests.Helpers.UnitTests;
 public sealed class ContainerBackedPinningTests
 {
     [Fact]
-    public void LaunchAs_ImageBackedPaymentResource_RunsPaymentOwnedE2EProjectAndRetargetsWaits()
+    public void SubstituteE2EProject_ImageBackedPaymentResource_RunsPaymentOwnedProjectAndRetargetsWaits()
     {
         var builder = DistributedApplication.CreateBuilder();
         var payment = builder.AddContainer(PaymentConstants.WebResource, "test-image")
@@ -23,7 +23,7 @@ public sealed class ContainerBackedPinningTests
         var metadata = new TestProjectMetadata("payment-e2e-web.csproj");
 
         var e2ePayment = Concertable.Testing.E2E.DistributedApplicationBuilderExtensions
-            .LaunchAs(builder, payment, metadata);
+            .SubstituteE2EProject(builder, payment, metadata);
         Concertable.Testing.E2E.DistributedApplicationBuilderExtensions
             .PinHttpsEndpoint(builder, e2ePayment, 7098);
 

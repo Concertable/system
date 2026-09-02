@@ -49,7 +49,7 @@ public static class DistributedApplicationBuilderExtensions
             }
             else
             {
-                LaunchAs(searchWeb, searchWebProject);
+                ReplaceProjectMetadataWhenSourceBacked(searchWeb, searchWebProject);
             }
 
             PinHttpsEndpoint(builder, searchWeb, searchApiUri.Port);
@@ -76,7 +76,7 @@ public static class DistributedApplicationBuilderExtensions
             }
             else
             {
-                LaunchAs(searchWorkers, searchWorkersProject);
+                ReplaceProjectMetadataWhenSourceBacked(searchWorkers, searchWorkersProject);
             }
 
             searchWorkers.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
@@ -89,7 +89,7 @@ public static class DistributedApplicationBuilderExtensions
         }
     }
 
-    private static void LaunchAs(IResource resource, IProjectMetadata project)
+    private static void ReplaceProjectMetadataWhenSourceBacked(IResource resource, IProjectMetadata project)
     {
         if (resource is not ProjectResource)
             return;
