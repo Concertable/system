@@ -43,10 +43,17 @@ public static class DistributedApplicationBuilderExtensions
         {
             var auth = builder.GetRequiredResource(AuthConstants.Resource);
 
+            // The standalone AppHosts run Auth as a pinned image with a real HTTPS endpoint (its
+            // certificate comes from WithHttpsDeveloperCertificate). Pin the host port to the E2E
+            // contract; never set ASPNETCORE_URLS here — forcing the container onto
+            // https://localhost:<port> left Kestrel with no certificate and crashed it on startup.
+            var authPort = new Uri(authEndpoint).Port;
+            foreach (var endpoint in auth.Annotations.OfType<EndpointAnnotation>().Where(e => e.Name == "https"))
+                endpoint.Port = authPort;
+
             auth.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
             {
                 context.EnvironmentVariables["ASPNETCORE_ENVIRONMENT"] = "E2E";
-                context.EnvironmentVariables["ASPNETCORE_URLS"] = authEndpoint;
                 context.EnvironmentVariables["Auth__Authority"] = authEndpoint;
                 foreach (var (key, value) in environmentVariables)
                     context.EnvironmentVariables[key] = value;
