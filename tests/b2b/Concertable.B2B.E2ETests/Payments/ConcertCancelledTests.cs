@@ -74,8 +74,8 @@ public sealed class ConcertCancelledTests : IAsyncLifetime
         await cancelResponse.ShouldBe(HttpStatusCode.NoContent);
 
         await fixture.Polling.UntilAsync(
-            () => fixture.DbFixture.Application.GetStateByIdAsync(appId),
-            state => state == B2BLifecycleStates.Cancelled,
+            () => fixture.DbFixture.Concert.GetStateByApplicationIdAsync(appId),
+            state => state == B2BConcertLifecycleState.Cancelled,
             timeout: TimeSpan.FromSeconds(30));
 
         var refundId = await fixture.Polling.UntilAsync(
