@@ -117,10 +117,11 @@ public static class DistributedApplicationBuilderExtensions
         }
     }
 
-    internal static IResource GetRequiredResource(
-        this IDistributedApplicationBuilder builder,
-        string name) =>
-        builder.Resources.Single(resource => resource.Name == name);
+    extension(IDistributedApplicationBuilder builder)
+    {
+        internal IResource GetRequiredResource(string name) =>
+            builder.Resources.Single(resource => resource.Name == name);
+    }
 
     internal static IResource SubstituteE2EProject(
         IDistributedApplicationBuilder builder,
