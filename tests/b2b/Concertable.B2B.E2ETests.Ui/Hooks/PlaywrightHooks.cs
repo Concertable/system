@@ -35,11 +35,11 @@ public sealed class PlaywrightHooks
         var tags = scenarioContext.ScenarioInfo.Tags;
         var isSignUp = scenarioContext.HasTag("SignUp");
 
-        var persona = isSignUp ? null : tags
-            .Select(tag => Enum.TryParse<LoginPersona>(tag, out var p) ? (LoginPersona?)p : null)
+        var user = isSignUp ? null : tags
+            .Select(tag => Enum.TryParse<SeededUser>(tag, out var p) ? (SeededUser?)p : null)
             .FirstOrDefault(p => p is not null);
 
-        await browser.InitializeAsync(fixture.Browser, persona, fixture);
+        await browser.InitializeAsync(fixture.Browser, user, fixture);
     }
 
     [AfterScenario]
