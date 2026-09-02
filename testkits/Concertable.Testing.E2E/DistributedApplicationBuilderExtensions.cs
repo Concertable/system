@@ -20,7 +20,7 @@ public static class DistributedApplicationBuilderExtensions
         {
             var paymentWeb = builder.GetRequiredResource(PaymentConstants.WebResource);
 
-            paymentWeb = LaunchAs(builder, paymentWeb, project);
+            paymentWeb = SubstituteE2EProject(builder, paymentWeb, project);
             PinHttpsEndpoint(builder, paymentWeb, new Uri(paymentApiEndpoint).Port);
 
             var stripeSecretKey = builder.Configuration["Stripe:SecretKey"];
@@ -59,7 +59,7 @@ public static class DistributedApplicationBuilderExtensions
         {
             var paymentWorkers = builder.GetRequiredResource(PaymentConstants.WorkersResource);
 
-            paymentWorkers = LaunchAs(builder, paymentWorkers, project);
+            paymentWorkers = SubstituteE2EProject(builder, paymentWorkers, project);
 
             paymentWorkers.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
             {
@@ -122,7 +122,7 @@ public static class DistributedApplicationBuilderExtensions
         string name) =>
         builder.Resources.Single(resource => resource.Name == name);
 
-    internal static IResource LaunchAs(
+    internal static IResource SubstituteE2EProject(
         IDistributedApplicationBuilder builder,
         IResource resource,
         IProjectMetadata host)

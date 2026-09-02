@@ -1,12 +1,12 @@
 using Aspire.Hosting;
 using Aspire.Hosting.Testing;
 
-namespace Concertable.SystemTesting.E2E;
+namespace Concertable.E2E;
 
-public interface ISystemAppHostFactory
+public interface IComposition
 {
     Task<IDistributedApplicationTestingBuilder> CreateBuilderAsync(
-        SystemSurface surface,
+        Surface surface,
         CancellationToken cancellationToken = default);
 
     IProjectMetadata B2BWeb { get; }

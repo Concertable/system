@@ -1,17 +1,17 @@
 using Aspire.Hosting.Testing;
-using Concertable.SystemTesting.E2E;
+using Concertable.E2E;
 
-namespace Concertable.SystemTesting.E2E.Source;
+namespace Concertable.E2E.Source;
 
-public sealed class SourceSystemAppHostFactory : ISystemAppHostFactory
+public sealed class SourceComposition : IComposition
 {
     public Task<IDistributedApplicationTestingBuilder> CreateBuilderAsync(
-        SystemSurface surface,
+        Surface surface,
         CancellationToken cancellationToken = default) =>
         surface switch
         {
-            SystemSurface.B2B => DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_B2B_AppHost>(cancellationToken),
-            SystemSurface.Customer => DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_Customer_AppHost>(cancellationToken),
+            Surface.B2B => DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_B2B_AppHost>(cancellationToken),
+            Surface.Customer => DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_Customer_AppHost>(cancellationToken),
             _ => throw new ArgumentOutOfRangeException(nameof(surface), surface, null),
         };
 

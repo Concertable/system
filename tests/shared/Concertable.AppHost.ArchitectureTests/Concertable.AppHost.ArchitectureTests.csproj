@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Concertable.AppHost.ArchitectureTests</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
@@ -13,7 +14,7 @@
     <PackageReference Include="xunit.runner.visualstudio" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Concertable.System.AppHost\Concertable.System.AppHost.csproj" />
+    <ProjectReference Include="..\..\Concertable.AppHost\Concertable.AppHost.csproj" />
     <PackageReference Include="Concertable.Testing.Architecture" />
   </ItemGroup>
 </Project>

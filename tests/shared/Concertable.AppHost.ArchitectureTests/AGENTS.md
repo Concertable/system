@@ -1,4 +1,4 @@
-# Concertable.System.AppHost.ArchitectureTests — architecture tests
+# Concertable.AppHost.ArchitectureTests — architecture tests
 
 **Architecture fitness functions for the composed AppHost graph. The dynamic host-graph checks build the
 real production registration graph without starting it or external infrastructure, and the inventory guard

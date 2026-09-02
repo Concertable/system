@@ -3,7 +3,7 @@ using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
 using Concertable.B2B.Hosting;
 using Concertable.B2B.TestKit;
-using Concertable.SystemTesting.E2E;
+using Concertable.E2E;
 using Concertable.Payment.Hosting;
 using Concertable.Payment.TestKit;
 using Microsoft.Extensions.Configuration;
@@ -83,15 +83,15 @@ public sealed class AppFixture : IAsyncLifetime
         logger.InitializingE2ETestFixture();
 
         healthWaiter = new HealthWaiter(loggerFactory.CreateLogger<HealthWaiter>());
-        var appHostFactory = SystemAppHostFactories.Source();
-        var builder = await appHostFactory.CreateBuilderAsync(SystemSurface.B2B);
+        var composition = Compositions.Source();
+        var builder = await composition.CreateBuilderAsync(Surface.B2B);
         var stripeSecretKey = builder.Configuration["Stripe:SecretKey"]
             ?? throw new InvalidOperationException("Stripe:SecretKey is not configured for the B2B E2E fixture.");
         var stripeClient = new StripeClient(stripeSecretKey);
         StripeCustomerResolver = await Concertable.Testing.E2E.StripeCustomerResolver.CreateAsync(stripeClient);
-        var systemRun = SystemRun.Create(SystemProfile.B2B(B2BWebUrl, SearchWebUrl, authUrl, PaymentWebUrl));
+        var run = Run.Create(Profile.B2B(B2BWebUrl, SearchWebUrl, authUrl, PaymentWebUrl));
 
-        builder.AddE2EStack(systemRun, appHostFactory, StripeCustomerResolver);
+        builder.AddE2EStack(run, composition, StripeCustomerResolver);
         StripePaymentIntents = new PaymentIntentService(stripeClient);
         Stripe = new StripeFixture(stripeClient);
 
@@ -119,10 +119,10 @@ public sealed class AppFixture : IAsyncLifetime
         paymentAdminClient = new HttpClient { BaseAddress = new Uri(PaymentWebUrl) };
         b2bTestClient = new B2BTestClient(
             b2bAdminClient,
-            systemRun.AdminKey);
+            run.AdminKey);
         var paymentTestClient = new PaymentTestClient(
             paymentAdminClient,
-            systemRun.AdminKey);
+            run.AdminKey);
         DbFixture = new DbFixture(b2bTestClient, paymentTestClient);
         await DbFixture.ResetAsync();
         SeedState = await b2bTestClient.GetSeedStateAsync();
