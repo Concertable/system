@@ -157,16 +157,26 @@ public static class DistributedApplicationBuilderExtensions
                      .Where(endpoint => endpoint.Name == "https" && endpoint.Port is not null))
             endpoint.Port = null;
 
-        var e2eProject = builder.AddResource(new ProjectResource($"{resource.Name}-e2e"))
-            .WithAnnotation(host)
-            .Resource;
+        var e2eProjectBuilder = builder.AddResource(new ProjectResource($"{resource.Name}-e2e"))
+            .WithAnnotation(host);
+        var e2eProject = e2eProjectBuilder.Resource;
 
         foreach (var annotation in resource.Annotations.OfType<EnvironmentCallbackAnnotation>())
             e2eProject.Annotations.Add(annotation);
         foreach (var annotation in resource.Annotations.OfType<WaitAnnotation>())
             e2eProject.Annotations.Add(annotation);
 
-        var e2eProjectBuilder = builder.CreateResourceBuilder((IResource)e2eProject);
+        // The container's WithReference(...) calls injected connection strings through callbacks bound to
+        // the original resource, which Aspire does not resolve for the substituted project — payment
+        // workers then start with a null 'asb' connection string and crash. Re-issue the reference for
+        // every connection-string resource the container waited on (this is what AddSearchService does
+        // on its own image path).
+        foreach (var connectionResource in resource.Annotations
+                     .OfType<WaitAnnotation>()
+                     .Select(wait => wait.Resource)
+                     .OfType<IResourceWithConnectionString>()
+                     .Distinct())
+            e2eProjectBuilder.WithReference(builder.CreateResourceBuilder(connectionResource));
         foreach (var dependent in builder.Resources.Where(candidate => !ReferenceEquals(candidate, resource)))
         {
             var waits = dependent.Annotations
