@@ -43,13 +43,11 @@ public static class DistributedApplicationBuilderExtensions
         {
             var auth = builder.GetRequiredResource(AuthConstants.Resource);
 
-            // The standalone AppHosts run Auth as a pinned image with a real HTTPS endpoint (its
-            // certificate comes from WithHttpsDeveloperCertificate). Pin the host port to the E2E
-            // contract; never set ASPNETCORE_URLS here — forcing the container onto
-            // https://localhost:<port> left Kestrel with no certificate and crashed it on startup.
-            var authPort = new Uri(authEndpoint).Port;
-            foreach (var endpoint in auth.Annotations.OfType<EndpointAnnotation>().Where(e => e.Name == "https"))
-                endpoint.Port = authPort;
+            // Never set ASPNETCORE_URLS here — forcing the container onto https://localhost:<port>
+            // left Kestrel with no certificate and crashed it on startup. The image serves HTTPS on
+            // its own target port (the certificate comes from WithHttpsDeveloperCertificate); only the
+            // published host port is pinned to the E2E contract.
+            PinHttpsEndpoint(builder, auth, new Uri(authEndpoint).Port);
 
             auth.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
             {
@@ -207,13 +205,20 @@ public static class DistributedApplicationBuilderExtensions
         IResource resource,
         int port)
     {
+        var resourceBuilder = builder.CreateResourceBuilder((IResourceWithEndpoints)resource);
+        if (!resource.Annotations.OfType<EndpointAnnotation>().Any(endpoint => endpoint.Name == "https"))
+            resourceBuilder.WithHttpsEndpoint();
+
+        // DCP ignores a proxied endpoint's declared public port whenever RandomizePorts is on, and the
+        // Aspire testing builder always turns it on. An E2E host port is a contract the tests dial by
+        // literal URL, so the endpoint has to be proxyless — otherwise DCP publishes the resource on
+        // some other port and every call to the contract URL is refused.
         foreach (var endpoint in resource.Annotations
                      .OfType<EndpointAnnotation>()
-                     .Where(endpoint => endpoint.Name == "https")
-                     .ToList())
-            resource.Annotations.Remove(endpoint);
-
-        builder.CreateResourceBuilder((IResourceWithEndpoints)resource)
-            .WithHttpsEndpoint(port: port, isProxied: false);
+                     .Where(endpoint => endpoint.Name == "https"))
+        {
+            endpoint.Port = port;
+            endpoint.IsProxied = false;
+        }
     }
 }

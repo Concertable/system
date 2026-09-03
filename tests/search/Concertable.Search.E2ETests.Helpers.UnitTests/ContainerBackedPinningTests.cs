@@ -47,6 +47,28 @@ public sealed class ContainerBackedPinningTests
     }
 
     [Fact]
+    public void PinHttpsEndpoint_ImageBackedAuthResource_PublishesTheContractPortProxyless()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var auth = builder.AddContainer(AuthConstants.Resource, "test-image")
+            .WithHttpsEndpoint(targetPort: 8080, name: "https")
+            .Resource;
+
+        Concertable.Testing.E2E.DistributedApplicationBuilderExtensions
+            .PinHttpsEndpoint(builder, auth, 7083);
+
+        var endpoint = Assert.Single(
+            auth.Annotations.OfType<EndpointAnnotation>(),
+            annotation => annotation.Name == "https");
+        Assert.Equal(7083, endpoint.Port);
+        Assert.Equal(8080, endpoint.TargetPort);
+
+        // DCP honours a declared public port under RandomizePorts only for a proxyless endpoint, and the
+        // Aspire testing builder always sets RandomizePorts.
+        Assert.False(endpoint.IsProxied);
+    }
+
+    [Fact]
     public void SubstituteE2EProject_ImageBackedWorkers_CarriesConnectionStringReferences()
     {
         var builder = DistributedApplication.CreateBuilder();
