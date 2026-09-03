@@ -18,8 +18,8 @@ internal static class DistributedApplicationBuilderExtensions
             StripeCustomerResolver stripeCustomers)
         {
             var endpoints = run.Profile.Endpoints;
-            builder.PinAuthService(endpoints.Auth, Run.AuthEnvironmentVariables());
-            builder.PinAuthApi(endpoints.ServiceApi);
+            var auth = builder.PinAuthService(composition.Auth, endpoints.Auth, Run.AuthEnvironmentVariables());
+            PinAuthApi(auth, endpoints.ServiceApi);
             builder.PinWeb(run, composition);
             builder.AddSearchService(
                 composition.SearchWeb,
@@ -38,16 +38,16 @@ internal static class DistributedApplicationBuilderExtensions
             return builder;
         }
 
-        private void PinAuthApi(string customerApiBaseUrl)
-        {
-            var auth = builder.Resources
-                .Single(r => r.Name == AuthConstants.Resource);
+    }
 
-            auth.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
-            {
-                context.EnvironmentVariables["Services__CustomerApiUrl"] = customerApiBaseUrl;
-            }));
-        }
+    private static void PinAuthApi(IResource auth, string customerApiBaseUrl) =>
+        auth.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
+        {
+            context.EnvironmentVariables["Services__CustomerApiUrl"] = customerApiBaseUrl;
+        }));
+
+    extension(IDistributedApplicationTestingBuilder builder)
+    {
 
         private void PinWeb(
             Run run,

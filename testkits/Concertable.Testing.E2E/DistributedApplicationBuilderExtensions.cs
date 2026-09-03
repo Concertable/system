@@ -37,25 +37,33 @@ public static class DistributedApplicationBuilderExtensions
             }));
         }
 
-        internal void PinAuthService(
+        internal IResource PinAuthService(
+            IProjectMetadata project,
             string authEndpoint,
             IReadOnlyDictionary<string, string> environmentVariables)
         {
             var auth = builder.GetRequiredResource(AuthConstants.Resource);
 
-            // Never set ASPNETCORE_URLS here — forcing the container onto https://localhost:<port>
-            // left Kestrel with no certificate and crashed it on startup. The image serves HTTPS on
-            // its own target port (the certificate comes from WithHttpsDeveloperCertificate); only the
-            // published host port is pinned to the E2E contract.
+            // The pinned image binds HTTP only and cannot be handed a certificate — Aspire's
+            // developer-certificate annotation never reaches it, so forcing ASPNETCORE_URLS onto https
+            // made Kestrel fail to bind ("No server certificate was specified") and leaving it alone
+            // served plaintext on the port declared as https ("Cannot determine the frame size").
+            // Consumers set RequireHttpsMetadata outside Development, so E2E needs a real TLS Auth:
+            // run it from source like every other source-backed host here, which is also what the
+            // Payment hosts do with their own production images.
+            auth = SubstituteE2EProject(builder, auth, project);
             PinHttpsEndpoint(builder, auth, new Uri(authEndpoint).Port);
 
             auth.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
             {
                 context.EnvironmentVariables["ASPNETCORE_ENVIRONMENT"] = "E2E";
+                context.EnvironmentVariables["ASPNETCORE_URLS"] = authEndpoint;
                 context.EnvironmentVariables["Auth__Authority"] = authEndpoint;
                 foreach (var (key, value) in environmentVariables)
                     context.EnvironmentVariables[key] = value;
             }));
+
+            return auth;
         }
 
         internal void PinPaymentWorkers(

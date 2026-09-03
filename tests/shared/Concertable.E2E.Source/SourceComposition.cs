@@ -15,6 +15,7 @@ public sealed class SourceComposition : IComposition
             _ => throw new ArgumentOutOfRangeException(nameof(surface), surface, null),
         };
 
+    public Aspire.Hosting.IProjectMetadata Auth { get; } = new Projects.Concertable_Auth();
     public Aspire.Hosting.IProjectMetadata B2BWeb { get; } = new Projects.Concertable_B2B_E2ETests_Web();
     public Aspire.Hosting.IProjectMetadata CustomerWeb { get; } = new Projects.Concertable_Customer_E2ETests_Web();
     public Aspire.Hosting.IProjectMetadata PaymentWeb { get; } = new Projects.Concertable_Payment_E2ETests_Web();

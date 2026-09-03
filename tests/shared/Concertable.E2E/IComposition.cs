@@ -9,6 +9,7 @@ public interface IComposition
         Surface surface,
         CancellationToken cancellationToken = default);
 
+    IProjectMetadata Auth { get; }
     IProjectMetadata B2BWeb { get; }
     IProjectMetadata CustomerWeb { get; }
     IProjectMetadata PaymentWeb { get; }
