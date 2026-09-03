@@ -136,11 +136,34 @@ public sealed class ContainerBackedPinningTests
         Assert.Equal("concertable-search", workersEnvironment["ServiceBus__ServiceName"]);
     }
 
+    [Fact]
+    public void SubstituteE2EProject_RealPaymentWebImage_CarriesServiceBusServiceName()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var digest = $"sha256:{new string('a', 64)}";
+        var sql = builder.AddSqlServer("sql");
+        var paymentDb = sql.AddDatabase(PaymentConstants.Database);
+        var asb = builder.AddAzureServiceBus("asb");
+        var auth = builder.AddContainerImage(AuthConstants.Resource, "test-image", digest)
+            .WithHttpsEndpoint(targetPort: 8080, name: "https");
+        var paymentWeb = builder.AddPaymentWeb("test-image", digest, auth, paymentDb, asb).Resource;
+
+        var e2ePaymentWeb = Concertable.Testing.E2E.DistributedApplicationBuilderExtensions
+            .SubstituteE2EProject(builder, paymentWeb, new TestProjectMetadata("payment-e2e-web.csproj"));
+
+        // The Payment web host throws at startup without it, and the substitution is the only thing
+        // between the image's own WithEnvironment and the project that replaces it.
+        Assert.Equal(
+            PaymentConstants.ServiceName,
+            Environment(e2ePaymentWeb)["ServiceBus__ServiceName"]);
+    }
+
     private static Dictionary<string, object> Environment(IResource resource)
     {
         var environment = new Dictionary<string, object>();
         var context = new EnvironmentCallbackContext(
             new DistributedApplicationExecutionContext(DistributedApplicationOperation.Run),
+            resource,
             environment,
             CancellationToken.None);
 
