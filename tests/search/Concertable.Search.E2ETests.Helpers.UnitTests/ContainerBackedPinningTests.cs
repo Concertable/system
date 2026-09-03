@@ -158,6 +158,28 @@ public sealed class ContainerBackedPinningTests
             Environment(e2ePaymentWeb)["ServiceBus__ServiceName"]);
     }
 
+    [Fact]
+    public void PinHttpsEndpoint_ProjectResource_MatchesTheDeclarativeProxylessShape()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var mutated = builder.AddResource(new ProjectResource("mutated")).Resource;
+        Concertable.Testing.E2E.DistributedApplicationBuilderExtensions
+            .PinHttpsEndpoint(builder, mutated, 7098);
+
+        var declared = builder.AddResource(new ProjectResource("declared"))
+            .WithHttpsEndpoint(port: 7098, isProxied: false)
+            .Resource;
+
+        var a = Assert.Single(mutated.Annotations.OfType<EndpointAnnotation>());
+        var b = Assert.Single(declared.Annotations.OfType<EndpointAnnotation>());
+        Assert.Equal(b.Name, a.Name);
+        Assert.Equal(b.UriScheme, a.UriScheme);
+        Assert.Equal(b.Port, a.Port);
+        Assert.Equal(b.TargetPort, a.TargetPort);
+        Assert.Equal(b.IsProxied, a.IsProxied);
+        Assert.Equal(b.IsExternal, a.IsExternal);
+    }
+
     private static Dictionary<string, object> Environment(IResource resource)
     {
         var environment = new Dictionary<string, object>();
