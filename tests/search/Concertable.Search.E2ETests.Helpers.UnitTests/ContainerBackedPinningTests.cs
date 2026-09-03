@@ -47,6 +47,35 @@ public sealed class ContainerBackedPinningTests
     }
 
     [Fact]
+    public void SubstituteE2EProject_ImageBackedWorkers_CarriesConnectionStringReferences()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var sql = builder.AddSqlServer("sql");
+        var paymentDb = sql.AddDatabase("PaymentDb");
+        var asb = builder.AddAzureServiceBus("asb");
+        var workers = builder.AddContainer(PaymentConstants.WorkersResource, "test-image")
+            .WithReference(paymentDb).WaitFor(paymentDb)
+            .WithReference(asb).WaitFor(asb)
+            .Resource;
+
+        var e2eWorkers = Concertable.Testing.E2E.DistributedApplicationBuilderExtensions
+            .SubstituteE2EProject(builder, workers, new TestProjectMetadata("payment-workers-e2e.csproj"));
+
+        var environment = Environment(e2eWorkers);
+        Assert.Contains("ConnectionStrings__asb", environment.Keys);
+        Assert.Contains("ConnectionStrings__PaymentDb", environment.Keys);
+
+        // The substituted project must reference the connection-string resources so Aspire resolves
+        // them at launch — copying the env callbacks alone leaves ConnectionStrings:asb null and the
+        // Payment workers host throws on startup.
+        var referenced = e2eWorkers.Annotations.OfType<ResourceRelationshipAnnotation>()
+            .Select(relationship => relationship.Resource.Name)
+            .ToList();
+        Assert.Contains("asb", referenced);
+        Assert.Contains("PaymentDb", referenced);
+    }
+
+    [Fact]
     public void AddSearchService_ImageBackedResources_PreservesContainersAndPinsE2EConfiguration()
     {
         var builder = DistributedApplication.CreateBuilder();
