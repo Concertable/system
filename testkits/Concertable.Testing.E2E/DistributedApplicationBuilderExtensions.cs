@@ -68,9 +68,17 @@ public static class DistributedApplicationBuilderExtensions
 
             paymentWorkers = SubstituteE2EProject(builder, paymentWorkers, project);
 
+            // SubstituteE2EProject carries the container's reference wiring but not its static
+            // WithEnvironment / AddSecrets values, so re-set the ones the Payment workers host requires
+            // at startup (matches AddSearchService's own image path).
+            var stripeSecretKey = builder.Configuration["Stripe:SecretKey"];
+
             paymentWorkers.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
             {
                 context.EnvironmentVariables["DOTNET_ENVIRONMENT"] = "E2E";
+                context.EnvironmentVariables["ServiceBus__ServiceName"] = PaymentConstants.ServiceName;
+                if (!string.IsNullOrEmpty(stripeSecretKey))
+                    context.EnvironmentVariables["Stripe__SecretKey"] = stripeSecretKey;
                 AddStripeCustomerConfiguration(context, stripeCustomers);
             }));
         }
