@@ -101,6 +101,25 @@ function Assert-DockerHealthy {
     }
 }
 
+function Assert-PinnedImagesPullable {
+    # The stack runs Auth and Payment from digest-pinned ghcr.io images, so a boot needs a
+    # registry credential CI gets from its `Log in to GHCR` step. Without one the pull fails
+    # `unauthorized`, Aspire marks `auth` FailedToStart, every dependent cascades, and the
+    # fixture then reports a health-check timeout on an unrelated port - three layers from
+    # the cause. Fail here instead, naming the remedy.
+    $appHost = Join-Path $PSScriptRoot '../api/Concertable.B2B/src/Concertable.B2B.AppHost/AppHost.cs'
+    $image = (Select-String -Path $appHost -Pattern 'AuthImage = "([^"]+)"').Matches.Groups[1].Value
+    $digest = (Select-String -Path $appHost -Pattern 'AuthDigest = "([^"]+)"').Matches.Groups[1].Value
+    docker manifest inspect "$image@$digest" *> $null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Cannot resolve the pinned Auth image $image@$digest." -ForegroundColor Red
+        Write-Host "Log in to the registry, then retry:" -ForegroundColor Red
+        Write-Host "  gh auth token | docker login ghcr.io -u <your-github-user> --password-stdin" -ForegroundColor Red
+        Remove-Item Env:\HEADLESS -ErrorAction SilentlyContinue
+        exit 1
+    }
+}
+
 function Assert-HostCapacity {
     # An E2E boot needs the host mostly to itself; a competing full-solution build or another
     # E2E run starves it and it dies at fixture startup. Wait up to 5 min for transient
@@ -205,6 +224,7 @@ function Show-Usage {
 function Invoke-UiCommand([string]$cmd) {
     if ($cmd -in @('run', 'b2b', 'customer', '3ds')) {
         Assert-DockerHealthy
+        Assert-PinnedImagesPullable
         Assert-HostCapacity
         & $localPlatform prepare
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -239,6 +259,7 @@ function Invoke-ApiCommand([string]$cmd) {
     $settings = @('--settings', $runsettings)
     if ($cmd -in @('run', 'b2b', 'customer')) {
         Assert-DockerHealthy
+        Assert-PinnedImagesPullable
         Assert-HostCapacity
         & $localPlatform prepare
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
