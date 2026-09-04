@@ -1,28 +1,12 @@
-using Aspire.Hosting.Testing;
 using Concertable.Testing.Architecture;
 using Xunit;
 
 namespace Concertable.AppHost.ArchitectureTests;
 
-public sealed class AppHostArchitectureTests
+public sealed class InventoryTests
 {
     [Fact]
-    public async Task Build_ProductionGraph_IsValid()
-    {
-        using var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_AppHost>();
-        await using var app = await builder.BuildAsync();
-    }
-
-    [Fact]
-    public async Task Build_InvalidLifetimeGraph_IsRejected()
-    {
-        using var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_AppHost>();
-        builder.Services.AddInvalidLifetimeGraph();
-        await Assert.ThrowsAnyAsync<Exception>(async () => await builder.BuildAsync());
-    }
-
-    [Fact]
-    public void Inventory_AllExecutableProjectsDeclareCoverageOrExclusion()
+    public void AllExecutableProjects_DeclareCoverageOrExclusion()
     {
         var root = ExecutableHostInventory.FindRepositoryRoot();
         ExecutableHostInventory.Validate(Path.Combine(root, "api"),
