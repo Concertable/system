@@ -1,3 +1,5 @@
+using Aspire.Hosting;
+using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
 using Concertable.Testing.Architecture;
 using Xunit;
@@ -11,6 +13,75 @@ public sealed class AppHostArchitectureTests
     {
         using var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_AppHost>();
         await using var app = await builder.BuildAsync();
+    }
+
+    [Fact]
+    public async Task Build_AllFrontendSurfaces_AreOwnedAndCollisionFree()
+    {
+        using var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_AppHost>(
+            ["--RunMobile=true"]);
+        Assert.Equal(
+            new[] { "admin", "artist", "business", "customer", "mobile-b2b", "mobile-customer", "venue" },
+            builder.Resources.OfType<NodeAppResource>().Select(resource => resource.Name).Order());
+        Assert.Single(builder.Resources, resource => resource.Name == "concertable-dev");
+        var surfaces = SystemLocalSpaSurfaces.All;
+        Assert.Equal(5, surfaces.Count);
+        Assert.Equal(surfaces.Count, surfaces.Select(surface => surface.ResourceName).Distinct().Count());
+        Assert.Equal(surfaces.Count, surfaces.Select(surface => surface.HttpsPort).Distinct().Count());
+        await using var app = await builder.BuildAsync();
+    }
+
+    [Fact]
+    public async Task Build_MobileUrls_ResolveThroughOwnedTunnel()
+    {
+        using var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_AppHost>(
+            ["--RunMobile=true"]);
+        await using var app = await builder.BuildAsync();
+        var ports = builder.Resources.OfType<Aspire.Hosting.DevTunnels.DevTunnelPortResource>().ToArray();
+        Assert.NotEmpty(ports);
+        foreach (var port in ports)
+        {
+            foreach (var endpoint in port.Annotations.OfType<EndpointAnnotation>())
+                endpoint.AllocatedEndpoint = new AllocatedEndpoint(endpoint, $"{port.Name}.example.test", 443);
+        }
+
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        foreach (var mobile in builder.Resources.OfType<NodeAppResource>()
+            .Where(resource => resource.Name.StartsWith("mobile-", StringComparison.Ordinal)))
+        {
+            var environment = await GetEnvironmentAsync(mobile, cancellation.Token);
+            foreach (var (key, service) in new[]
+            {
+                ("EXPO_PUBLIC_API_URL", "b2b-web"),
+                ("EXPO_PUBLIC_AUTH_AUTHORITY", "auth"),
+                ("EXPO_PUBLIC_SEARCH_API_URL", "search-web"),
+                ("EXPO_PUBLIC_CUSTOMER_API_URL", "customer-web"),
+                ("EXPO_PUBLIC_PAYMENT_API_URL", "payment-web")
+            })
+            {
+                var url = await Assert.IsAssignableFrom<IValueProvider>(environment[key])
+                    .GetValueAsync(cancellation.Token);
+                Assert.Equal($"https://concertable-dev-{service}-https.example.test:443", url);
+            }
+        }
+
+        var auth = builder.Resources.Single(resource => resource.Name == "auth");
+        var authEnvironment = await GetEnvironmentAsync(auth, cancellation.Token);
+        var publicUrl = await Assert.IsAssignableFrom<IValueProvider>(authEnvironment["Auth__PublicUrl"])
+            .GetValueAsync(cancellation.Token);
+        Assert.Equal("https://concertable-dev-auth-https.example.test:443", publicUrl);
+    }
+
+    private static async Task<Dictionary<string, object>> GetEnvironmentAsync(
+        IResource resource, CancellationToken cancellationToken)
+    {
+        var environment = new Dictionary<string, object>();
+        var context = new EnvironmentCallbackContext(
+            new DistributedApplicationExecutionContext(DistributedApplicationOperation.Publish),
+            resource, environment, cancellationToken);
+        foreach (var annotation in resource.Annotations.OfType<EnvironmentCallbackAnnotation>().ToArray())
+            await annotation.Callback(context);
+        return environment;
     }
 
     [Fact]
