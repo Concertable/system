@@ -180,6 +180,33 @@ public sealed class ContainerBackedPinningTests
         Assert.Equal(b.IsExternal, a.IsExternal);
     }
 
+    [Fact]
+    public void RetargetSubstitutedWaits_WaitAddedAfterSubstitution_PointsAtTheReplacement()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var original = builder.AddContainer(AuthConstants.Resource, "test-image").Resource;
+
+        var replacement = Concertable.Testing.E2E.DistributedApplicationBuilderExtensions
+            .SubstituteE2EProject(builder, original, new TestProjectMetadata("auth-e2e.csproj"));
+
+        // Every pin that runs after the substitution still names the original, exactly as
+        // AddSearchService does with Auth. The original never starts, so an unretargeted wait hangs
+        // StartAsync forever with no error and no timeout.
+        var latecomer = builder.AddResource(new ProjectResource("search-web"))
+            .WaitFor(builder.CreateResourceBuilder((IResourceWithWaitSupport)original))
+            .Resource;
+
+        Concertable.Testing.E2E.DistributedApplicationBuilderExtensions
+            .RetargetSubstitutedWaits(builder);
+
+        Assert.DoesNotContain(
+            latecomer.Annotations.OfType<WaitAnnotation>(),
+            annotation => ReferenceEquals(annotation.Resource, original));
+        Assert.Contains(
+            latecomer.Annotations.OfType<WaitAnnotation>(),
+            annotation => ReferenceEquals(annotation.Resource, replacement));
+    }
+
     private static Dictionary<string, object> Environment(IResource resource)
     {
         var environment = new Dictionary<string, object>();

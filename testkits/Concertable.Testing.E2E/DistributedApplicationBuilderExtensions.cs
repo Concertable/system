@@ -208,6 +208,40 @@ public static class DistributedApplicationBuilderExtensions
         return e2eProject;
     }
 
+    /// <summary>Repoints every wait still aimed at a substituted resource onto its replacement.
+    /// SubstituteE2EProject can only retarget the waits that exist when it runs, so any WaitFor added
+    /// afterwards — AddSearchService's wait on Auth, for one — still names the explicit-start original,
+    /// which never starts. Aspire then waits on it forever: StartAsync never returns, and the run hangs
+    /// with no error and no timeout. Run this once after the whole stack is composed.</summary>
+    internal static void RetargetSubstitutedWaits(IDistributedApplicationBuilder builder)
+    {
+        foreach (var original in builder.Resources
+                     .Where(resource => resource.Annotations.OfType<ExplicitStartupAnnotation>().Any())
+                     .ToList())
+        {
+            if (builder.Resources.FirstOrDefault(candidate => candidate.Name == $"{original.Name}-e2e")
+                is not ProjectResource replacement)
+                continue;
+
+            var replacementBuilder = builder.CreateResourceBuilder(replacement);
+            foreach (var dependent in builder.Resources
+                         .Where(candidate => !ReferenceEquals(candidate, original))
+                         .ToList())
+            {
+                var waits = dependent.Annotations
+                    .OfType<WaitAnnotation>()
+                    .Where(annotation => ReferenceEquals(annotation.Resource, original))
+                    .ToList();
+                if (waits.Count == 0)
+                    continue;
+
+                foreach (var wait in waits)
+                    dependent.Annotations.Remove(wait);
+                builder.CreateResourceBuilder((IResourceWithWaitSupport)dependent).WaitFor(replacementBuilder);
+            }
+        }
+    }
+
     internal static void PinHttpsEndpoint(
         IDistributedApplicationBuilder builder,
         IResource resource,
