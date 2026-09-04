@@ -37,20 +37,39 @@ public static class DistributedApplicationBuilderExtensions
             }));
         }
 
-        internal void PinAuthService(
+        internal IResource PinAuthService(
+            IProjectMetadata project,
             string authEndpoint,
             IReadOnlyDictionary<string, string> environmentVariables)
         {
             var auth = builder.GetRequiredResource(AuthConstants.Resource);
+
+            // The pinned image binds HTTP only and cannot be handed a certificate — Aspire's
+            // developer-certificate annotation never reaches it, so forcing ASPNETCORE_URLS onto https
+            // made Kestrel fail to bind ("No server certificate was specified") and leaving it alone
+            // served plaintext on the port declared as https ("Cannot determine the frame size").
+            // Consumers set RequireHttpsMetadata outside Development, so E2E needs a real TLS Auth:
+            // run it from source like every other source-backed host here, which is also what the
+            // Payment hosts do with their own production images.
+            auth = SubstituteE2EProject(builder, auth, project);
+            PinHttpsEndpoint(builder, auth, new Uri(authEndpoint).Port);
 
             auth.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
             {
                 context.EnvironmentVariables["ASPNETCORE_ENVIRONMENT"] = "E2E";
                 context.EnvironmentVariables["ASPNETCORE_URLS"] = authEndpoint;
                 context.EnvironmentVariables["Auth__Authority"] = authEndpoint;
+
+                // Auth throws "ServiceAuth:AuthClientId is required." without this. The AppHosts set it
+                // with a plain WithEnvironment on the container, and a substituted resource only inherits
+                // that through the copied callback chain — which the UI tier proved is not dependable.
+                // Every other value Auth needs at startup is already set here explicitly; so is this one.
+                context.EnvironmentVariables["ServiceAuth__AuthClientId"] = AuthConstants.ServiceName;
                 foreach (var (key, value) in environmentVariables)
                     context.EnvironmentVariables[key] = value;
             }));
+
+            return auth;
         }
 
         internal void PinPaymentWorkers(
@@ -61,9 +80,17 @@ public static class DistributedApplicationBuilderExtensions
 
             paymentWorkers = SubstituteE2EProject(builder, paymentWorkers, project);
 
+            // SubstituteE2EProject carries the container's reference wiring but not its static
+            // WithEnvironment / AddSecrets values, so re-set the ones the Payment workers host requires
+            // at startup (matches AddSearchService's own image path).
+            var stripeSecretKey = builder.Configuration["Stripe:SecretKey"];
+
             paymentWorkers.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
             {
                 context.EnvironmentVariables["DOTNET_ENVIRONMENT"] = "E2E";
+                context.EnvironmentVariables["ServiceBus__ServiceName"] = PaymentConstants.ServiceName;
+                if (!string.IsNullOrEmpty(stripeSecretKey))
+                    context.EnvironmentVariables["Stripe__SecretKey"] = stripeSecretKey;
                 AddStripeCustomerConfiguration(context, stripeCustomers);
             }));
         }
@@ -150,16 +177,26 @@ public static class DistributedApplicationBuilderExtensions
                      .Where(endpoint => endpoint.Name == "https" && endpoint.Port is not null))
             endpoint.Port = null;
 
-        var e2eProject = builder.AddResource(new ProjectResource($"{resource.Name}-e2e"))
-            .WithAnnotation(host)
-            .Resource;
+        var e2eProjectBuilder = builder.AddResource(new ProjectResource($"{resource.Name}-e2e"))
+            .WithAnnotation(host);
+        var e2eProject = e2eProjectBuilder.Resource;
 
         foreach (var annotation in resource.Annotations.OfType<EnvironmentCallbackAnnotation>())
             e2eProject.Annotations.Add(annotation);
         foreach (var annotation in resource.Annotations.OfType<WaitAnnotation>())
             e2eProject.Annotations.Add(annotation);
 
-        var e2eProjectBuilder = builder.CreateResourceBuilder((IResource)e2eProject);
+        // The container's WithReference(...) calls injected connection strings through callbacks bound to
+        // the original resource, which Aspire does not resolve for the substituted project — payment
+        // workers then start with a null 'asb' connection string and crash. Re-issue the reference for
+        // every connection-string resource the container waited on (this is what AddSearchService does
+        // on its own image path).
+        foreach (var connectionResource in resource.Annotations
+                     .OfType<WaitAnnotation>()
+                     .Select(wait => wait.Resource)
+                     .OfType<IResourceWithConnectionString>()
+                     .Distinct())
+            e2eProjectBuilder.WithReference(builder.CreateResourceBuilder(connectionResource));
         foreach (var dependent in builder.Resources.Where(candidate => !ReferenceEquals(candidate, resource)))
         {
             var waits = dependent.Annotations
@@ -177,18 +214,59 @@ public static class DistributedApplicationBuilderExtensions
         return e2eProject;
     }
 
+    /// <summary>Repoints every wait still aimed at a substituted resource onto its replacement.
+    /// SubstituteE2EProject can only retarget the waits that exist when it runs, so any WaitFor added
+    /// afterwards — AddSearchService's wait on Auth, for one — still names the explicit-start original,
+    /// which never starts. Aspire then waits on it forever: StartAsync never returns, and the run hangs
+    /// with no error and no timeout. Run this once after the whole stack is composed.</summary>
+    internal static void RetargetSubstitutedWaits(IDistributedApplicationBuilder builder)
+    {
+        foreach (var original in builder.Resources
+                     .Where(resource => resource.Annotations.OfType<ExplicitStartupAnnotation>().Any())
+                     .ToList())
+        {
+            if (builder.Resources.FirstOrDefault(candidate => candidate.Name == $"{original.Name}-e2e")
+                is not ProjectResource replacement)
+                continue;
+
+            var replacementBuilder = builder.CreateResourceBuilder(replacement);
+            foreach (var dependent in builder.Resources
+                         .Where(candidate => !ReferenceEquals(candidate, original))
+                         .ToList())
+            {
+                var waits = dependent.Annotations
+                    .OfType<WaitAnnotation>()
+                    .Where(annotation => ReferenceEquals(annotation.Resource, original))
+                    .ToList();
+                if (waits.Count == 0)
+                    continue;
+
+                foreach (var wait in waits)
+                    dependent.Annotations.Remove(wait);
+                builder.CreateResourceBuilder((IResourceWithWaitSupport)dependent).WaitFor(replacementBuilder);
+            }
+        }
+    }
+
     internal static void PinHttpsEndpoint(
         IDistributedApplicationBuilder builder,
         IResource resource,
         int port)
     {
+        var resourceBuilder = builder.CreateResourceBuilder((IResourceWithEndpoints)resource);
+        if (!resource.Annotations.OfType<EndpointAnnotation>().Any(endpoint => endpoint.Name == "https"))
+            resourceBuilder.WithHttpsEndpoint();
+
+        // DCP ignores a proxied endpoint's declared public port whenever RandomizePorts is on, and the
+        // Aspire testing builder always turns it on. An E2E host port is a contract the tests dial by
+        // literal URL, so the endpoint has to be proxyless — otherwise DCP publishes the resource on
+        // some other port and every call to the contract URL is refused.
         foreach (var endpoint in resource.Annotations
                      .OfType<EndpointAnnotation>()
-                     .Where(endpoint => endpoint.Name == "https")
-                     .ToList())
-            resource.Annotations.Remove(endpoint);
-
-        builder.CreateResourceBuilder((IResourceWithEndpoints)resource)
-            .WithHttpsEndpoint(port: port, isProxied: false);
+                     .Where(endpoint => endpoint.Name == "https"))
+        {
+            endpoint.Port = port;
+            endpoint.IsProxied = false;
+        }
     }
 }
