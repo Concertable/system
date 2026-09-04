@@ -35,6 +35,7 @@ internal static class DistributedApplicationBuilderExtensions
             builder.PinPaymentWorkers(composition.PaymentWorkers, stripeCustomers);
             builder.AddEphemeralSql();
             builder.PinStripeCli(endpoints.PaymentApi);
+            Concertable.Testing.E2E.DistributedApplicationBuilderExtensions.RetargetSubstitutedWaits(builder);
             return builder;
         }
 
