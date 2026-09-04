@@ -59,6 +59,12 @@ public static class DistributedApplicationBuilderExtensions
                 context.EnvironmentVariables["ASPNETCORE_ENVIRONMENT"] = "E2E";
                 context.EnvironmentVariables["ASPNETCORE_URLS"] = authEndpoint;
                 context.EnvironmentVariables["Auth__Authority"] = authEndpoint;
+
+                // Auth throws "ServiceAuth:AuthClientId is required." without this. The AppHosts set it
+                // with a plain WithEnvironment on the container, and a substituted resource only inherits
+                // that through the copied callback chain — which the UI tier proved is not dependable.
+                // Every other value Auth needs at startup is already set here explicitly; so is this one.
+                context.EnvironmentVariables["ServiceAuth__AuthClientId"] = AuthConstants.ServiceName;
                 foreach (var (key, value) in environmentVariables)
                     context.EnvironmentVariables[key] = value;
             }));
