@@ -1,4 +1,4 @@
-using Concertable.B2B.Application.Application.DTOs;
+using Concertable.B2B.TestKit;
 
 namespace Concertable.B2B.E2ETests;
 
