@@ -75,7 +75,12 @@ public sealed class StripeCustomerResolver : IAsyncDisposable
         var values = new Dictionary<string, string>();
 
         foreach (var (userId, customerId) in customerIds)
-            values[$"{CustomersKey}:{userId:N}"] = customerId;
+        {
+            var ownerId = SeedUsers.Managers.Any(manager => manager.Id == userId)
+                ? TenantSeedIds.For(userId)
+                : userId;
+            values[$"{CustomersKey}:{ownerId:N}"] = customerId;
+        }
 
         return values;
     }
