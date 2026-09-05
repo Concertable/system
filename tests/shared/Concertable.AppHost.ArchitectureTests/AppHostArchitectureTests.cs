@@ -2,6 +2,7 @@ using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
 using Concertable.Testing.Architecture;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace Concertable.AppHost.ArchitectureTests;
@@ -29,6 +30,35 @@ public sealed class AppHostArchitectureTests
         Assert.Equal(surfaces.Count, surfaces.Select(surface => surface.ResourceName).Distinct().Count());
         Assert.Equal(surfaces.Count, surfaces.Select(surface => surface.HttpsPort).Distinct().Count());
         await using var app = await builder.BuildAsync();
+
+        var auth = builder.Resources.Single(resource => resource.Name == "auth");
+        var environment = await GetRawEnvironmentAsync(auth, CancellationToken.None);
+        var authClientKeys = environment.Keys
+            .Where(key => key.StartsWith("Auth__SpaClients__", StringComparison.Ordinal))
+            .Order()
+            .ToArray();
+        var expectedKeys = surfaces
+            .Where(surface => surface.AuthClient is not null)
+            .SelectMany(surface => new[]
+            {
+                $"Auth__SpaClients__{surface.AuthClient}__AllowedCorsOrigins__0",
+                $"Auth__SpaClients__{surface.AuthClient}__PostLogoutRedirectUri",
+                $"Auth__SpaClients__{surface.AuthClient}__RedirectUri"
+            })
+            .Order()
+            .ToArray();
+
+        Assert.Equal(expectedKeys, authClientKeys);
+        foreach (var surface in surfaces.Where(surface => surface.AuthClient is not null))
+        {
+            Assert.Equal($"{surface.Origin}/auth/callback",
+                environment[$"Auth__SpaClients__{surface.AuthClient}__RedirectUri"]);
+            Assert.Equal(surface.Origin,
+                environment[$"Auth__SpaClients__{surface.AuthClient}__PostLogoutRedirectUri"]);
+            Assert.Equal(surface.Origin,
+                environment[$"Auth__SpaClients__{surface.AuthClient}__AllowedCorsOrigins__0"]);
+        }
+        Assert.DoesNotContain(authClientKeys, key => key.Contains("__Business__", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -49,7 +79,7 @@ public sealed class AppHostArchitectureTests
         foreach (var mobile in builder.Resources.OfType<NodeAppResource>()
             .Where(resource => resource.Name.StartsWith("mobile-", StringComparison.Ordinal)))
         {
-            var environment = await GetEnvironmentAsync(mobile, cancellation.Token);
+            var environment = await GetResolvedEnvironmentAsync(mobile, cancellation.Token);
             foreach (var (key, service) in new[]
             {
                 ("EXPO_PUBLIC_API_URL", "b2b-web"),
@@ -59,25 +89,34 @@ public sealed class AppHostArchitectureTests
                 ("EXPO_PUBLIC_PAYMENT_API_URL", "payment-web")
             })
             {
-                var url = await Assert.IsAssignableFrom<IValueProvider>(environment[key])
-                    .GetValueAsync(cancellation.Token);
-                Assert.Equal($"https://concertable-dev-{service}-https.example.test:443", url);
+                Assert.Equal($"https://concertable-dev-{service}-https.example.test:443", environment[key]);
             }
         }
 
         var auth = builder.Resources.Single(resource => resource.Name == "auth");
-        var authEnvironment = await GetEnvironmentAsync(auth, cancellation.Token);
+        var authEnvironment = await GetRawEnvironmentAsync(auth, cancellation.Token);
         var publicUrl = await Assert.IsAssignableFrom<IValueProvider>(authEnvironment["Auth__PublicUrl"])
             .GetValueAsync(cancellation.Token);
         Assert.Equal("https://concertable-dev-auth-https.example.test:443", publicUrl);
     }
 
-    private static async Task<Dictionary<string, object>> GetEnvironmentAsync(
+    private static async Task<Dictionary<string, string>> GetResolvedEnvironmentAsync(
+        IResource resource, CancellationToken cancellationToken)
+    {
+        var environmentResource = Assert.IsAssignableFrom<IResourceWithEnvironment>(resource);
+        var configuration = await ExecutionConfigurationBuilder.Create(environmentResource)
+            .WithEnvironmentVariablesConfig()
+            .BuildAsync(new DistributedApplicationExecutionContext(DistributedApplicationOperation.Run),
+                NullLogger.Instance, cancellationToken);
+        return configuration.EnvironmentVariables.ToDictionary();
+    }
+
+    private static async Task<Dictionary<string, object>> GetRawEnvironmentAsync(
         IResource resource, CancellationToken cancellationToken)
     {
         var environment = new Dictionary<string, object>();
         var context = new EnvironmentCallbackContext(
-            new DistributedApplicationExecutionContext(DistributedApplicationOperation.Publish),
+            new DistributedApplicationExecutionContext(DistributedApplicationOperation.Run),
             resource, environment, cancellationToken);
         foreach (var annotation in resource.Annotations.OfType<EnvironmentCallbackAnnotation>().ToArray())
             await annotation.Callback(context);
