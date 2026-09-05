@@ -13,6 +13,12 @@ public sealed class AppHostArchitectureTests
     public async Task Build_ProductionGraph_IsValid()
     {
         using var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_AppHost>();
+        Assert.DoesNotContain(builder.Resources.OfType<NodeAppResource>(),
+            resource => resource.Name.StartsWith("mobile-", StringComparison.Ordinal));
+        Assert.DoesNotContain(builder.Resources, resource => resource.Name == "concertable-dev");
+        var auth = builder.Resources.Single(resource => resource.Name == "auth");
+        var authEnvironment = await GetRawEnvironmentAsync(auth, CancellationToken.None);
+        Assert.DoesNotContain("Auth__PublicUrl", authEnvironment.Keys);
         await using var app = await builder.BuildAsync();
     }
 
@@ -33,8 +39,15 @@ public sealed class AppHostArchitectureTests
 
         var auth = builder.Resources.Single(resource => resource.Name == "auth");
         var environment = await GetRawEnvironmentAsync(auth, CancellationToken.None);
+        Assert.Equal(
+            new[] { "Customer", "Venue", "Artist", "Admin" },
+            environment
+                .Where(pair => pair.Key.StartsWith("Auth__SpaClients__EnabledClients__", StringComparison.Ordinal))
+                .OrderBy(pair => pair.Key)
+                .Select(pair => Assert.IsType<string>(pair.Value)));
         var authClientKeys = environment.Keys
-            .Where(key => key.StartsWith("Auth__SpaClients__", StringComparison.Ordinal))
+            .Where(key => key.StartsWith("Auth__SpaClients__", StringComparison.Ordinal)
+                && !key.StartsWith("Auth__SpaClients__EnabledClients__", StringComparison.Ordinal))
             .Order()
             .ToArray();
         var expectedKeys = surfaces
@@ -65,7 +78,7 @@ public sealed class AppHostArchitectureTests
     public async Task Build_MobileUrls_ResolveThroughOwnedTunnel()
     {
         using var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_AppHost>(
-            ["--RunMobile=true"]);
+            ["--RunMobile=true", "--MobileLanIp=192.0.2.42"]);
         await using var app = await builder.BuildAsync();
         var ports = builder.Resources.OfType<Aspire.Hosting.DevTunnels.DevTunnelPortResource>().ToArray();
         Assert.NotEmpty(ports);
@@ -79,7 +92,9 @@ public sealed class AppHostArchitectureTests
         foreach (var mobile in builder.Resources.OfType<NodeAppResource>()
             .Where(resource => resource.Name.StartsWith("mobile-", StringComparison.Ordinal)))
         {
+            AssertClearMetroCacheCommand(mobile);
             var environment = await GetResolvedEnvironmentAsync(mobile, cancellation.Token);
+            Assert.Equal("192.0.2.42", environment["REACT_NATIVE_PACKAGER_HOSTNAME"]);
             foreach (var (key, service) in new[]
             {
                 ("EXPO_PUBLIC_API_URL", "b2b-web"),
@@ -109,6 +124,14 @@ public sealed class AppHostArchitectureTests
             .BuildAsync(new DistributedApplicationExecutionContext(DistributedApplicationOperation.Run),
                 NullLogger.Instance, cancellationToken);
         return configuration.EnvironmentVariables.ToDictionary();
+    }
+
+    private static void AssertClearMetroCacheCommand(NodeAppResource mobile)
+    {
+        var command = Assert.Single(mobile.Annotations.OfType<ResourceCommandAnnotation>(),
+            command => command.Name == "clear-metro-cache");
+        Assert.Equal("Clear Metro Cache", command.DisplayName);
+        Assert.Equal("ArrowCounterclockwise", command.IconName);
     }
 
     private static async Task<Dictionary<string, object>> GetRawEnvironmentAsync(
