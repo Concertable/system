@@ -1,5 +1,4 @@
 using System.Net;
-using Concertable.B2B.Concert.Domain.Lifecycle;
 using Concertable.B2B.TestKit;
 using Concertable.Payment.Contracts;
 using Concertable.Payment.Contracts.Enums;

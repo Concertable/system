@@ -1,5 +1,4 @@
 using System.Net;
-using Concertable.B2B.Application.Application.DTOs;
 using Concertable.B2B.TestKit;
 using Concertable.Testing;
 using Xunit;

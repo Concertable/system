@@ -1,4 +1,4 @@
-﻿using Concertable.B2B.Infrastructure.Payments;
+﻿using Concertable.B2B.TestKit;
 using Concertable.Payment.E2ETests.Helpers;
 
 namespace Concertable.B2B.E2ETests;

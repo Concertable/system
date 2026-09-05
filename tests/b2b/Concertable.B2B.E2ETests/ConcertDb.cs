@@ -1,4 +1,3 @@
-using Concertable.B2B.Concert.Domain.Lifecycle;
 using Concertable.B2B.TestKit;
 
 namespace Concertable.B2B.E2ETests;
