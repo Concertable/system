@@ -23,6 +23,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Concertable.E2E\Concertable.E2E.csproj" IsAspireProjectResource="false" />
+    <!-- The E2E tier runs Auth from source: the pinned image serves HTTP only and cannot be handed a
+         certificate, so an https Auth endpoint is only reachable as a project the way every other
+         source-backed host here already is. The AppHosts keep the image. -->
+    <ProjectReference Include="..\..\Concertable.Auth\src\Concertable.Auth\Concertable.Auth.csproj"
+                      PrivateAssets="all" />
     <ProjectReference Include="..\..\Concertable.B2B\src\Concertable.B2B.AppHost\Concertable.B2B.AppHost.csproj"
                       IsAspireProjectResource="false"
                       PrivateAssets="all" />
