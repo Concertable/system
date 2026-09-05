@@ -39,6 +39,7 @@ public sealed class AppHostArchitectureTests
 
         var auth = builder.Resources.Single(resource => resource.Name == "auth");
         var environment = await GetRawEnvironmentAsync(auth, CancellationToken.None);
+        Assert.Equal("true", environment["Auth__SpaClients__RestrictToEnabledClients"]);
         Assert.Equal(
             new[] { "Customer", "Venue", "Artist", "Admin" },
             environment
@@ -47,7 +48,8 @@ public sealed class AppHostArchitectureTests
                 .Select(pair => Assert.IsType<string>(pair.Value)));
         var authClientKeys = environment.Keys
             .Where(key => key.StartsWith("Auth__SpaClients__", StringComparison.Ordinal)
-                && !key.StartsWith("Auth__SpaClients__EnabledClients__", StringComparison.Ordinal))
+                && !key.StartsWith("Auth__SpaClients__EnabledClients__", StringComparison.Ordinal)
+                && key != "Auth__SpaClients__RestrictToEnabledClients")
             .Order()
             .ToArray();
         var expectedKeys = surfaces
