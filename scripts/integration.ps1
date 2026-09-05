@@ -14,9 +14,15 @@ $authProjects = @(
     "api/Concertable.Auth/tests/Concertable.Auth.IntegrationTests/Concertable.Auth.IntegrationTests.csproj"
 )
 $b2bProjects = @(
+    "api/Concertable.B2B/src/Modules/Application/Tests/Concertable.B2B.Application.IntegrationTests/Concertable.B2B.Application.IntegrationTests.csproj",
     "api/Concertable.B2B/src/Modules/Artist/Tests/Concertable.B2B.Artist.IntegrationTests/Concertable.B2B.Artist.IntegrationTests.csproj",
+    "api/Concertable.B2B/src/Modules/Booking/Tests/Concertable.B2B.Booking.IntegrationTests/Concertable.B2B.Booking.IntegrationTests.csproj",
     "api/Concertable.B2B/src/Modules/Concert/Tests/Concertable.B2B.Concert.IntegrationTests/Concertable.B2B.Concert.IntegrationTests.csproj",
     "api/Concertable.B2B/src/Modules/Conversations/Tests/Concertable.B2B.Conversations.IntegrationTests/Concertable.B2B.Conversations.IntegrationTests.csproj",
+    "api/Concertable.B2B/src/Modules/Dashboard/Tests/Concertable.B2B.Dashboard.IntegrationTests/Concertable.B2B.Dashboard.IntegrationTests.csproj",
+    "api/Concertable.B2B/src/Modules/Deal/Tests/Concertable.B2B.Deal.IntegrationTests/Concertable.B2B.Deal.IntegrationTests.csproj",
+    "api/Concertable.B2B/tests/Concertable.B2B.Lifecycle.IntegrationTests/Concertable.B2B.Lifecycle.IntegrationTests.csproj",
+    "api/Concertable.B2B/src/Modules/Opportunity/Tests/Concertable.B2B.Opportunity.IntegrationTests/Concertable.B2B.Opportunity.IntegrationTests.csproj",
     "api/Concertable.B2B/src/Modules/Tenant/Tests/Concertable.B2B.Tenant.IntegrationTests/Concertable.B2B.Tenant.IntegrationTests.csproj",
     "api/Concertable.B2B/src/Modules/User/Tests/Concertable.B2B.User.IntegrationTests/Concertable.B2B.User.IntegrationTests.csproj",
     "api/Concertable.B2B/src/Modules/Venue/Tests/Concertable.B2B.Venue.IntegrationTests/Concertable.B2B.Venue.IntegrationTests.csproj"

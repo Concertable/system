@@ -92,11 +92,11 @@ public sealed class ConcertCancelledTests : IAsyncLifetime
         Assert.Equal("succeeded", refund.Status);
 
         await fixture.Polling.UntilAsync(
-            () => fixture.DbFixture.Payment.GetLedgerTransactionCountAsync(bookingId),
+            () => fixture.DbFixture.Payment.GetEscrowLedgerTransactionCountAsync(bookingId),
             count => count == 2,
             timeout: TimeSpan.FromSeconds(30));
-        Assert.Equal(0L, await fixture.DbFixture.Payment.GetLedgerSignedSumAsync(bookingId));
-        Assert.Equal(0L, await fixture.DbFixture.Payment.GetLedgerPlatformRevenueAsync(bookingId));
+        Assert.Equal(0L, await fixture.DbFixture.Payment.GetEscrowLedgerSignedSumAsync(bookingId));
+        Assert.Equal(0L, await fixture.DbFixture.Payment.GetEscrowLedgerPlatformRevenueAsync(bookingId));
 
         // Once cancelled, the cancel action is withdrawn from the concert response.
         await fixture.Polling.UntilAsync(

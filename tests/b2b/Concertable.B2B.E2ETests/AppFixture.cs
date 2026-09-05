@@ -29,7 +29,6 @@ public sealed class AppFixture : IAsyncLifetime
     private readonly string authUrl;
     private readonly SemaphoreSlim resetGate = new(1, 1);
 
-    public const string TestPaymentMethodId = "pm_card_visa";
 
     public string B2BWebUrl { get; }
     public string SearchWebUrl { get; }
