@@ -89,7 +89,7 @@ public sealed class ConcertDraftTests : IAsyncLifetime
     {
         var acceptResponse = await venueManagerClient.PostAsync(
             $"/api/application/{fixture.SeedState.DoorSplitApp.Id}/accept",
-            new { PaymentMethodId = AppFixture.TestPaymentMethodId, eSignature = new { signatoryName = "Test Signatory" } });
+            new { eSignature = new { signatoryName = "Test Signatory" } });
         await acceptResponse.ShouldBe(HttpStatusCode.NoContent);
 
         var applicationResponse = await venueManagerClient.GetAsync($"/api/application/{fixture.SeedState.DoorSplitApp.Id}");
@@ -103,7 +103,7 @@ public sealed class ConcertDraftTests : IAsyncLifetime
     {
         var acceptResponse = await venueManagerClient.PostAsync(
             $"/api/application/{fixture.SeedState.VersusApp.Id}/accept",
-            new { PaymentMethodId = AppFixture.TestPaymentMethodId, eSignature = new { signatoryName = "Test Signatory" } });
+            new { eSignature = new { signatoryName = "Test Signatory" } });
         await acceptResponse.ShouldBe(HttpStatusCode.NoContent);
 
         var applicationResponse = await venueManagerClient.GetAsync($"/api/application/{fixture.SeedState.VersusApp.Id}");
