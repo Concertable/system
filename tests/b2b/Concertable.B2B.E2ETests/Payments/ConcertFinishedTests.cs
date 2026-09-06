@@ -13,28 +13,28 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
     public Task DisposeAsync() => Task.CompletedTask;
 
     [Fact]
-    public async Task ShouldCompleteBooking_WhenFlatFeeConcertFinishes()
+    public async Task ShouldCompleteConcert_WhenFlatFeeConcertFinishes()
     {
         // Act
         await TriggerConcertFinishedFunctionAsync();
 
         // Assert
         await fixture.Polling.UntilAsync(
-            () => fixture.DbFixture.Application.GetStateByIdAsync(fixture.SeedState.PastFlatFeeApp.Id),
-            state => state == B2BLifecycleStates.Complete,
+            () => fixture.DbFixture.Concert.GetStateByApplicationIdAsync(fixture.SeedState.PastFlatFeeApp.Id),
+            state => state == ConcertState.Complete,
             timeout: TimeSpan.FromSeconds(30));
     }
 
     [Fact]
-    public async Task ShouldCompleteBooking_WhenVenueHireConcertFinishes()
+    public async Task ShouldCompleteConcert_WhenVenueHireConcertFinishes()
     {
         // Act
         await TriggerConcertFinishedFunctionAsync();
 
         // Assert
         await fixture.Polling.UntilAsync(
-            () => fixture.DbFixture.Application.GetStateByIdAsync(fixture.SeedState.PastVenueHireApp.Id),
-            state => state == B2BLifecycleStates.Complete,
+            () => fixture.DbFixture.Concert.GetStateByApplicationIdAsync(fixture.SeedState.PastVenueHireApp.Id),
+            state => state == ConcertState.Complete,
             timeout: TimeSpan.FromSeconds(30));
     }
 
@@ -46,24 +46,28 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
         // settles on both channels summed, not either alone.
 
         // Arrange — the venue declares the external door take on top of Concertable's own sales
-        await fixture.DbFixture.Concert.DeclareDoorRevenueAsync(fixture.SeedState.PastDoorSplitBooking.Concert!.Id, 100m);
+        await fixture.DbFixture.Concert.DeclareDoorRevenueAsync(
+            fixture.SeedState.PastDoorSplitBooking.Concert.Id,
+            100m);
 
         // Act
         await TriggerConcertFinishedFunctionAsync();
 
         // Assert
         var paymentIntentId = await fixture.Polling.UntilAsync(
-            () => fixture.DbFixture.Payment.GetLatestSettlementPaymentIntentIdAsync(fixture.SeedState.PastDoorSplitBooking.Id),
+            () => fixture.DbFixture.Payment.GetSettlementPaymentIntentIdAsync(fixture.SeedState.PastDoorSplitBooking.Concert.Id),
             id => id is not null,
             timeout: TimeSpan.FromSeconds(30));
 
         var intent = await fixture.StripePaymentIntents.GetAsync(paymentIntentId);
-        Assert.Equal(StripeTestAccounts.BySeedUserId[fixture.SeedState.ArtistManager1.Id], intent.TransferData.DestinationId);
+        Assert.Equal(StripeTestAccounts.ByOwnerId[TenantOf(fixture.SeedState.ArtistManager1.Id)], intent.TransferData.DestinationId);
         Assert.Equal(22000L, intent.Amount);
         Assert.Equal(21000L, intent.TransferData.Amount);
 
         await AssertSettlementLedgerReconcilesAsync(
-            fixture.SeedState.PastDoorSplitBooking.Id, stripeCharge: intent.Amount, stripeTransfer: intent.TransferData.Amount);
+            fixture.SeedState.PastDoorSplitBooking.Concert.Id,
+            stripeCharge: intent.Amount,
+            stripeTransfer: intent.TransferData.Amount);
     }
 
     [Fact]
@@ -73,37 +77,46 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
         // extra door take → total £20 → artist share = £100 + £14 = £114 (11400 pence).
 
         // Arrange — the venue declares the external door take (£0 here; all sales came through us)
-        await fixture.DbFixture.Concert.DeclareDoorRevenueAsync(fixture.SeedState.PastVersusBooking.Concert!.Id, 0m);
+        await fixture.DbFixture.Concert.DeclareDoorRevenueAsync(
+            fixture.SeedState.PastVersusBooking.Concert.Id,
+            0m);
 
         // Act
         await TriggerConcertFinishedFunctionAsync();
 
         // Assert
         var paymentIntentId = await fixture.Polling.UntilAsync(
-            () => fixture.DbFixture.Payment.GetLatestSettlementPaymentIntentIdAsync(fixture.SeedState.PastVersusBooking.Id),
+            () => fixture.DbFixture.Payment.GetSettlementPaymentIntentIdAsync(fixture.SeedState.PastVersusBooking.Concert.Id),
             id => id is not null,
             timeout: TimeSpan.FromSeconds(30));
 
         var intent = await fixture.StripePaymentIntents.GetAsync(paymentIntentId);
-        Assert.Equal(StripeTestAccounts.BySeedUserId[fixture.SeedState.ArtistManager1.Id], intent.TransferData.DestinationId);
+        Assert.Equal(StripeTestAccounts.ByOwnerId[TenantOf(fixture.SeedState.ArtistManager1.Id)], intent.TransferData.DestinationId);
         Assert.Equal(12400L, intent.Amount);
         Assert.Equal(11400L, intent.TransferData.Amount);
 
         await AssertSettlementLedgerReconcilesAsync(
-            fixture.SeedState.PastVersusBooking.Id, stripeCharge: intent.Amount, stripeTransfer: intent.TransferData.Amount);
+            fixture.SeedState.PastVersusBooking.Concert.Id,
+            stripeCharge: intent.Amount,
+            stripeTransfer: intent.TransferData.Amount);
     }
 
-    private async Task AssertSettlementLedgerReconcilesAsync(int bookingId, long stripeCharge, long stripeTransfer)
+    private async Task AssertSettlementLedgerReconcilesAsync(int concertId, long stripeCharge, long stripeTransfer)
     {
         await fixture.Polling.UntilAsync(
-            () => fixture.DbFixture.Payment.GetLedgerTransactionCountAsync(bookingId),
+            () => fixture.DbFixture.Payment.GetSettlementLedgerTransactionCountAsync(concertId),
             count => count == 1,
             timeout: TimeSpan.FromSeconds(30));
 
-        Assert.Equal(0L, await fixture.DbFixture.Payment.GetLedgerSignedSumAsync(bookingId));
-        Assert.Equal(stripeCharge - stripeTransfer, await fixture.DbFixture.Payment.GetLedgerPlatformRevenueAsync(bookingId));
-        Assert.Equal(1, await fixture.DbFixture.Payment.GetLedgerTransactionCountAsync(bookingId));
+        Assert.Equal(0L, await fixture.DbFixture.Payment.GetSettlementLedgerSignedSumAsync(concertId));
+        Assert.Equal(
+            stripeCharge - stripeTransfer,
+            await fixture.DbFixture.Payment.GetSettlementLedgerPlatformRevenueAsync(concertId));
+        Assert.Equal(1, await fixture.DbFixture.Payment.GetSettlementLedgerTransactionCountAsync(concertId));
     }
+
+    private Guid TenantOf(Guid managerUserId) =>
+        fixture.SeedState.Tenants.Single(tenant => tenant.CreatedByUserId == managerUserId).Id;
 
     private Task TriggerConcertFinishedFunctionAsync() =>
         fixture.Workers.TriggerAsync(B2BTestFunctions.ConcertFinished);

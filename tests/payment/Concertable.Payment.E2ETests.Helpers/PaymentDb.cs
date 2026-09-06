@@ -11,27 +11,27 @@ public sealed class PaymentDb
         this.client = client;
     }
 
-    public Task<string?> GetLatestSettlementPaymentIntentIdAsync(int bookingId) =>
-        client.GetLatestSettlementPaymentIntentIdAsync(bookingId);
+    public Task<string?> GetLatestSettlementPaymentIntentIdAsync(string operationType, string clientReference) =>
+        client.GetLatestSettlementPaymentIntentIdAsync(operationType, clientReference);
 
-    public Task<Guid?> GetEscrowPayeeIdAsync(int bookingId) =>
-        client.GetEscrowPayeeIdAsync(bookingId);
+    public Task<Guid?> GetEscrowPayeeIdAsync(string operationType, string clientReference) =>
+        client.GetEscrowPayeeIdAsync(operationType, clientReference);
 
-    public Task<string> GetEscrowPaymentIntentIdAsync(int bookingId) =>
-        client.GetEscrowPaymentIntentIdAsync(bookingId);
+    public Task<string> GetEscrowPaymentIntentIdAsync(string operationType, string clientReference) =>
+        client.GetEscrowPaymentIntentIdAsync(operationType, clientReference);
 
-    public Task<int?> GetEscrowStatusAsync(int bookingId) =>
-        client.GetEscrowStatusAsync(bookingId);
+    public Task<int?> GetEscrowStatusAsync(string operationType, string clientReference) =>
+        client.GetEscrowStatusAsync(operationType, clientReference);
 
-    public Task<string?> GetEscrowRefundIdAsync(int bookingId) =>
-        client.GetEscrowRefundIdAsync(bookingId);
+    public Task<string?> GetEscrowRefundIdAsync(string operationType, string clientReference) =>
+        client.GetEscrowRefundIdAsync(operationType, clientReference);
 
-    public Task<int> GetLedgerTransactionCountAsync(int bookingId) =>
-        client.GetLedgerTransactionCountAsync(bookingId);
+    public Task<int> GetLedgerTransactionCountAsync(string operationType, string clientReference) =>
+        client.GetLedgerTransactionCountAsync(operationType, clientReference);
 
-    public Task<long> GetLedgerSignedSumAsync(int bookingId) =>
-        client.GetLedgerSignedSumAsync(bookingId);
+    public Task<long> GetLedgerSignedSumAsync(string operationType, string clientReference) =>
+        client.GetLedgerSignedSumAsync(operationType, clientReference);
 
-    public Task<long> GetLedgerPlatformRevenueAsync(int bookingId) =>
-        client.GetLedgerPlatformRevenueAsync(bookingId);
+    public Task<long> GetLedgerPlatformRevenueAsync(string operationType, string clientReference) =>
+        client.GetLedgerPlatformRevenueAsync(operationType, clientReference);
 }
