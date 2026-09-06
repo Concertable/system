@@ -52,26 +52,25 @@ public sealed class AppHostArchitectureTests
                 && key != "Auth__SpaClients__RestrictToEnabledClients")
             .Order()
             .ToArray();
-        var expectedKeys = surfaces
-            .Where(surface => surface.AuthClient is not null)
-            .SelectMany(surface => new[]
+        var expectedKeys = SystemLocalSpaSurfaces.AuthClients
+            .SelectMany(registration => new[]
             {
-                $"Auth__SpaClients__{surface.AuthClient}__AllowedCorsOrigins__0",
-                $"Auth__SpaClients__{surface.AuthClient}__PostLogoutRedirectUri",
-                $"Auth__SpaClients__{surface.AuthClient}__RedirectUri"
+                $"Auth__SpaClients__{registration.ClientName}__AllowedCorsOrigins__0",
+                $"Auth__SpaClients__{registration.ClientName}__PostLogoutRedirectUri",
+                $"Auth__SpaClients__{registration.ClientName}__RedirectUri"
             })
             .Order()
             .ToArray();
 
         Assert.Equal(expectedKeys, authClientKeys);
-        foreach (var surface in surfaces.Where(surface => surface.AuthClient is not null))
+        foreach (var (surface, clientName) in SystemLocalSpaSurfaces.AuthClients)
         {
             Assert.Equal($"{surface.Origin}/auth/callback",
-                environment[$"Auth__SpaClients__{surface.AuthClient}__RedirectUri"]);
+                environment[$"Auth__SpaClients__{clientName}__RedirectUri"]);
             Assert.Equal(surface.Origin,
-                environment[$"Auth__SpaClients__{surface.AuthClient}__PostLogoutRedirectUri"]);
+                environment[$"Auth__SpaClients__{clientName}__PostLogoutRedirectUri"]);
             Assert.Equal(surface.Origin,
-                environment[$"Auth__SpaClients__{surface.AuthClient}__AllowedCorsOrigins__0"]);
+                environment[$"Auth__SpaClients__{clientName}__AllowedCorsOrigins__0"]);
         }
         Assert.DoesNotContain(authClientKeys, key => key.Contains("__Business__", StringComparison.Ordinal));
     }

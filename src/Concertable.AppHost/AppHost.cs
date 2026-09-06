@@ -18,7 +18,7 @@ var (storage, blobs) = builder.AddAzureStorage();
 var asb = builder.AddServiceBus();
 asb.Topology().AddB2BTopology().AddCustomerTopology().AddSearchTopology().AddPaymentTopology().AddAuthTopology().RunAsEmulator();
 var auth = builder.AddAuth<Projects.Concertable_Auth>(authDb, asb);
-auth.WithSpaClients(SystemLocalSpaSurfaces.All.Where(surface => surface.AuthClient is not null).ToArray());
+auth.WithSpaClients(SystemLocalSpaSurfaces.AuthClients);
 var paymentWeb = builder.AddPaymentWeb<Projects.Concertable_Payment_Web>(auth, paymentDb, asb);
 var api = builder.AddB2BWeb<Projects.Concertable_B2B_Web>(b2bDb, auth, storage, blobs, asb, paymentWeb);
 auth.WithEnvironment("Services__B2BApiUrl", api.GetEndpoint("https"));
