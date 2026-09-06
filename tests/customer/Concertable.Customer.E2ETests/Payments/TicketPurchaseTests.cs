@@ -1,6 +1,7 @@
 using System.Net;
 using Concertable.Seed.Identity;
 using Concertable.Testing;
+using Concertable.Payment.Contracts;
 using Xunit;
 
 namespace Concertable.Customer.E2ETests.Payments;
@@ -12,22 +13,22 @@ public sealed class TicketPurchaseTests(AppFixture fixture) : IAsyncLifetime
     public Task DisposeAsync() => Task.CompletedTask;
 
     [Fact]
-    public async Task ShouldCreateTicket_WhenPaymentSucceeds()
+    public async Task Purchase_PaymentSucceeds_CreatesTicket()
     {
-        // Arrange
         var client = await fixture.CreateAuthenticatedClientAsync(fixture.SeedState.Customer1.Email);
         var upcomingConcertId = fixture.SeedState.UpcomingFlatFeeConcert.Id;
 
-        // Act
-        var response = await client.PostAsync("/api/Ticket/purchase", new
+        var response = await client.PostAsync("/api/Ticket/checkout", new
         {
             ConcertId = upcomingConcertId,
-            Quantity = 1,
-            PaymentMethodId = AppFixture.TestPaymentMethodId
+            Quantity = 1
         });
         await response.ShouldBe(HttpStatusCode.OK);
+        var checkout = await response.Content.ReadAsync<TicketCheckout>();
+        Assert.NotNull(checkout);
 
-        // Assert
+        await fixture.ConfirmPaymentAsync(checkout.Session.ClientSecret);
+
         await fixture.Polling.UntilAsync(
             async () =>
             {
@@ -39,6 +40,10 @@ public sealed class TicketPurchaseTests(AppFixture fixture) : IAsyncLifetime
             timeout: TimeSpan.FromSeconds(30));
     }
 
+    private sealed record TicketCheckout(
+        PaymentOperationReference Reference,
+        CheckoutSession Session);
+    private sealed record CheckoutSession(string ClientSecret);
     private sealed record UpcomingTicket(Guid Id, UpcomingConcert Concert);
     private sealed record UpcomingConcert(int Id, string Name);
 }
