@@ -1,3 +1,4 @@
+#requires -Version 7.0
 # SDK evaluation checks only: no restore, build, containers, or user-secrets mutation.
 [CmdletBinding()]
 param()
