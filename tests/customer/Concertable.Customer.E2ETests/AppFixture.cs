@@ -20,6 +20,7 @@ public sealed class AppFixture : IAsyncLifetime
     private HttpClient customerAdminClient = null!;
     private HttpClient paymentAdminClient = null!;
     private CustomerTestClient customerTestClient = null!;
+    private PaymentIntentService stripePaymentIntents = null!;
     private readonly ILoggerFactory loggerFactory;
     private readonly ILogger<AppFixture> logger;
     private readonly IConfiguration configuration;
@@ -30,8 +31,6 @@ public sealed class AppFixture : IAsyncLifetime
     private readonly string paymentWebUrl;
     private readonly string authUrl;
     private readonly string customerSpaUrl;
-
-    public const string TestPaymentMethodId = "pm_card_visa";
 
     public HttpClient CustomerClient { get; private set; } = null!;
     public IPollingService Polling { get; private set; } = null!;
@@ -79,6 +78,7 @@ public sealed class AppFixture : IAsyncLifetime
         var stripeSecretKey = builder.Configuration["Stripe:SecretKey"]
             ?? throw new InvalidOperationException("Stripe:SecretKey is not configured for the Customer E2E fixture.");
         var stripeClient = new StripeClient(stripeSecretKey);
+        stripePaymentIntents = new PaymentIntentService(stripeClient);
         StripeCustomerResolver = await Concertable.Testing.E2E.StripeCustomerResolver.CreateAsync(stripeClient);
         var run = Run.Create(Profile.Customer(customerWebUrl, searchWebUrl, authUrl, paymentWebUrl));
 
@@ -129,6 +129,17 @@ public sealed class AppFixture : IAsyncLifetime
 
     public Task WaitForTokenMintingAsync(string email, string password) =>
         tokenMinter.WaitUntilMintableAsync(email, password, Polling);
+
+    public Task ConfirmPaymentAsync(string clientSecret)
+    {
+        var separatorIndex = clientSecret.IndexOf("_secret_", StringComparison.Ordinal);
+        if (separatorIndex <= 0)
+            throw new ArgumentException("The payment client secret is invalid.", nameof(clientSecret));
+
+        return stripePaymentIntents.ConfirmAsync(
+            clientSecret[..separatorIndex],
+            new PaymentIntentConfirmOptions { PaymentMethod = "pm_card_visa" });
+    }
 
     public async Task DisposeAsync()
     {
