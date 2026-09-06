@@ -5,6 +5,7 @@ namespace Concertable.Payment.E2ETests.Helpers;
 public sealed class StripeFixture
 {
     private readonly PaymentIntentService paymentIntents;
+    private readonly SetupIntentService setupIntents;
     private readonly TransferService transfers;
     private readonly PaymentMethodService paymentMethods;
     private readonly RefundService refunds;
@@ -16,6 +17,7 @@ public sealed class StripeFixture
     public StripeFixture(IStripeClient client)
     {
         paymentIntents = new PaymentIntentService(client);
+        setupIntents = new SetupIntentService(client);
         transfers = new TransferService(client);
         paymentMethods = new PaymentMethodService(client);
         refunds = new RefundService(client);
@@ -62,6 +64,12 @@ public sealed class StripeFixture
         paymentIntents.ConfirmAsync(
             clientSecret.Split("_secret_")[0],
             new PaymentIntentConfirmOptions { PaymentMethod = paymentMethodId },
+            cancellationToken: ct);
+
+    public Task ConfirmPaymentMethodAsync(string clientSecret, string paymentMethodId = "pm_card_visa", CancellationToken ct = default) =>
+        setupIntents.ConfirmAsync(
+            clientSecret.Split("_secret_")[0],
+            new SetupIntentConfirmOptions { PaymentMethod = paymentMethodId },
             cancellationToken: ct);
 
     public async Task<PaymentIntent?> GetCapturedHoldAsync(
