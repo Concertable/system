@@ -1,4 +1,5 @@
 using Concertable.B2B.TestKit;
+using Concertable.Payment.E2ETests.Helpers;
 using Concertable.Payment.TestKit;
 
 namespace Concertable.B2B.E2ETests;
@@ -12,7 +13,7 @@ public sealed class DbFixture
     public ApplicationDb Application { get; }
     public BookingDb Booking { get; }
     public ConcertDb Concert { get; }
-    public PaymentDb Payment { get; }
+    public PaymentOperationsDb Payment { get; }
 
     public DbFixture(B2BTestClient b2b, PaymentTestClient payment)
     {
@@ -22,7 +23,7 @@ public sealed class DbFixture
         Application = new ApplicationDb(b2b);
         Booking = new BookingDb(b2b);
         Concert = new ConcertDb(b2b);
-        Payment = new PaymentDb(payment);
+        Payment = new PaymentOperationsDb(new PaymentDb(payment));
     }
 
     public async Task ResetAsync()
