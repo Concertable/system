@@ -1,4 +1,4 @@
-using Concertable.B2B.TestKit;
+﻿using Concertable.B2B.TestKit;
 using Concertable.Payment.TestKit;
 using Concertable.Testing;
 using Xunit;
@@ -45,7 +45,9 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
         // £100 external door take → total £300 → artist share = £210 (21000 pence). Proves the split
         // settles on both channels summed, not either alone.
 
-        // Arrange — the venue declares the external door take on top of Concertable's own sales
+        // Arrange — the venue commits the card it verified at accept, then declares the external door
+        // take on top of Concertable's own sales
+        await fixture.CommitVenuePaymentMethodAsync(fixture.SeedState.PastDoorSplitBooking.ApplicationId);
         await fixture.DbFixture.Concert.DeclareDoorRevenueAsync(
             fixture.SeedState.PastDoorSplitBooking.Concert.Id,
             100m);
@@ -76,7 +78,9 @@ public sealed class ConcertFinishedTests(AppFixture fixture) : IAsyncLifetime
         // PastVersus: Versus £100 + 70% door — 1 ticket sold on Concertable at £20, venue declares £0
         // extra door take → total £20 → artist share = £100 + £14 = £114 (11400 pence).
 
-        // Arrange — the venue declares the external door take (£0 here; all sales came through us)
+        // Arrange — the venue commits the card it verified at accept, then declares the external door
+        // take (£0 here; all sales came through us)
+        await fixture.CommitVenuePaymentMethodAsync(fixture.SeedState.PastVersusBooking.ApplicationId);
         await fixture.DbFixture.Concert.DeclareDoorRevenueAsync(
             fixture.SeedState.PastVersusBooking.Concert.Id,
             0m);
