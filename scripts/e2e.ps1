@@ -140,7 +140,9 @@ function Assert-SpaDependencies {
     # one with `npm install`, which does not wipe the tree.
     $app = Join-Path $repoRoot 'app'
     $modules = Join-Path $app 'node_modules'
-    if (Test-Path (Join-Path $modules '.bin/vite.cmd')) { return }
+    # Probe the entrypoint the shim runs, not the shim: .bin/vite.cmd is a stub that outlives its own
+    # package, so it reports a complete workspace while `npm run dev` dies on a missing module.
+    if (Test-Path (Join-Path $modules 'vite/bin/vite.js')) { return }
 
     $command = if (Test-Path $modules) { 'install' } else { 'ci' }
     Write-Host "Installing SPA workspace dependencies (npm $command)..." -ForegroundColor Gray
