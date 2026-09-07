@@ -6,7 +6,6 @@ using Concertable.E2E;
 using Concertable.Payment.E2ETests.Helpers;
 using Concertable.Payment.Hosting;
 using Concertable.Payment.TestKit;
-using Concertable.Seed.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -115,14 +114,30 @@ public sealed class AppFixture : IAsyncLifetime
         var payoutAccounts = new PayoutAccountDb(
             await app.GetConnectionStringAsync(PaymentConstants.Database)
                 ?? throw new InvalidOperationException("Payment connection string is missing."));
-        await Polling.UntilAsync(
-            async () => (
-                Chargeable: await payoutAccounts.GetChargeableOwnerIdsAsync(),
-                Payable: await payoutAccounts.GetPayableOwnerIdsAsync()),
-            provisioned =>
-                provisioned.Chargeable.Contains(SeedCustomers.CustomerId(1))
-                && StripeTestAccounts.ByOwnerId.Keys.All(provisioned.Payable.Contains),
-            timeout: TimeSpan.FromMinutes(3));
+        var buyerId = SeedState.Customer1.Id;
+        var payeeId = SeedState.UpcomingFlatFeeConcert.PayeeOwnerId;
+        try
+        {
+            await Polling.UntilAsync(
+                async () => (
+                    Chargeable: await payoutAccounts.GetChargeableOwnerIdsAsync(),
+                    Payable: await payoutAccounts.GetPayableOwnerIdsAsync()),
+                provisioned =>
+                    provisioned.Chargeable.Contains(buyerId)
+                    && provisioned.Payable.Contains(payeeId),
+                timeout: TimeSpan.FromMinutes(3));
+        }
+        catch (TimeoutException)
+        {
+            var chargeable = await payoutAccounts.GetChargeableOwnerIdsAsync();
+            var payable = await payoutAccounts.GetPayableOwnerIdsAsync();
+            throw new InvalidOperationException(
+                $"Payment never provisioned the owners this suite transacts as. "
+                + $"Buyer {buyerId} chargeable: {chargeable.Contains(buyerId)}. "
+                + $"Payee {payeeId} payable: {payable.Contains(payeeId)}. "
+                + $"Chargeable owners: [{string.Join(", ", chargeable)}]. "
+                + $"Payable owners: [{string.Join(", ", payable)}].");
+        }
 
         logger.E2ETestFixtureReady();
     }
