@@ -54,11 +54,19 @@ public sealed class StripeFixture
         }
     }
 
-    public Task AttachTestCardAsync(string customerId, CancellationToken ct = default) =>
-        paymentMethods.AttachAsync(
+    public async Task AttachTestCardAsync(string customerId, CancellationToken ct = default)
+    {
+        var attached = await paymentMethods.AttachAsync(
             "pm_card_visa",
             new PaymentMethodAttachOptions { Customer = customerId },
             cancellationToken: ct);
+
+        // A customer session only re-offers a saved method marked `always`.
+        await paymentMethods.UpdateAsync(
+            attached.Id,
+            new PaymentMethodUpdateOptions { AllowRedisplay = "always" },
+            cancellationToken: ct);
+    }
 
     public Task ConfirmHoldAsync(string clientSecret, string paymentMethodId = "pm_card_visa", CancellationToken ct = default) =>
         paymentIntents.ConfirmAsync(
