@@ -31,6 +31,7 @@ public static class DistributedApplicationBuilderExtensions
                 context.EnvironmentVariables["ASPNETCORE_URLS"] = paymentApiEndpoint;
                 context.EnvironmentVariables["Auth__Authority"] = authEndpoint;
                 context.EnvironmentVariables["E2E__AdminKey"] = adminKey;
+                context.EnvironmentVariables["ServiceBus__ServiceName"] = PaymentConstants.ServiceName;
                 AddStripeCustomerConfiguration(context, stripeCustomers);
                 if (!string.IsNullOrEmpty(stripeSecretKey))
                     context.EnvironmentVariables["Stripe__SecretKey"] = stripeSecretKey;

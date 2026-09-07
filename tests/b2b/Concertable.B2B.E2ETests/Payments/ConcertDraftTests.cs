@@ -51,15 +51,18 @@ public sealed class ConcertDraftTests : IAsyncLifetime
             {
                 var response = await venueManagerClient.GetAsync($"/api/application/{fixture.SeedState.FlatFeeApp.Id}");
                 await response.ShouldBe(HttpStatusCode.OK);
-                return await response.Content.ReadAsync<B2BApplicationState>();
+                return await response.Content.ReadAsync<ApplicationResponse>();
             },
-            app => app?.Status == B2BApplicationStatus.Accepted,
+            app => app?.Status == ApplicationStatus.Accepted,
             timeout: TimeSpan.FromSeconds(15));
     }
 
     [Fact]
     public async Task ShouldCreateDraftAndPayVenue_WhenVenueHireApplicationAccepted()
     {
+        var artistClient = await fixture.CreateAuthenticatedClientAsync(fixture.SeedState.ArtistManager1.Email);
+        await fixture.CommitArtistPaymentMethodAsync(artistClient, fixture.SeedState.VenueHireApp.OpportunityId);
+
         var response = await venueManagerClient.PostAsync(
             $"/api/application/{fixture.SeedState.VenueHireApp.Id}/accept", new { eSignature = new { signatoryName = "Test Signatory" } });
         await response.ShouldBe(HttpStatusCode.NoContent);
@@ -77,9 +80,9 @@ public sealed class ConcertDraftTests : IAsyncLifetime
             {
                 var response = await venueManagerClient.GetAsync($"/api/application/{fixture.SeedState.VenueHireApp.Id}");
                 await response.ShouldBe(HttpStatusCode.OK);
-                return await response.Content.ReadAsync<B2BApplicationState>();
+                return await response.Content.ReadAsync<ApplicationResponse>();
             },
-            app => app?.Status == B2BApplicationStatus.Accepted,
+            app => app?.Status == ApplicationStatus.Accepted,
             timeout: TimeSpan.FromSeconds(15));
     }
 
@@ -88,13 +91,13 @@ public sealed class ConcertDraftTests : IAsyncLifetime
     {
         var acceptResponse = await venueManagerClient.PostAsync(
             $"/api/application/{fixture.SeedState.DoorSplitApp.Id}/accept",
-            new { PaymentMethodId = AppFixture.TestPaymentMethodId, eSignature = new { signatoryName = "Test Signatory" } });
+            new { eSignature = new { signatoryName = "Test Signatory" } });
         await acceptResponse.ShouldBe(HttpStatusCode.NoContent);
 
         var applicationResponse = await venueManagerClient.GetAsync($"/api/application/{fixture.SeedState.DoorSplitApp.Id}");
         await applicationResponse.ShouldBe(HttpStatusCode.OK);
-        var application = await applicationResponse.Content.ReadAsync<B2BApplicationState>();
-        Assert.Equal(B2BApplicationStatus.Accepted, application!.Status);
+        var application = await applicationResponse.Content.ReadAsync<ApplicationResponse>();
+        Assert.Equal(ApplicationStatus.Accepted, application!.Status);
     }
 
     [Fact]
@@ -102,13 +105,13 @@ public sealed class ConcertDraftTests : IAsyncLifetime
     {
         var acceptResponse = await venueManagerClient.PostAsync(
             $"/api/application/{fixture.SeedState.VersusApp.Id}/accept",
-            new { PaymentMethodId = AppFixture.TestPaymentMethodId, eSignature = new { signatoryName = "Test Signatory" } });
+            new { eSignature = new { signatoryName = "Test Signatory" } });
         await acceptResponse.ShouldBe(HttpStatusCode.NoContent);
 
         var applicationResponse = await venueManagerClient.GetAsync($"/api/application/{fixture.SeedState.VersusApp.Id}");
         await applicationResponse.ShouldBe(HttpStatusCode.OK);
-        var application = await applicationResponse.Content.ReadAsync<B2BApplicationState>();
-        Assert.Equal(B2BApplicationStatus.Accepted, application!.Status);
+        var application = await applicationResponse.Content.ReadAsync<ApplicationResponse>();
+        Assert.Equal(ApplicationStatus.Accepted, application!.Status);
     }
 
     private async Task<string> PlaceAcceptHoldAsync(int applicationId)

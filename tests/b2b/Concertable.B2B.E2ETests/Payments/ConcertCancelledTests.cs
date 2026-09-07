@@ -44,6 +44,8 @@ public sealed class ConcertCancelledTests : IAsyncLifetime
     {
         var appId = fixture.SeedState.VenueHireApp.Id;
 
+        var artistClient = await fixture.CreateAuthenticatedClientAsync(fixture.SeedState.ArtistManager1.Email);
+        await fixture.CommitArtistPaymentMethodAsync(artistClient, fixture.SeedState.VenueHireApp.OpportunityId);
         await AcceptAsync(appId);
 
         await CancelAndAssertRefundedAsync(appId);
@@ -74,8 +76,8 @@ public sealed class ConcertCancelledTests : IAsyncLifetime
         await cancelResponse.ShouldBe(HttpStatusCode.NoContent);
 
         await fixture.Polling.UntilAsync(
-            () => fixture.DbFixture.Application.GetStateByIdAsync(appId),
-            state => state == B2BLifecycleStates.Cancelled,
+            () => fixture.DbFixture.Concert.GetStateByApplicationIdAsync(appId),
+            state => state == ConcertState.Cancelled,
             timeout: TimeSpan.FromSeconds(30));
 
         var refundId = await fixture.Polling.UntilAsync(
@@ -91,11 +93,11 @@ public sealed class ConcertCancelledTests : IAsyncLifetime
         Assert.Equal("succeeded", refund.Status);
 
         await fixture.Polling.UntilAsync(
-            () => fixture.DbFixture.Payment.GetLedgerTransactionCountAsync(bookingId),
+            () => fixture.DbFixture.Payment.GetEscrowLedgerTransactionCountAsync(bookingId),
             count => count == 2,
             timeout: TimeSpan.FromSeconds(30));
-        Assert.Equal(0L, await fixture.DbFixture.Payment.GetLedgerSignedSumAsync(bookingId));
-        Assert.Equal(0L, await fixture.DbFixture.Payment.GetLedgerPlatformRevenueAsync(bookingId));
+        Assert.Equal(0L, await fixture.DbFixture.Payment.GetEscrowLedgerSignedSumAsync(bookingId));
+        Assert.Equal(0L, await fixture.DbFixture.Payment.GetEscrowLedgerPlatformRevenueAsync(bookingId));
 
         // Once cancelled, the cancel action is withdrawn from the concert response.
         await fixture.Polling.UntilAsync(

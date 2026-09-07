@@ -18,11 +18,17 @@ $dataAccessProjects = @(
 )
 $b2bProjects = @(
     "api/Concertable.B2B/src/Concertable.B2B.DataAccess/Tests/Concertable.B2B.DataAccess.UnitTests/Concertable.B2B.DataAccess.UnitTests.csproj",
+    "api/Concertable.B2B/src/Modules/Admin/Tests/Concertable.B2B.Admin.UnitTests/Concertable.B2B.Admin.UnitTests.csproj",
+    "api/Concertable.B2B/src/Modules/Application/Tests/Concertable.B2B.Application.UnitTests/Concertable.B2B.Application.UnitTests.csproj",
+    "api/Concertable.B2B/src/Modules/Artist/Tests/Concertable.B2B.Artist.UnitTests/Concertable.B2B.Artist.UnitTests.csproj",
+    "api/Concertable.B2B/src/Modules/Booking/Tests/Concertable.B2B.Booking.UnitTests/Concertable.B2B.Booking.UnitTests.csproj",
     "api/Concertable.B2B/src/Modules/Concert/Tests/Concertable.B2B.Concert.UnitTests/Concertable.B2B.Concert.UnitTests.csproj",
     "api/Concertable.B2B/src/Modules/Conversations/Tests/Concertable.B2B.Conversations.UnitTests/Concertable.B2B.Conversations.UnitTests.csproj",
+    "api/Concertable.B2B/src/Modules/Dashboard/Tests/Concertable.B2B.Dashboard.Opportunity.UnitTests/Concertable.B2B.Dashboard.Opportunity.UnitTests.csproj",
     "api/Concertable.B2B/src/Modules/Deal/Tests/Concertable.B2B.Deal.UnitTests/Concertable.B2B.Deal.UnitTests.csproj",
     "api/Concertable.B2B/src/Modules/Tenant/Tests/Concertable.B2B.Tenant.UnitTests/Concertable.B2B.Tenant.UnitTests.csproj",
-    "api/Concertable.B2B/tests/Concertable.B2B.Workers.UnitTests/Concertable.B2B.Workers.UnitTests.csproj"
+    "api/Concertable.B2B/src/Modules/User/Tests/Concertable.B2B.User.UnitTests/Concertable.B2B.User.UnitTests.csproj",
+    "api/Concertable.B2B/src/Modules/Venue/Tests/Concertable.B2B.Venue.UnitTests/Concertable.B2B.Venue.UnitTests.csproj"
 )
 $customerProjects = @(
     "api/Concertable.Customer/src/Modules/Concert/Tests/Concertable.Customer.Concert.UnitTests/Concertable.Customer.Concert.UnitTests.csproj",

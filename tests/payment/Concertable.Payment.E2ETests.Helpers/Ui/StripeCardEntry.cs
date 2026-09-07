@@ -8,6 +8,7 @@ public sealed class StripeCardEntry(IPageAccessor accessor)
     private IPage Page => accessor.Page;
 
     private const string CardFrameSelector = "iframe[src*='elements-inner-accessory-target']";
+    private const float TabTimeoutMs = 5000;
 
     private IFrameLocator CardForm => Page.FrameLocator(CardFrameSelector);
     private ILocator CardFrameElement => Page.Locator(CardFrameSelector);
@@ -28,6 +29,17 @@ public sealed class StripeCardEntry(IPageAccessor accessor)
     private async Task SelectCardAsync()
     {
         await CardFrameElement.ScrollIntoViewIfNeededAsync();
+
+        // Stripe draws no tab strip when the account has only one payment method enabled.
+        try
+        {
+            await CardTab.WaitForAsync(new() { Timeout = TabTimeoutMs });
+        }
+        catch (TimeoutException)
+        {
+            await CardNumber.WaitForAsync();
+            return;
+        }
 
         if (await CardTab.GetAttributeAsync("aria-selected") != "true")
             await CardTab.ClickAsync();

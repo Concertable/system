@@ -57,7 +57,7 @@ public sealed class ArtistSteps
     [Given(@"a venue hire opportunity is open for application")]
     public async Task AVenueHireOpportunityIsOpen()
     {
-        var opp = fixture.App.SeedState.FreshVenueHireOpportunity;
+        var opp = fixture.App.SeedState.ActiveVenueHireOpportunity;
         state.VenueId = opp.VenueId;
         state.OpportunityId = opp.Id;
 
