@@ -191,7 +191,7 @@ public sealed class VenueManagerSteps
     [When(@"a draft concert is created")]
     [Then(@"a draft concert is created")]
     public Task DraftConcertCreated() =>
-        browser.Page.WaitForURLAsync("**/my/concerts/concert/**", new() { Timeout = 60_000 });
+        browser.Page.WaitForURLAsync("**/my/concerts/concert/**", new() { Timeout = 30_000 });
 
     [When(@"the venue manager downloads the booking contract")]
     [Then(@"the venue manager downloads the booking contract")]
