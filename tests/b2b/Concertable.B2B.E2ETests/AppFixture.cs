@@ -1,4 +1,4 @@
-using Aspire.Hosting;
+﻿using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
 using Concertable.B2B.Hosting;
@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Stripe;
+using System.Net;
 using System.Net.Http.Headers;
 
 namespace Concertable.B2B.E2ETests;
@@ -28,8 +29,8 @@ public sealed class AppFixture : IAsyncLifetime
     private readonly TestTokenMinter tokenMinter;
     private readonly string authUrl;
     private readonly SemaphoreSlim resetGate = new(1, 1);
+    private PayoutAccountDb payoutAccounts = null!;
 
-    public const string TestPaymentMethodId = "pm_card_visa";
 
     public string B2BWebUrl { get; }
     public string SearchWebUrl { get; }
@@ -111,9 +112,13 @@ public sealed class AppFixture : IAsyncLifetime
             [B2BWebUrl, SearchWebUrl, PaymentWebUrl],
             TimeSpan.FromMinutes(12));
 
-        var paymentConnectionString = await app.GetConnectionStringAsync(PaymentConstants.Database)
-            ?? throw new InvalidOperationException("Payment connection string is missing.");
-        await healthWaiter.WaitForPayoutAccountsAsync(paymentConnectionString, 4, TimeSpan.FromMinutes(3));
+        payoutAccounts = new PayoutAccountDb(
+            await app.GetConnectionStringAsync(PaymentConstants.Database)
+                ?? throw new InvalidOperationException("Payment connection string is missing."));
+        await Polling.UntilAsync(
+            () => payoutAccounts.GetPayableOwnerIdsAsync(),
+            payable => StripeTestAccounts.ByOwnerId.Keys.All(payable.Contains),
+            timeout: TimeSpan.FromMinutes(3));
 
         b2bAdminClient = new HttpClient { BaseAddress = new Uri(B2BWebUrl) };
         paymentAdminClient = new HttpClient { BaseAddress = new Uri(PaymentWebUrl) };
@@ -138,6 +143,13 @@ public sealed class AppFixture : IAsyncLifetime
             logger.ResettingTestState();
             Stripe.Reset();
             await DbFixture.ResetAsync();
+            // The reset replays every payout-owner registration, and an owner is briefly unusable as a
+            // payer while its customer and connect account are re-provisioned. Tests that open a payment
+            // session must not race that window.
+            await Polling.UntilAsync(
+                () => payoutAccounts.GetPayableOwnerIdsAsync(),
+                payable => StripeTestAccounts.ByOwnerId.Keys.All(payable.Contains),
+                timeout: TimeSpan.FromMinutes(3));
             SeedState = await b2bTestClient.GetSeedStateAsync();
         }
         finally
@@ -153,6 +165,20 @@ public sealed class AppFixture : IAsyncLifetime
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         return client;
     }
+
+    public async Task CommitArtistPaymentMethodAsync(HttpClient artistClient, int opportunityId)
+    {
+        var checkoutPath = $"/api/application/opportunity/{opportunityId}/checkout";
+        var response = await artistClient.PostAsync(checkoutPath);
+        await response.ShouldBe(HttpStatusCode.OK);
+        var checkout = await response.Content.ReadAsync<B2BCheckoutState>()
+            ?? throw new InvalidOperationException($"{checkoutPath} returned an empty checkout.");
+        await Stripe.ConfirmPaymentMethodAsync(checkout.Session.ClientSecret);
+    }
+
+    public async Task CommitVenuePaymentMethodAsync(int applicationId) =>
+        await Stripe.ConfirmPaymentMethodAsync(
+            await b2bTestClient.OpenMethodVerificationAsync(applicationId));
 
     public Task WaitForTokenMintingAsync(string email, string password) =>
         tokenMinter.WaitUntilMintableAsync(email, password, Polling);
