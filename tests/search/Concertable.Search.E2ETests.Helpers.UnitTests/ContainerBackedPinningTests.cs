@@ -37,6 +37,9 @@ public sealed class ContainerBackedPinningTests
         Assert.Single(
             builder.Resources.SelectMany(resource => resource.Annotations.OfType<EndpointAnnotation>()),
             annotation => annotation.Port == 7098);
+        Assert.NotSame(
+            Assert.Single(payment.Annotations.OfType<EnvironmentCallbackAnnotation>()),
+            Assert.Single(project.Annotations.OfType<EnvironmentCallbackAnnotation>()));
         Assert.Equal("test-connection", Environment(project)["ConnectionStrings__PaymentDb"]);
         Assert.DoesNotContain(
             dependent.Annotations.OfType<WaitAnnotation>(),
