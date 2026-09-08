@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Cryptography;
 
 namespace Concertable.E2E;
@@ -17,5 +18,9 @@ public sealed record Run(Profile Profile, string AdminKey)
             ["ServiceAuth__B2BClientSecret"] = B2BServiceAuthSecret,
             ["ServiceAuth__CustomerClientSecret"] = CustomerServiceAuthSecret,
             ["ServiceAuth__AuthClientSecret"] = AuthServiceAuthSecret,
+            // The browser suites reset their database and login state between scenarios while Auth stays
+            // alive. Keep the production credential policy enabled, but remove its cross-scenario budget
+            // from E2E just as the in-process integration fixtures do.
+            ["RateLimiting__credential__PermitLimit"] = int.MaxValue.ToString(CultureInfo.InvariantCulture),
         };
 }
