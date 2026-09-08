@@ -31,6 +31,7 @@ public static class DistributedApplicationBuilderExtensions
                 context.EnvironmentVariables["ASPNETCORE_URLS"] = paymentApiEndpoint;
                 context.EnvironmentVariables["Auth__Authority"] = authEndpoint;
                 context.EnvironmentVariables["E2E__AdminKey"] = adminKey;
+                context.EnvironmentVariables["ServiceBus__ServiceName"] = PaymentConstants.ServiceName;
                 AddStripeCustomerConfiguration(context, stripeCustomers);
                 if (!string.IsNullOrEmpty(stripeSecretKey))
                     context.EnvironmentVariables["Stripe__SecretKey"] = stripeSecretKey;
@@ -182,7 +183,7 @@ public static class DistributedApplicationBuilderExtensions
         var e2eProject = e2eProjectBuilder.Resource;
 
         foreach (var annotation in resource.Annotations.OfType<EnvironmentCallbackAnnotation>())
-            e2eProject.Annotations.Add(annotation);
+            e2eProject.Annotations.Add(new EnvironmentCallbackAnnotation(annotation.Callback));
         foreach (var annotation in resource.Annotations.OfType<WaitAnnotation>())
             e2eProject.Annotations.Add(annotation);
 
