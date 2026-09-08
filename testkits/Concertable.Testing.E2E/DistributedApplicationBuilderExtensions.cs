@@ -183,7 +183,7 @@ public static class DistributedApplicationBuilderExtensions
         var e2eProject = e2eProjectBuilder.Resource;
 
         foreach (var annotation in resource.Annotations.OfType<EnvironmentCallbackAnnotation>())
-            e2eProject.Annotations.Add(annotation);
+            e2eProject.Annotations.Add(new EnvironmentCallbackAnnotation(annotation.Callback));
         foreach (var annotation in resource.Annotations.OfType<WaitAnnotation>())
             e2eProject.Annotations.Add(annotation);
 
