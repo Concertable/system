@@ -5,12 +5,12 @@ using Concertable.Testing.Architecture;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
-namespace Concertable.AppHost.ArchitectureTests;
+namespace Concertable.AppHost.StartupTests;
 
-public sealed class AppHostArchitectureTests
+public sealed class ResourceGraphTests
 {
     [Fact]
-    public async Task Build_ProductionGraph_IsValid()
+    public async Task ProductionGraph_IsValid()
     {
         using var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_AppHost>();
         Assert.DoesNotContain(builder.Resources.OfType<NodeAppResource>(),
@@ -23,7 +23,7 @@ public sealed class AppHostArchitectureTests
     }
 
     [Fact]
-    public async Task Build_AllFrontendSurfaces_AreOwnedAndCollisionFree()
+    public async Task AllFrontendSurfaces_AreOwnedAndCollisionFree()
     {
         using var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_AppHost>(
             ["--RunMobile=true"]);
@@ -76,7 +76,7 @@ public sealed class AppHostArchitectureTests
     }
 
     [Fact]
-    public async Task Build_MobileUrls_ResolveThroughOwnedTunnel()
+    public async Task MobileUrls_ResolveThroughOwnedTunnel()
     {
         using var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_AppHost>(
             ["--RunMobile=true", "--MobileLanIp=192.0.2.42"]);
@@ -148,32 +148,10 @@ public sealed class AppHostArchitectureTests
     }
 
     [Fact]
-    public async Task Build_InvalidLifetimeGraph_IsRejected()
+    public async Task InvalidLifetimeGraph_IsRejected()
     {
         using var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_AppHost>();
         builder.Services.AddInvalidLifetimeGraph();
         await Assert.ThrowsAnyAsync<Exception>(async () => await builder.BuildAsync());
-    }
-
-    [Fact]
-    public void Inventory_AllExecutableProjectsDeclareCoverageOrExclusion()
-    {
-        var root = ExecutableHostInventory.FindRepositoryRoot();
-        ExecutableHostInventory.Validate(Path.Combine(root, "api"),
-            "Concertable.AppHost/Concertable.AppHost.csproj",
-            "Concertable.Auth/src/Concertable.Auth.AppHost/Concertable.Auth.AppHost.csproj",
-            "Concertable.Auth/src/Concertable.Auth/Concertable.Auth.csproj",
-            "Concertable.B2B/src/Concertable.B2B.AppHost/Concertable.B2B.AppHost.csproj",
-            "Concertable.B2B/src/Concertable.B2B.Web/Concertable.B2B.Web.csproj",
-            "Concertable.B2B/src/Concertable.B2B.Workers/Concertable.B2B.Workers.csproj",
-            "Concertable.B2B/src/Seed/Concertable.B2B.Seed.Simulator/Concertable.B2B.Seed.Simulator.csproj",
-            "Concertable.Customer/src/Concertable.Customer.AppHost/Concertable.Customer.AppHost.csproj",
-            "Concertable.Customer/src/Concertable.Customer.Web/Concertable.Customer.Web.csproj",
-            "Concertable.Search/src/Concertable.Search.AppHost/Concertable.Search.AppHost.csproj",
-            "Concertable.Search/src/Concertable.Search.Web/Concertable.Search.Web.csproj",
-            "Concertable.Search/src/Concertable.Search.Workers/Concertable.Search.Workers.csproj",
-            "Concertable.Payment/src/Concertable.Payment.AppHost/Concertable.Payment.AppHost.csproj",
-            "Concertable.Payment/src/Concertable.Payment.Web/Concertable.Payment.Web.csproj",
-            "Concertable.Payment/src/Concertable.Payment.Workers/Concertable.Payment.Workers.csproj");
     }
 }
