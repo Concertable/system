@@ -162,6 +162,34 @@ public sealed class ContainerBackedPinningTests
     }
 
     [Fact]
+    public async Task PinPaymentDiscovery_ConsumerOfTheImageBackedPayment_ResolvesEveryAdvertisedEndpoint()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var digest = $"sha256:{new string('a', 64)}";
+        var sql = builder.AddSqlServer("sql");
+        var paymentDb = sql.AddDatabase(PaymentConstants.Database);
+        var asb = builder.AddAzureServiceBus("asb");
+        var auth = builder.AddContainerImage(AuthConstants.Resource, "test-image", digest)
+            .WithHttpsEndpoint(targetPort: 8080, name: "https");
+        var paymentWeb = builder.AddPaymentWeb("test-image", digest, auth, paymentDb, asb);
+        var consumer = builder.AddResource(new ProjectResource("consumer"))
+            .WithReference(paymentWeb)
+            .Resource;
+        consumer.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
+            Concertable.Testing.E2E.DistributedApplicationBuilderExtensions
+                .PinPaymentDiscovery(context, "https://localhost:7098")));
+
+        var discovery = (await ResolvedEnvironmentAsync(consumer))
+            .Where(pair => pair.Key.StartsWith($"services__{PaymentConstants.WebResource}__", StringComparison.Ordinal))
+            .ToList();
+
+        // The client prefers the grpc key, and the container it was advertised from never starts here.
+        Assert.Contains(discovery, pair => pair.Key == $"services__{PaymentConstants.WebResource}__grpc__0");
+        Assert.Contains(discovery, pair => pair.Key == $"services__{PaymentConstants.WebResource}__https__0");
+        Assert.All(discovery, pair => Assert.Equal("https://localhost:7098", pair.Value));
+    }
+
+    [Fact]
     public void PinHttpsEndpoint_ProjectResource_MatchesTheDeclarativeProxylessShape()
     {
         var builder = DistributedApplication.CreateBuilder();
@@ -208,6 +236,21 @@ public sealed class ContainerBackedPinningTests
         Assert.Contains(
             latecomer.Annotations.OfType<WaitAnnotation>(),
             annotation => ReferenceEquals(annotation.Resource, replacement));
+    }
+
+    private static async Task<Dictionary<string, object>> ResolvedEnvironmentAsync(IResource resource)
+    {
+        var environment = new Dictionary<string, object>();
+        var context = new EnvironmentCallbackContext(
+            new DistributedApplicationExecutionContext(DistributedApplicationOperation.Run),
+            resource,
+            environment,
+            CancellationToken.None);
+
+        foreach (var annotation in resource.Annotations.OfType<EnvironmentCallbackAnnotation>().ToList())
+            await annotation.Callback(context);
+
+        return environment;
     }
 
     private static Dictionary<string, object> Environment(IResource resource)
