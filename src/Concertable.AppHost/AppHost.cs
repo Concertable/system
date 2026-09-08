@@ -1,7 +1,9 @@
+using Concertable.B2B.Hosting.Frontend;
+using Concertable.Customer.Hosting.Frontend;
+using Concertable.AppHost;
 using Concertable.Auth.Hosting;
 using Concertable.B2B.Hosting;
 using Concertable.Customer.Hosting;
-using Concertable.Frontend.Hosting;
 using Concertable.Payment.Hosting;
 using Concertable.Search.Hosting;
 
@@ -16,6 +18,7 @@ var (storage, blobs) = builder.AddAzureStorage();
 var asb = builder.AddServiceBus();
 asb.Topology().AddB2BTopology().AddCustomerTopology().AddSearchTopology().AddPaymentTopology().AddAuthTopology().RunAsEmulator();
 var auth = builder.AddAuth<Projects.Concertable_Auth>(authDb, asb);
+auth.WithSpaClients(SystemLocalSpaSurfaces.AuthClients);
 var paymentWeb = builder.AddPaymentWeb<Projects.Concertable_Payment_Web>(auth, paymentDb, asb);
 var api = builder.AddB2BWeb<Projects.Concertable_B2B_Web>(b2bDb, auth, storage, blobs, asb, paymentWeb);
 auth.WithEnvironment("Services__B2BApiUrl", api.GetEndpoint("https"));
@@ -31,6 +34,7 @@ builder.AddVenueSpa(api, auth);
 builder.AddArtistSpa(api, auth);
 builder.AddBusinessSpa(api, auth);
 builder.AddAdminSpa(api, auth);
-builder.AddMobile(api, auth, searchWeb, customerWeb, paymentWeb);
+if (builder.AddMobile(api, auth, searchWeb, customerWeb, paymentWeb) is { } mobileTunnel)
+    auth.WithMobilePublicUrl(mobileTunnel.GetEndpoint(auth, "https"));
 builder.AddStripeCli(paymentWeb);
 builder.Build().Run();
