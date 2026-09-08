@@ -13,7 +13,4 @@ public sealed class BookingDb
 
     public Task<int> GetIdByApplicationIdAsync(int applicationId) =>
         client.GetBookingIdAsync(applicationId);
-
-    public async Task<BookingState> GetStateByApplicationIdAsync(int applicationId) =>
-        (BookingState)await client.GetBookingStateByApplicationIdAsync(applicationId);
 }
