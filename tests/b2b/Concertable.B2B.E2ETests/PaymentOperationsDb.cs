@@ -37,6 +37,9 @@ public sealed class PaymentOperationsDb
     public Task<long> GetEscrowLedgerPlatformRevenueAsync(int bookingId) =>
         payment.GetLedgerPlatformRevenueAsync(PaymentOperationReferences.EscrowType, Escrow(bookingId));
 
+    public Task<int> GetActiveOutboxCountAsync() =>
+        payment.GetActiveOutboxCountAsync();
+
     public Task<string?> GetSettlementPaymentIntentIdAsync(int concertId) =>
         payment.GetLatestSettlementPaymentIntentIdAsync(
             PaymentOperationReferences.SettlementType,
