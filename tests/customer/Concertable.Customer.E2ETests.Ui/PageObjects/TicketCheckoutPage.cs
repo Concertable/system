@@ -17,7 +17,7 @@ public sealed class TicketCheckoutPage
     private ILocator Toast(string text) =>
         page.Locator("[data-sonner-toast]").Filter(new() { HasText = text });
 
-    public Task PayWithTestCardAsync() => payment.PayWithSavedCardAsync();
+    public Task PayWithTestCardAsync() => payment.PayWithNewCardAsync(StripeCards.Success);
 
     public Task PayWithNewCardAsync(string cardNumber) =>
         payment.PayWithNewCardAsync(cardNumber);
