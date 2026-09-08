@@ -63,7 +63,8 @@ internal static class DistributedApplicationBuilderExtensions
             workers.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
             {
                 context.EnvironmentVariables["Auth__Authority"] = authBaseUrl;
-                context.EnvironmentVariables["services__payment-web__https__0"] = paymentBaseUrl;
+                Concertable.Testing.E2E.DistributedApplicationBuilderExtensions
+                    .PinPaymentDiscovery(context, paymentBaseUrl);
                 context.EnvironmentVariables["ServiceAuth__ClientSecret"] = Run.B2BServiceAuthSecret;
             }));
         }
@@ -86,7 +87,8 @@ internal static class DistributedApplicationBuilderExtensions
                 context.EnvironmentVariables["ASPNETCORE_ENVIRONMENT"] = "E2E";
                 context.EnvironmentVariables["ASPNETCORE_URLS"] = run.Profile.Endpoints.ServiceApi;
                 context.EnvironmentVariables["Auth__Authority"] = run.Profile.Endpoints.Auth;
-                context.EnvironmentVariables["services__payment-web__https__0"] = run.Profile.Endpoints.PaymentApi;
+                Concertable.Testing.E2E.DistributedApplicationBuilderExtensions
+                    .PinPaymentDiscovery(context, run.Profile.Endpoints.PaymentApi);
                 context.EnvironmentVariables["ServiceAuth__ClientSecret"] = Run.B2BServiceAuthSecret;
                 context.EnvironmentVariables["E2E__AdminKey"] = run.AdminKey;
                 context.EnvironmentVariables["ExternalServices__UseRealStripe"] = "true";

@@ -10,7 +10,7 @@ namespace Concertable.Search.E2ETests.Helpers.UnitTests;
 public sealed class ContainerBackedPinningTests
 {
     [Fact]
-    public void SubstituteE2EProject_ImageBackedPaymentResource_RunsPaymentOwnedProjectAndRetargetsWaits()
+    public async Task SubstituteE2EProject_ImageBackedPaymentResource_RunsPaymentOwnedProjectAndRetargetsWaits()
     {
         var builder = DistributedApplication.CreateBuilder();
         var payment = builder.AddContainer(PaymentConstants.WebResource, "test-image")
@@ -40,7 +40,7 @@ public sealed class ContainerBackedPinningTests
         Assert.NotSame(
             Assert.Single(payment.Annotations.OfType<EnvironmentCallbackAnnotation>()),
             Assert.Single(project.Annotations.OfType<EnvironmentCallbackAnnotation>()));
-        Assert.Equal("test-connection", Environment(project)["ConnectionStrings__PaymentDb"]);
+        Assert.Equal("test-connection", (await ResolvedEnvironmentAsync(project))["ConnectionStrings__PaymentDb"]);
         Assert.DoesNotContain(
             dependent.Annotations.OfType<WaitAnnotation>(),
             annotation => ReferenceEquals(annotation.Resource, payment));
@@ -72,7 +72,7 @@ public sealed class ContainerBackedPinningTests
     }
 
     [Fact]
-    public void SubstituteE2EProject_ImageBackedWorkers_CarriesConnectionStringReferences()
+    public async Task SubstituteE2EProject_ImageBackedWorkers_CarriesConnectionStringReferences()
     {
         var builder = DistributedApplication.CreateBuilder();
         var sql = builder.AddSqlServer("sql");
@@ -86,7 +86,7 @@ public sealed class ContainerBackedPinningTests
         var e2eWorkers = Concertable.Testing.E2E.DistributedApplicationBuilderExtensions
             .SubstituteE2EProject(builder, workers, new TestProjectMetadata("payment-workers-e2e.csproj"));
 
-        var environment = Environment(e2eWorkers);
+        var environment = await ResolvedEnvironmentAsync(e2eWorkers);
         Assert.Contains("ConnectionStrings__asb", environment.Keys);
         Assert.Contains("ConnectionStrings__PaymentDb", environment.Keys);
 
@@ -101,7 +101,7 @@ public sealed class ContainerBackedPinningTests
     }
 
     [Fact]
-    public void AddSearchService_ImageBackedResources_PreservesContainersAndPinsE2EConfiguration()
+    public async Task AddSearchService_ImageBackedResources_PreservesContainersAndPinsE2EConfiguration()
     {
         var builder = DistributedApplication.CreateBuilder();
         var digest = $"sha256:{new string('a', 64)}";
@@ -129,18 +129,18 @@ public sealed class ContainerBackedPinningTests
         Assert.Equal(7097, endpoint.Port);
         Assert.False(endpoint.IsProxied);
 
-        var webEnvironment = Environment(searchWeb);
+        var webEnvironment = await ResolvedEnvironmentAsync(searchWeb);
         Assert.Equal("E2E", webEnvironment["ASPNETCORE_ENVIRONMENT"]);
         Assert.Equal("https://localhost:7097", webEnvironment["ASPNETCORE_URLS"]);
         Assert.Equal("https://localhost:7096", webEnvironment["Auth__Authority"]);
 
-        var workersEnvironment = Environment(searchWorkers);
+        var workersEnvironment = await ResolvedEnvironmentAsync(searchWorkers);
         Assert.Equal("E2E", workersEnvironment["DOTNET_ENVIRONMENT"]);
         Assert.Equal("concertable-search", workersEnvironment["ServiceBus__ServiceName"]);
     }
 
     [Fact]
-    public void SubstituteE2EProject_RealPaymentWebImage_CarriesServiceBusServiceName()
+    public async Task SubstituteE2EProject_RealPaymentWebImage_CarriesServiceBusServiceName()
     {
         var builder = DistributedApplication.CreateBuilder();
         var digest = $"sha256:{new string('a', 64)}";
@@ -158,7 +158,35 @@ public sealed class ContainerBackedPinningTests
         // between the image's own WithEnvironment and the project that replaces it.
         Assert.Equal(
             PaymentConstants.ServiceName,
-            Environment(e2ePaymentWeb)["ServiceBus__ServiceName"]);
+            (await ResolvedEnvironmentAsync(e2ePaymentWeb))["ServiceBus__ServiceName"]);
+    }
+
+    [Fact]
+    public async Task PinPaymentDiscovery_ConsumerOfTheImageBackedPayment_ResolvesEveryAdvertisedEndpoint()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var digest = $"sha256:{new string('a', 64)}";
+        var sql = builder.AddSqlServer("sql");
+        var paymentDb = sql.AddDatabase(PaymentConstants.Database);
+        var asb = builder.AddAzureServiceBus("asb");
+        var auth = builder.AddContainerImage(AuthConstants.Resource, "test-image", digest)
+            .WithHttpsEndpoint(targetPort: 8080, name: "https");
+        var paymentWeb = builder.AddPaymentWeb("test-image", digest, auth, paymentDb, asb);
+        var consumer = builder.AddResource(new ProjectResource("consumer"))
+            .WithReference(paymentWeb)
+            .Resource;
+        consumer.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
+            Concertable.Testing.E2E.DistributedApplicationBuilderExtensions
+                .PinPaymentDiscovery(context, "https://localhost:7098")));
+
+        var discovery = (await ResolvedEnvironmentAsync(consumer))
+            .Where(pair => pair.Key.StartsWith($"services__{PaymentConstants.WebResource}__", StringComparison.Ordinal))
+            .ToList();
+
+        // The client prefers the grpc key, and the container it was advertised from never starts here.
+        Assert.Contains(discovery, pair => pair.Key == $"services__{PaymentConstants.WebResource}__grpc__0");
+        Assert.Contains(discovery, pair => pair.Key == $"services__{PaymentConstants.WebResource}__https__0");
+        Assert.All(discovery, pair => Assert.Equal("https://localhost:7098", pair.Value));
     }
 
     [Fact]
@@ -210,7 +238,7 @@ public sealed class ContainerBackedPinningTests
             annotation => ReferenceEquals(annotation.Resource, replacement));
     }
 
-    private static Dictionary<string, object> Environment(IResource resource)
+    private static async Task<Dictionary<string, object>> ResolvedEnvironmentAsync(IResource resource)
     {
         var environment = new Dictionary<string, object>();
         var context = new EnvironmentCallbackContext(
@@ -219,11 +247,12 @@ public sealed class ContainerBackedPinningTests
             environment,
             CancellationToken.None);
 
-        foreach (var annotation in resource.Annotations.OfType<EnvironmentCallbackAnnotation>())
-            annotation.Callback(context);
+        foreach (var annotation in resource.Annotations.OfType<EnvironmentCallbackAnnotation>().ToList())
+            await annotation.Callback(context);
 
         return environment;
     }
+
 
     private sealed class TestProjectMetadata(string projectPath) : IProjectMetadata
     {
