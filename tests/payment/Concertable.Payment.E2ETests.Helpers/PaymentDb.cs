@@ -34,4 +34,7 @@ public sealed class PaymentDb
 
     public Task<long> GetLedgerPlatformRevenueAsync(string operationType, string clientReference) =>
         client.GetLedgerPlatformRevenueAsync(operationType, clientReference);
+
+    public Task<int> GetActiveOutboxCountAsync() =>
+        client.GetActiveOutboxCountAsync();
 }

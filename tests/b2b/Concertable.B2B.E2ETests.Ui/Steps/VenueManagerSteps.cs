@@ -211,8 +211,33 @@ public sealed class VenueManagerSteps
         new MyConcertPage(browser.Page).CancelBookingAsync();
 
     [Then(@"the booking is cancelled and the payment refunded")]
-    public Task BookingCancelledAndRefunded() =>
-        new MyConcertPage(browser.Page).WaitUntilCancelledAsync();
+    public async Task BookingCancelledAndRefunded()
+    {
+        await new MyConcertPage(browser.Page).WaitUntilCancelledAsync();
+
+        var bookingId = await fixture.App.DbFixture.Booking.GetIdByApplicationIdAsync(state.ApplicationId);
+        var refundId = await fixture.App.Polling.UntilAsync(
+            () => fixture.App.DbFixture.Payment.GetEscrowRefundIdAsync(bookingId),
+            id => id is not null,
+            timeout: TimeSpan.FromSeconds(30));
+
+        var refund = await fixture.App.Stripe.GetRefundAsync(
+            refundId ?? throw new InvalidOperationException("Payment did not expose the booking refund."));
+        Assert.Equal("succeeded", refund.Status);
+
+        await fixture.App.Polling.UntilAsync(
+            () => fixture.App.DbFixture.Booking.GetStateByApplicationIdAsync(state.ApplicationId),
+            bookingState => bookingState == BookingState.Cancelled,
+            timeout: TimeSpan.FromSeconds(30));
+        await fixture.App.Polling.UntilAsync(
+            () => fixture.App.DbFixture.Concert.GetStateByApplicationIdAsync(state.ApplicationId),
+            concertState => concertState == ConcertState.Cancelled,
+            timeout: TimeSpan.FromSeconds(30));
+        await fixture.App.Polling.UntilAsync(
+            () => fixture.App.DbFixture.Payment.GetActiveOutboxCountAsync(),
+            count => count == 0,
+            timeout: TimeSpan.FromSeconds(30));
+    }
 
     [Given(@"an ended door split concert with (\d+) tickets sold through Concertable")]
     public Task AnEndedDoorSplitConcertWithConcertableSales(int ticketsSold)
