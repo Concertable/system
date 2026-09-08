@@ -3,6 +3,8 @@ using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
 using Concertable.Customer.TestKit;
 using Concertable.E2E;
+using Concertable.Payment.E2ETests.Helpers;
+using Concertable.Payment.Hosting;
 using Concertable.Payment.TestKit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -108,6 +110,34 @@ public sealed class AppFixture : IAsyncLifetime
         DbFixture = new DbFixture(customerTestClient, paymentTestClient);
         await DbFixture.ResetAsync();
         SeedState = await customerTestClient.GetSeedStateAsync();
+
+        var payoutAccounts = new PayoutAccountDb(
+            await app.GetConnectionStringAsync(PaymentConstants.Database)
+                ?? throw new InvalidOperationException("Payment connection string is missing."));
+        var buyerId = SeedState.Customer1.Id;
+        var payeeId = SeedState.UpcomingFlatFeeConcert.PayeeOwnerId;
+        try
+        {
+            await Polling.UntilAsync(
+                async () => (
+                    Chargeable: await payoutAccounts.GetChargeableOwnerIdsAsync(),
+                    Payable: await payoutAccounts.GetPayableOwnerIdsAsync()),
+                provisioned =>
+                    provisioned.Chargeable.Contains(buyerId)
+                    && provisioned.Payable.Contains(payeeId),
+                timeout: TimeSpan.FromMinutes(3));
+        }
+        catch (TimeoutException)
+        {
+            var chargeable = await payoutAccounts.GetChargeableOwnerIdsAsync();
+            var payable = await payoutAccounts.GetPayableOwnerIdsAsync();
+            throw new InvalidOperationException(
+                $"Payment never provisioned the owners this suite transacts as. "
+                + $"Buyer {buyerId} chargeable: {chargeable.Contains(buyerId)}. "
+                + $"Payee {payeeId} payable: {payable.Contains(payeeId)}. "
+                + $"Chargeable owners: [{string.Join(", ", chargeable)}]. "
+                + $"Payable owners: [{string.Join(", ", payable)}].");
+        }
 
         logger.E2ETestFixtureReady();
     }

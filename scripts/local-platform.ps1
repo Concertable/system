@@ -13,6 +13,7 @@ $packagesRoot = Join-Path $platformRoot 'packages'
 $buildRoot = Join-Path $repoRoot 'artifacts/local-platform-build'
 $configPath = Join-Path $platformRoot 'nuget.config'
 $versionPath = Join-Path $platformRoot 'version.txt'
+$stampPath = Join-Path $platformRoot 'inputs.sha256'
 
 function Invoke-DotNet([string[]]$Arguments) {
     & dotnet @Arguments
@@ -27,6 +28,39 @@ function Get-LocalPlatformVersion {
     }
 
     return (Get-Content -Raw -LiteralPath $versionPath).Trim()
+}
+
+function Get-LocalPlatformInputsHash {
+    $scoped = @('api', 'scripts/local-platform.ps1')
+    $builder = [System.Text.StringBuilder]::new()
+    [void]$builder.AppendLine((& git -C $repoRoot ls-files -s -- @scoped | Out-String))
+    if ($LASTEXITCODE -ne 0) { return $null }
+
+    $changed = @(& git -C $repoRoot status --porcelain --untracked-files=all -- @scoped)
+    if ($LASTEXITCODE -ne 0) { return $null }
+
+    foreach ($entry in ($changed | Sort-Object)) {
+        [void]$builder.AppendLine($entry)
+        $relative = $entry.Substring(3).Trim('"')
+        $full = Join-Path $repoRoot $relative
+        if (Test-Path -LiteralPath $full -PathType Leaf) {
+            [void]$builder.AppendLine((Get-FileHash -LiteralPath $full -Algorithm SHA256).Hash)
+        }
+    }
+
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($builder.ToString())
+    $sha256 = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        return [System.BitConverter]::ToString($sha256.ComputeHash($bytes)).Replace('-', '')
+    }
+    finally {
+        $sha256.Dispose()
+    }
+}
+
+function Get-LocalPlatformPackageCount {
+    if (-not (Test-Path -LiteralPath $packagesRoot)) { return 0 }
+    return @(Get-ChildItem -LiteralPath $packagesRoot -Filter '*.nupkg').Count
 }
 
 function Write-NuGetConfig {
@@ -61,8 +95,27 @@ function Write-NuGetConfig {
     [System.IO.File]::WriteAllText($configPath, $content, [System.Text.UTF8Encoding]::new($false))
 }
 
-function Initialize-LocalPlatform {
-    $version = $env:LOCAL_PLATFORM_VERSION
+function Initialize-LocalPlatform([switch]$Force) {
+    $requestedVersion = $env:LOCAL_PLATFORM_VERSION
+    $inputsHash = Get-LocalPlatformInputsHash
+
+    if (-not $Force -and
+        $null -ne $inputsHash -and
+        (Test-Path -LiteralPath $stampPath) -and
+        (Test-Path -LiteralPath $versionPath)) {
+        $packageCount = Get-LocalPlatformPackageCount
+        $currentVersion = (Get-Content -Raw -LiteralPath $versionPath).Trim()
+        $versionMatches = [string]::IsNullOrWhiteSpace($requestedVersion) -or $requestedVersion -eq $currentVersion
+        if ($packageCount -gt 0 -and $versionMatches -and
+            (Get-Content -Raw -LiteralPath $stampPath).Trim() -eq "$inputsHash $packageCount") {
+            Write-NuGetConfig
+            Write-Host "Local platform $currentVersion is current with $packageCount packages; skipping pack."
+            Write-Host "Force a repack with './scripts/local-platform.ps1 prepare --force'."
+            return
+        }
+    }
+
+    $version = $requestedVersion
     if ([string]::IsNullOrWhiteSpace($version)) {
         $version = "0.1.0-local.$([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())"
     }
@@ -109,6 +162,14 @@ function Initialize-LocalPlatform {
     if ($missing.Count -gt 0 -or $packages.Count -ne $packableProjects.Count) {
         $missingNames = ($missing.BaseName | Sort-Object) -join ', '
         throw "Local platform package set is incomplete. Expected $($packableProjects.Count), found $($packages.Count). Missing: $missingNames"
+    }
+
+    if ($null -ne $inputsHash) {
+        [System.IO.File]::WriteAllText(
+            $stampPath, "$inputsHash $($packages.Count)", [System.Text.UTF8Encoding]::new($false))
+    }
+    elseif (Test-Path -LiteralPath $stampPath) {
+        Remove-Item -LiteralPath $stampPath -Force
     }
 
     Write-Host "Local platform $version prepared with $($packages.Count) packages at $packagesRoot."
@@ -175,7 +236,7 @@ Set-Location $repoRoot
 
 switch ($Command) {
     'prepare' {
-        Initialize-LocalPlatform
+        Initialize-LocalPlatform -Force:(($Target -eq '--force') -or ($Rest -contains '--force'))
     }
     'restore' {
         if ([string]::IsNullOrWhiteSpace($Target)) { throw 'restore requires a project or solution target.' }

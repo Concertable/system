@@ -44,6 +44,8 @@ public sealed class ConcertCancelledTests : IAsyncLifetime
     {
         var appId = fixture.SeedState.VenueHireApp.Id;
 
+        var artistClient = await fixture.CreateAuthenticatedClientAsync(fixture.SeedState.ArtistManager1.Email);
+        await fixture.CommitArtistPaymentMethodAsync(artistClient, fixture.SeedState.VenueHireApp.OpportunityId);
         await AcceptAsync(appId);
 
         await CancelAndAssertRefundedAsync(appId);

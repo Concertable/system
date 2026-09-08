@@ -60,6 +60,9 @@ public sealed class ConcertDraftTests : IAsyncLifetime
     [Fact]
     public async Task ShouldCreateDraftAndPayVenue_WhenVenueHireApplicationAccepted()
     {
+        var artistClient = await fixture.CreateAuthenticatedClientAsync(fixture.SeedState.ArtistManager1.Email);
+        await fixture.CommitArtistPaymentMethodAsync(artistClient, fixture.SeedState.VenueHireApp.OpportunityId);
+
         var response = await venueManagerClient.PostAsync(
             $"/api/application/{fixture.SeedState.VenueHireApp.Id}/accept", new { eSignature = new { signatoryName = "Test Signatory" } });
         await response.ShouldBe(HttpStatusCode.NoContent);
