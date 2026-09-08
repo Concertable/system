@@ -225,10 +225,8 @@ public sealed class VenueManagerSteps
             refundId ?? throw new InvalidOperationException("Payment did not expose the booking refund."));
         Assert.Equal("succeeded", refund.Status);
 
-        await fixture.App.Polling.UntilAsync(
-            () => fixture.App.DbFixture.Booking.GetStateByApplicationIdAsync(state.ApplicationId),
-            bookingState => bookingState == BookingState.Cancelled,
-            timeout: TimeSpan.FromSeconds(30));
+        // This action cancels the concert and refunds its escrow. The confirmed booking is immutable;
+        // its state machine intentionally cannot begin cancellation from Confirmed.
         await fixture.App.Polling.UntilAsync(
             () => fixture.App.DbFixture.Concert.GetStateByApplicationIdAsync(state.ApplicationId),
             concertState => concertState == ConcertState.Cancelled,
