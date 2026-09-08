@@ -151,6 +151,24 @@ public static class DistributedApplicationBuilderExtensions
             builder.Resources.Single(resource => resource.Name == name);
     }
 
+    /// <summary>Repoints every Payment service-discovery key a consumer inherited onto the pinned E2E host.
+    /// The imported AppHost wires consumers with WithReference against the Payment container, which emits one
+    /// key per container endpoint, and SubstituteE2EProject leaves that container on explicit start — so a key
+    /// this does not cover resolves to a DCP proxy with no backend, which accepts the connection and never
+    /// answers. Deriving the list from what the reference actually emitted is what keeps a new container
+    /// endpoint from silently reintroducing that hang.</summary>
+    internal static void PinPaymentDiscovery(EnvironmentCallbackContext context, string paymentApiEndpoint)
+    {
+        var prefix = $"services__{PaymentConstants.WebResource}__";
+
+        foreach (var key in context.EnvironmentVariables.Keys
+                     .Where(key => key.StartsWith(prefix, StringComparison.Ordinal))
+                     .ToList())
+            context.EnvironmentVariables[key] = paymentApiEndpoint;
+
+        context.EnvironmentVariables[$"{prefix}https__0"] = paymentApiEndpoint;
+    }
+
     internal static IResource SubstituteE2EProject(
         IDistributedApplicationBuilder builder,
         IResource resource,
