@@ -85,13 +85,13 @@ public sealed class ResourceGraphTests
         Assert.NotEmpty(ports);
         foreach (var port in ports)
         {
-            foreach (var endpoint in port.Annotations.OfType<EndpointAnnotation>())
+            foreach (var endpoint in port.Annotations.OfType<EndpointAnnotation>().ToArray())
                 endpoint.AllocatedEndpoint = new AllocatedEndpoint(endpoint, $"{port.Name}.example.test", 443);
         }
 
         using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         foreach (var mobile in builder.Resources.OfType<NodeAppResource>()
-            .Where(resource => resource.Name.StartsWith("mobile-", StringComparison.Ordinal)))
+            .Where(resource => resource.Name.StartsWith("mobile-", StringComparison.Ordinal)).ToArray())
         {
             AssertClearMetroCacheCommand(mobile);
             var environment = await GetResolvedEnvironmentAsync(mobile, cancellation.Token);
@@ -129,7 +129,7 @@ public sealed class ResourceGraphTests
 
     private static void AssertClearMetroCacheCommand(NodeAppResource mobile)
     {
-        var command = Assert.Single(mobile.Annotations.OfType<ResourceCommandAnnotation>(),
+        var command = Assert.Single(mobile.Annotations.OfType<ResourceCommandAnnotation>().ToArray(),
             command => command.Name == "clear-metro-cache");
         Assert.Equal("Clear Metro Cache", command.DisplayName);
         Assert.Equal("ArrowCounterclockwise", command.IconName);
