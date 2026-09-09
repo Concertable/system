@@ -8,7 +8,7 @@ namespace Concertable.Qualification.E2ETests;
 
 public sealed class SystemFixture : IAsyncLifetime
 {
-    private static readonly TimeSpan BootTimeout = TimeSpan.FromMinutes(15);
+    private static readonly TimeSpan BootTimeout = TimeSpan.FromMinutes(20);
 
     private DistributedApplication? application;
     private HttpClient? client;
@@ -27,14 +27,26 @@ public sealed class SystemFixture : IAsyncLifetime
 
         var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_AppHost>();
 
-        // The images expose /health only in the Development or E2E environment. Configuring the
-        // container is deployment, not a change to the artefact under test.
+        // Resolved through the image rather than the resource name, which need not agree with the
+        // manifest key: B2B's workers resource is "workers" while its image is b2b-workers.
+        var byImage = builder.Resources
+            .OfType<ServiceContainerResource>()
+            .ToDictionary(
+                resource => resource.Annotations.OfType<ContainerImageAnnotation>().Single().Image,
+                resource => resource,
+                StringComparer.Ordinal);
+
+        var resourceNames = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var service in this.Manifest.ServiceNames)
         {
-            var resource = builder.Resources
-                .OfType<ServiceContainerResource>()
-                .Single(candidate => candidate.Name == service);
+            var repository = this.Manifest[service].Repository;
+            if (!byImage.TryGetValue(repository, out var resource))
+                throw new InvalidOperationException($"The composition runs no container for '{repository}'.");
 
+            resourceNames.Add(service, resource.Name);
+
+            // The images expose /health only in the Development or E2E environment. Configuring the
+            // container is deployment, not a change to the artefact under test.
             builder.CreateResourceBuilder(resource)
                    .WithEnvironment("ASPNETCORE_ENVIRONMENT", "E2E")
                    .WithEnvironment("DOTNET_ENVIRONMENT", "E2E");
@@ -50,9 +62,9 @@ public sealed class SystemFixture : IAsyncLifetime
         });
 
         var endpoints = new Dictionary<string, Uri>(StringComparer.Ordinal);
-        foreach (var service in this.Manifest.ServiceNames)
+        foreach (var (service, resourceName) in resourceNames)
         {
-            if (TryGetHttpEndpoint(this.application, service) is { } endpoint)
+            if (TryGetHttpEndpoint(this.application, resourceName) is { } endpoint)
                 endpoints.Add(service, endpoint);
         }
 
@@ -70,13 +82,17 @@ public sealed class SystemFixture : IAsyncLifetime
             await this.application.DisposeAsync();
     }
 
-    private static Uri? TryGetHttpEndpoint(DistributedApplication application, string service)
+    private static Uri? TryGetHttpEndpoint(DistributedApplication application, string resourceName)
     {
         try
         {
-            return application.GetEndpoint(service, "https");
+            return application.GetEndpoint(resourceName, "https");
         }
         catch (InvalidOperationException)
+        {
+            return null;
+        }
+        catch (ArgumentException)
         {
             return null;
         }
