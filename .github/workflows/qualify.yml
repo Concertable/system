@@ -1,0 +1,72 @@
+name: Qualify
+
+# Boots the composed system from the images pinned in compatibility/local.yaml and probes it from
+# outside. Kept off the push path: it needs a Docker host and read access to those images, so a
+# failure here is a statement about the pinned composition, never about an unrelated edit.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * *'
+
+permissions:
+  contents: read
+  packages: read
+
+concurrency:
+  group: qualify-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GITHUB_PACKAGES_TOKEN: ${{ secrets.CONCERTABLE_PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
+
+jobs:
+  qualify:
+    name: Black-box qualification
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Log in to GHCR
+        env:
+          TOKEN: ${{ secrets.CONCERTABLE_PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
+        run: echo "$TOKEN" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      # Pull before the suite so a missing or unreadable image fails as itself rather than as an
+      # Aspire start timeout minutes later.
+      - name: Pull the pinned images
+        run: |
+          python - <<'PY' > images.txt
+          import re
+          manifest = open('compatibility/local.yaml', encoding='utf-8').read()
+          for repository, digest in re.findall(
+                  r'^\s+repository:\s*(\S+)\s*\n\s+digest:\s*(\S+)\s*$', manifest, re.MULTILINE):
+              print(f'{repository}@{digest}')
+          PY
+          cat images.txt
+          xargs -r -n1 docker pull < images.txt
+
+      - name: Restore and build
+        run: |
+          dotnet restore Concertable.System.slnx
+          dotnet build Concertable.System.slnx --configuration Release --no-restore
+
+      - name: Qualify
+        run: >
+          dotnet test tests/shared/Concertable.Qualification.E2ETests
+          --configuration Release --no-build --logger "trx;LogFileName=qualify.trx"
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qualification-results
+          path: '**/TestResults/*.trx'
+          if-no-files-found: warn
