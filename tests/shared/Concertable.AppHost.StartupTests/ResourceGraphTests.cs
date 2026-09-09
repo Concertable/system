@@ -9,7 +9,7 @@ namespace Concertable.AppHost.StartupTests;
 public sealed class ResourceGraphTests
 {
     [Fact]
-    public async Task EveryService_IsImageBackedAtThePinnedDigest()
+    public async Task EveryServiceContainer_RunsAPinnedImageAtItsPinnedDigest()
     {
         using var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_AppHost>();
 
@@ -17,12 +17,25 @@ public sealed class ResourceGraphTests
         Assert.Empty(builder.Resources.OfType<NodeAppResource>());
 
         var manifest = CompatibilityManifest.Load(AppContext.BaseDirectory);
-        foreach (var service in manifest.ServiceNames)
+        var pinned = manifest.ServiceNames.ToDictionary(
+            service => manifest[service].Repository,
+            service => manifest[service].Digest["sha256:".Length..],
+            StringComparer.Ordinal);
+
+        // Matched on image rather than resource name: the manifest is keyed by image, and a resource
+        // name does not have to agree with it — B2B's workers resource is "workers", not "b2b-workers".
+        var composed = builder.Resources
+            .OfType<ServiceContainerResource>()
+            .Select(resource => (
+                resource.Name,
+                Image: Assert.Single(resource.Annotations.OfType<ContainerImageAnnotation>().ToArray())))
+            .ToArray();
+
+        Assert.Equal(pinned.Count, composed.Length);
+        foreach (var (name, image) in composed)
         {
-            var resource = builder.Resources.Single(candidate => candidate.Name == service);
-            var image = Assert.Single(resource.Annotations.OfType<ContainerImageAnnotation>().ToArray());
-            Assert.Equal(manifest[service].Repository, image.Image);
-            Assert.Equal(manifest[service].Digest["sha256:".Length..], image.SHA256);
+            Assert.True(pinned.ContainsKey(image.Image), $"{name} runs unpinned image '{image.Image}'.");
+            Assert.Equal(pinned[image.Image], image.SHA256);
         }
 
         await using var app = await builder.BuildAsync();
