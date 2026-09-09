@@ -1,0 +1,42 @@
+# Known-good composition for a local or CI qualification run of the Concertable system.
+#
+# src/Concertable.AppHost reads this file and fails composition if an image is missing, so this is
+# the only place a pin is edited and no second list can drift from what actually runs. Renovate
+# raises the digest and package bumps here (checkpoint 9C).
+
+version: 1
+
+# Until each service publishes its own release train, the system qualifies against artefacts the
+# monorepo produced. Every image below was built from this one commit.
+source:
+  repository: Concertable/concertable
+  commit: 081e149a2e0a4544e1c781adc5e322a6ee0e4f85
+
+platform:
+  packages: 0.1.0-alpha.0.1357
+
+images:
+  auth:
+    repository: ghcr.io/concertable/auth
+    digest: sha256:f457c22e834911ab360a25539738a30dcc94f61d6963b170822effcbdb03ebf2
+  b2b-web:
+    repository: ghcr.io/concertable/b2b-web
+    digest: sha256:7cde7bd0483d8ab5625a103c3cda0d08e5b10fde08cd555cf1026e11acee1321
+  b2b-workers:
+    repository: ghcr.io/concertable/b2b-workers
+    digest: sha256:4d5f027a737d61e624e4c92c7d96fd61492369c9f2969a7418259a247e4e715a
+  customer-web:
+    repository: ghcr.io/concertable/customer-web
+    digest: sha256:d23550c0e0e73032205cfada883d46f4156bf7d53dcfe662a3292b707b7386b5
+  payment-web:
+    repository: ghcr.io/concertable/payment-web
+    digest: sha256:9fe3f10f700376adc5b68077674921d9499614279919504fc3d0615f9343016f
+  payment-workers:
+    repository: ghcr.io/concertable/payment-workers
+    digest: sha256:5fdaa267e70de9113667fdf6180183483d08a3493eea11c686d22c5f8c90aef3
+  search-web:
+    repository: ghcr.io/concertable/search-web
+    digest: sha256:bd3dda010fa15ee3f1bf4660d75d5e54c8debb8e49cc7f1ab33022a8f81c98e4
+  search-workers:
+    repository: ghcr.io/concertable/search-workers
+    digest: sha256:1a11951a8adb65907bf17a60b047d17e040587904b30c11a464b1ed2d0ff7042

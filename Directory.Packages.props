@@ -1,0 +1,54 @@
+<Project>
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <ConcertableDotNetPlatformVersion>0.1.0-alpha.0.1357</ConcertableDotNetPlatformVersion>
+  </PropertyGroup>
+
+  <!-- Nothing carves out of this repository, so versions live once at the root rather than per folder.
+       Keep ConcertableDotNetPlatformVersion equal to platform.packages in compatibility/local.yaml. -->
+  <ItemGroup>
+    <PackageVersion Include="Concertable.AppHost.Shared" Version="$(ConcertableDotNetPlatformVersion)" />
+    <PackageVersion Include="Concertable.Auth.Hosting" Version="$(ConcertableDotNetPlatformVersion)" />
+    <PackageVersion Include="Concertable.B2B.Hosting" Version="$(ConcertableDotNetPlatformVersion)" />
+    <PackageVersion Include="Concertable.B2B.TestKit" Version="$(ConcertableDotNetPlatformVersion)" />
+    <PackageVersion Include="Concertable.Customer.Hosting" Version="$(ConcertableDotNetPlatformVersion)" />
+    <PackageVersion Include="Concertable.Customer.TestKit" Version="$(ConcertableDotNetPlatformVersion)" />
+    <PackageVersion Include="Concertable.Frontend.Hosting" Version="$(ConcertableDotNetPlatformVersion)" />
+    <PackageVersion Include="Concertable.Payment.Hosting" Version="$(ConcertableDotNetPlatformVersion)" />
+    <PackageVersion Include="Concertable.Payment.TestKit" Version="$(ConcertableDotNetPlatformVersion)" />
+    <PackageVersion Include="Concertable.Search.Hosting" Version="$(ConcertableDotNetPlatformVersion)" />
+    <PackageVersion Include="Concertable.Seed.Identity" Version="$(ConcertableDotNetPlatformVersion)" />
+    <PackageVersion Include="Concertable.Testing" Version="$(ConcertableDotNetPlatformVersion)" />
+    <PackageVersion Include="Concertable.Testing.Architecture" Version="$(ConcertableDotNetPlatformVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageVersion Include="Appium.WebDriver" Version="5.2.0" />
+    <PackageVersion Include="Aspire.Hosting.DevTunnels" Version="13.3.2" />
+    <PackageVersion Include="Aspire.Hosting.NodeJs" Version="9.5.2" />
+    <PackageVersion Include="Aspire.Hosting.SqlServer" Version="13.3.2" />
+    <PackageVersion Include="Aspire.Hosting.Testing" Version="13.3.2" />
+    <PackageVersion Include="coverlet.collector" Version="6.0.0" />
+    <PackageVersion Include="Dapper" Version="2.1.72" />
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.0.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.3" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="10.0.8" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageVersion Include="Microsoft.Playwright" Version="1.59.0" />
+    <PackageVersion Include="Reqnroll" Version="3.3.4" />
+    <PackageVersion Include="Reqnroll.Microsoft.Extensions.DependencyInjection" Version="3.3.4" />
+    <PackageVersion Include="Reqnroll.xUnit" Version="3.3.4" />
+    <PackageVersion Include="Respawn" Version="7.0.0" />
+    <PackageVersion Include="Stripe.net" Version="47.3.0" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.0.2" />
+    <PackageVersion Include="YamlDotNet" Version="18.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <GlobalPackageReference Include="Meziantou.Analyzer" Version="3.0.98" />
+    <GlobalPackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="3.3.4" />
+  </ItemGroup>
+
+</Project>
