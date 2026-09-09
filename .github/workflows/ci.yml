@@ -2,6 +2,11 @@ name: CI
 
 # Build and the container-free tiers. Booting the composed system is qualify.yml, which needs a
 # Docker host and read access to the pinned GHCR images, so it never gates a plain push.
+#
+# The org's reusable dotnet-ci.yml is deliberately not used here: it supplies NUGET_AUTH_TOKEN, and
+# this repository's nuget.config authenticates the org feed with GITHUB_PACKAGES_TOKEN so that one
+# credential name works both locally and in CI. A reusable workflow's steps cannot be handed extra
+# env by its caller, so the build runs here instead.
 
 on:
   push:
@@ -17,13 +22,45 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  GITHUB_PACKAGES_TOKEN: ${{ secrets.CONCERTABLE_PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
+
 jobs:
   build:
     name: Build
-    uses: Concertable/.github/.github/workflows/dotnet-ci.yml@main
-    with:
-      solution: Concertable.System.slnx
-      run-tests: false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore Concertable.System.slnx
+
+      - name: Build
+        run: dotnet build Concertable.System.slnx --configuration Release --no-restore
+
+      - name: Unit tier
+        run: |
+          for project in \
+            tests/payment/Concertable.Payment.E2ETests.Helpers.UnitTests \
+            tests/search/Concertable.Search.E2ETests.Helpers.UnitTests
+          do
+            dotnet test "$project" --configuration Release --no-build
+          done
+
+      - name: Architecture and startup tiers
+        run: |
+          for project in \
+            tests/shared/Concertable.AppHost.ArchitectureTests \
+            tests/shared/Concertable.AppHost.StartupTests
+          do
+            dotnet test "$project" --configuration Release --no-build
+          done
 
   pins:
     name: Composition pins
@@ -35,27 +72,3 @@ jobs:
 
       - name: Manifest and package pin agree
         run: python .github/scripts/check_pins.py
-
-  unit:
-    name: Unit tier
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-
-      - uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: 10.0.x
-          source-url: https://nuget.pkg.github.com/Concertable/index.json
-        env:
-          NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Test
-        run: |
-          for project in \
-            tests/payment/Concertable.Payment.E2ETests.Helpers.UnitTests \
-            tests/search/Concertable.Search.E2ETests.Helpers.UnitTests
-          do
-            dotnet test "$project" --configuration Release
-          done
