@@ -16,11 +16,19 @@ with zero scenarios run. Its own header says why each weaker check was rejected.
 
 ## Not yet converted
 
-The per-surface suites under `tests/b2b/` and `tests/customer/` still expect a service's E2E-only
-admin API for seeding and reset, which a production image does not carry, and the UI and mobile
-tiers additionally need frontend workspaces this repository does not contain.
-`tests/shared/Concertable.Qualification.E2ETests` is the converted, image-backed suite; treat it as
+`tests/shared/Concertable.Qualification.E2ETests` is the converted, image-backed suite. Treat it as
 the shape the others move to.
+
+The API suites under `tests/b2b/` and `tests/customer/` still reach a service's E2E-only `/_e2e/*`
+admin surface, which a production image does not carry. Their reset is only a Respawn call, so it
+relocates to the fixture through `RespawnableDb` ignoring `__EFMigrationsHistory`, `user.Users`,
+`admin.AdminProfiles` and `messaging.Inbox` — seeded users survive that, and the state derived from
+them re-provisions asynchronously. The remaining `B2BTestClient`/`PaymentTestClient` reads become
+queries against the connection strings the AppHost already exposes.
+
+The `.Ui` suites additionally need frontend workspaces this repository does not contain, and no SPA
+image exists to stand in for them. **The mobile suite is out of scope** — it is not run by CI
+anywhere and is kept only so its history is not lost.
 
 ## Standards
 
