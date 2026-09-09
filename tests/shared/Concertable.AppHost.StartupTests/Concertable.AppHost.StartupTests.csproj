@@ -15,7 +15,7 @@
     <PackageReference Include="xunit.runner.visualstudio" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Concertable.AppHost\Concertable.AppHost.csproj" />
+    <ProjectReference Include="..\..\..\src\Concertable.AppHost\Concertable.AppHost.csproj" />
     <PackageReference Include="Concertable.Testing.Architecture" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,61 @@
+name: CI
+
+# Build and the container-free tiers. Booting the composed system is qualify.yml, which needs a
+# Docker host and read access to the pinned GHCR images, so it never gates a plain push.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  merge_group:
+
+permissions:
+  contents: read
+  packages: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build
+    uses: Concertable/.github/.github/workflows/dotnet-ci.yml@main
+    with:
+      solution: Concertable.System.slnx
+      run-tests: false
+
+  pins:
+    name: Composition pins
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Manifest and package pin agree
+        run: python .github/scripts/check_pins.py
+
+  unit:
+    name: Unit tier
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+          source-url: https://nuget.pkg.github.com/Concertable/index.json
+        env:
+          NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Test
+        run: |
+          for project in \
+            tests/payment/Concertable.Payment.E2ETests.Helpers.UnitTests \
+            tests/search/Concertable.Search.E2ETests.Helpers.UnitTests
+          do
+            dotnet test "$project" --configuration Release
+          done

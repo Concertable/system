@@ -2,7 +2,6 @@ using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
 using Concertable.Testing.Architecture;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace Concertable.AppHost.StartupTests;
@@ -10,11 +9,29 @@ namespace Concertable.AppHost.StartupTests;
 public sealed class ResourceGraphTests
 {
     [Fact]
+    public async Task EveryService_IsImageBackedAtThePinnedDigest()
+    {
+        using var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_AppHost>();
+
+        Assert.Empty(builder.Resources.OfType<ProjectResource>());
+        Assert.Empty(builder.Resources.OfType<NodeAppResource>());
+
+        var manifest = CompatibilityManifest.Load(AppContext.BaseDirectory);
+        foreach (var service in manifest.ServiceNames)
+        {
+            var resource = builder.Resources.Single(candidate => candidate.Name == service);
+            var image = Assert.Single(resource.Annotations.OfType<ContainerImageAnnotation>().ToArray());
+            Assert.Equal(manifest[service].Repository, image.Image);
+            Assert.Equal(manifest[service].Digest["sha256:".Length..], image.SHA256);
+        }
+
+        await using var app = await builder.BuildAsync();
+    }
+
+    [Fact]
     public async Task ProductionGraph_IsValid()
     {
         using var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_AppHost>();
-        Assert.DoesNotContain(builder.Resources.OfType<NodeAppResource>(),
-            resource => resource.Name.StartsWith("mobile-", StringComparison.Ordinal));
         Assert.DoesNotContain(builder.Resources, resource => resource.Name == "concertable-dev");
         var auth = builder.Resources.Single(resource => resource.Name == "auth");
         var authEnvironment = await GetRawEnvironmentAsync(auth, CancellationToken.None);
@@ -23,14 +40,9 @@ public sealed class ResourceGraphTests
     }
 
     [Fact]
-    public async Task AllFrontendSurfaces_AreOwnedAndCollisionFree()
+    public async Task AuthSpaClients_AreOwnedAndCollisionFree()
     {
-        using var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_AppHost>(
-            ["--RunMobile=true"]);
-        Assert.Equal(
-            new[] { "admin", "artist", "business", "customer", "mobile-b2b", "mobile-customer", "venue" },
-            builder.Resources.OfType<NodeAppResource>().Select(resource => resource.Name).Order());
-        Assert.Single(builder.Resources, resource => resource.Name == "concertable-dev");
+        using var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_AppHost>();
         var surfaces = SystemLocalSpaSurfaces.All;
         Assert.Equal(5, surfaces.Count);
         Assert.Equal(surfaces.Count, surfaces.Select(surface => surface.ResourceName).Distinct().Count());
@@ -76,63 +88,11 @@ public sealed class ResourceGraphTests
     }
 
     [Fact]
-    public async Task MobileUrls_ResolveThroughOwnedTunnel()
+    public async Task InvalidLifetimeGraph_IsRejected()
     {
-        using var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_AppHost>(
-            ["--RunMobile=true", "--MobileLanIp=192.0.2.42"]);
-        await using var app = await builder.BuildAsync();
-        var ports = builder.Resources.OfType<Aspire.Hosting.DevTunnels.DevTunnelPortResource>().ToArray();
-        Assert.NotEmpty(ports);
-        foreach (var port in ports)
-        {
-            foreach (var endpoint in port.Annotations.OfType<EndpointAnnotation>().ToArray())
-                endpoint.AllocatedEndpoint = new AllocatedEndpoint(endpoint, $"{port.Name}.example.test", 443);
-        }
-
-        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-        foreach (var mobile in builder.Resources.OfType<NodeAppResource>()
-            .Where(resource => resource.Name.StartsWith("mobile-", StringComparison.Ordinal)).ToArray())
-        {
-            AssertClearMetroCacheCommand(mobile);
-            var environment = await GetResolvedEnvironmentAsync(mobile, cancellation.Token);
-            Assert.Equal("192.0.2.42", environment["REACT_NATIVE_PACKAGER_HOSTNAME"]);
-            foreach (var (key, service) in new[]
-            {
-                ("EXPO_PUBLIC_API_URL", "b2b-web"),
-                ("EXPO_PUBLIC_AUTH_AUTHORITY", "auth"),
-                ("EXPO_PUBLIC_SEARCH_API_URL", "search-web"),
-                ("EXPO_PUBLIC_CUSTOMER_API_URL", "customer-web"),
-                ("EXPO_PUBLIC_PAYMENT_API_URL", "payment-web")
-            })
-            {
-                Assert.Equal($"https://concertable-dev-{service}-https.example.test:443", environment[key]);
-            }
-        }
-
-        var auth = builder.Resources.Single(resource => resource.Name == "auth");
-        var authEnvironment = await GetRawEnvironmentAsync(auth, cancellation.Token);
-        var publicUrl = await Assert.IsAssignableFrom<IValueProvider>(authEnvironment["Auth__PublicUrl"])
-            .GetValueAsync(cancellation.Token);
-        Assert.Equal("https://concertable-dev-auth-https.example.test:443", publicUrl);
-    }
-
-    private static async Task<Dictionary<string, string>> GetResolvedEnvironmentAsync(
-        IResource resource, CancellationToken cancellationToken)
-    {
-        var environmentResource = Assert.IsAssignableFrom<IResourceWithEnvironment>(resource);
-        var configuration = await ExecutionConfigurationBuilder.Create(environmentResource)
-            .WithEnvironmentVariablesConfig()
-            .BuildAsync(new DistributedApplicationExecutionContext(DistributedApplicationOperation.Run),
-                NullLogger.Instance, cancellationToken);
-        return configuration.EnvironmentVariables.ToDictionary();
-    }
-
-    private static void AssertClearMetroCacheCommand(NodeAppResource mobile)
-    {
-        var command = Assert.Single(mobile.Annotations.OfType<ResourceCommandAnnotation>().ToArray(),
-            command => command.Name == "clear-metro-cache");
-        Assert.Equal("Clear Metro Cache", command.DisplayName);
-        Assert.Equal("ArrowCounterclockwise", command.IconName);
+        using var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_AppHost>();
+        builder.Services.AddInvalidLifetimeGraph();
+        await Assert.ThrowsAnyAsync<Exception>(async () => await builder.BuildAsync());
     }
 
     private static async Task<Dictionary<string, object>> GetRawEnvironmentAsync(
@@ -145,13 +105,5 @@ public sealed class ResourceGraphTests
         foreach (var annotation in resource.Annotations.OfType<EnvironmentCallbackAnnotation>().ToArray())
             await annotation.Callback(context);
         return environment;
-    }
-
-    [Fact]
-    public async Task InvalidLifetimeGraph_IsRejected()
-    {
-        using var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_AppHost>();
-        builder.Services.AddInvalidLifetimeGraph();
-        await Assert.ThrowsAnyAsync<Exception>(async () => await builder.BuildAsync());
     }
 }

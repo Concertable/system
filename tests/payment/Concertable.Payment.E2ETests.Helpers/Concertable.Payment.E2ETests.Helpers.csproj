@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\Concertable.Shared\tests\Concertable.Testing.E2E\Concertable.Testing.E2E.csproj" />
+    <ProjectReference Include="..\..\..\testkits\Concertable.Testing.E2E\Concertable.Testing.E2E.csproj" />
   </ItemGroup>
 
 </Project>

@@ -26,12 +26,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\Concertable.Shared\tests\Concertable.Testing.E2E\Concertable.Testing.E2E.csproj" />
-    <ProjectReference Include="..\..\..\..\tests\Concertable.E2E\Concertable.E2E.csproj" />
-    <ProjectReference Include="..\..\..\..\Concertable.Payment\tests\E2ETests\Concertable.Payment.E2ETests.Helpers\Concertable.Payment.E2ETests.Helpers.csproj" />
-    <ProjectReference Include="..\..\..\..\Concertable.Search\tests\E2ETests\Concertable.Search.E2ETests.Helpers\Concertable.Search.E2ETests.Helpers.csproj" />
-    <ProjectReference Include="..\..\..\..\tests\Concertable.E2E.Source\Concertable.E2E.Source.csproj"
-                      Condition="'$(UseSourceComposition)' == 'true'" />
+    <ProjectReference Include="..\..\..\testkits\Concertable.Testing.E2E\Concertable.Testing.E2E.csproj" />
+    <ProjectReference Include="..\..\shared\Concertable.E2E\Concertable.E2E.csproj" />
+    <ProjectReference Include="..\..\payment\Concertable.Payment.E2ETests.Helpers\Concertable.Payment.E2ETests.Helpers.csproj" />
+    <ProjectReference Include="..\..\search\Concertable.Search.E2ETests.Helpers\Concertable.Search.E2ETests.Helpers.csproj" />
   </ItemGroup>
 
   <ItemGroup>

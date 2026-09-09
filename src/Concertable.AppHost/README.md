@@ -12,6 +12,5 @@ This project uses the project-based Aspire convention: top-level composition in 
 
 ## Related projects
 
-- [`../Concertable.AppHost.Shared/`](../Concertable.AppHost.Shared/README.md) — class library of reusable Aspire helpers consumed by this AppHost (and every per-service AppHost).
-- `api/Concertable.X/Concertable.X.AppHost/` — per-service standalone executable AppHosts.
-- `api/Concertable.X/Concertable.X.AppHost.Extensions/` — per-service extension libraries (topology contributions today; eventually resource registration too — see [`TECH_DEBT.md`](./TECH_DEBT.md)).
+- `Concertable.AppHost.Shared` — published package of reusable Aspire helpers consumed by this AppHost and every per-service AppHost.
+- `Concertable.<Service>.Hosting` — published per-service composition packages. Their container overloads are the only way this AppHost adds a service; the project overloads exist for the owning service's own standalone AppHost, which lives in that service's repository.

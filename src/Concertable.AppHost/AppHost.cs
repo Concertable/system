@@ -1,5 +1,3 @@
-using Concertable.B2B.Hosting.Frontend;
-using Concertable.Customer.Hosting.Frontend;
 using Concertable.AppHost;
 using Concertable.Auth.Hosting;
 using Concertable.B2B.Hosting;
@@ -8,6 +6,8 @@ using Concertable.Payment.Hosting;
 using Concertable.Search.Hosting;
 
 var builder = StrictDistributedApplication.CreateBuilder(args);
+var manifest = CompatibilityManifest.Load(builder.AppHostDirectory);
+
 var sql = builder.AddSqlServerContainer();
 var b2bDb = sql.AddDatabase(B2BConstants.Database);
 var authDb = sql.AddDatabase(AuthConstants.Database);
@@ -17,24 +17,45 @@ var paymentDb = sql.AddDatabase(PaymentConstants.Database);
 var (storage, blobs) = builder.AddAzureStorage();
 var asb = builder.AddServiceBus();
 asb.Topology().AddB2BTopology().AddCustomerTopology().AddSearchTopology().AddPaymentTopology().AddAuthTopology().RunAsEmulator();
-var auth = builder.AddAuth<Projects.Concertable_Auth>(authDb, asb);
+
+var (authImage, authDigest) = manifest["auth"];
+var auth = builder.AddAuth(authImage, authDigest, authDb, asb)
+                  .WithContainerRuntimeArgs("--user", "root")
+                  .WithHttpsEndpoint(targetPort: AuthConstants.ContainerPort, name: "https");
 auth.WithSpaClients(SystemLocalSpaSurfaces.AuthClients);
-var paymentWeb = builder.AddPaymentWeb<Projects.Concertable_Payment_Web>(auth, paymentDb, asb);
-var api = builder.AddB2BWeb<Projects.Concertable_B2B_Web>(b2bDb, auth, storage, blobs, asb, paymentWeb);
+
+var (paymentWebImage, paymentWebDigest) = manifest["payment-web"];
+var paymentWeb = builder.AddPaymentWeb(paymentWebImage, paymentWebDigest, auth, paymentDb, asb);
+
+var (b2bWebImage, b2bWebDigest) = manifest["b2b-web"];
+var api = builder.AddB2BWeb(b2bWebImage, b2bWebDigest, b2bDb, auth, storage, blobs, asb, paymentWeb);
 auth.WithEnvironment("Services__B2BApiUrl", api.GetEndpoint("https"));
 auth.WithEnvironment("ServiceAuth__AuthClientId", "concertable-auth");
-builder.AddB2BWorkers<Projects.Concertable_B2B_Workers>(b2bDb, paymentWeb, auth);
-var customerWeb = builder.AddCustomerWeb<Projects.Concertable_Customer_Web>(auth, customerDb, asb, paymentWeb);
+
+var (b2bWorkersImage, b2bWorkersDigest) = manifest["b2b-workers"];
+var workers = builder.AddB2BWorkers(b2bWorkersImage, b2bWorkersDigest, b2bDb, paymentWeb, auth);
+
+var (customerWebImage, customerWebDigest) = manifest["customer-web"];
+var customerWeb = builder.AddCustomerWeb(customerWebImage, customerWebDigest, auth, customerDb, asb, paymentWeb);
 auth.WithEnvironment("Services__CustomerApiUrl", customerWeb.GetEndpoint("https"));
-var searchWeb = builder.AddSearchWeb<Projects.Concertable_Search_Web>(auth, searchDb);
-builder.AddSearchWorkers<Projects.Concertable_Search_Workers>(searchDb, asb);
-builder.AddPaymentWorkers<Projects.Concertable_Payment_Workers>(paymentDb, asb);
-builder.AddCustomerSpa(api, customerWeb, auth);
-builder.AddVenueSpa(api, auth);
-builder.AddArtistSpa(api, auth);
-builder.AddBusinessSpa(api, auth);
-builder.AddAdminSpa(api, auth);
-if (builder.AddMobile(api, auth, searchWeb, customerWeb, paymentWeb) is { } mobileTunnel)
-    auth.WithMobilePublicUrl(mobileTunnel.GetEndpoint(auth, "https"));
+
+// The payment image binds plaintext on the endpoint named "https", so every consumer of it must be
+// told to accept that rather than negotiating TLS against a cleartext port.
+if (builder.ExecutionContext.IsRunMode)
+{
+    api.WithEnvironment(PaymentConstants.AllowInsecureHttpClientEnvironmentVariable, bool.TrueString);
+    workers.WithEnvironment(PaymentConstants.AllowInsecureHttpClientEnvironmentVariable, bool.TrueString);
+    customerWeb.WithEnvironment(PaymentConstants.AllowInsecureHttpClientEnvironmentVariable, bool.TrueString);
+}
+
+var (searchWebImage, searchWebDigest) = manifest["search-web"];
+builder.AddSearchWeb(searchWebImage, searchWebDigest, auth, searchDb);
+
+var (searchWorkersImage, searchWorkersDigest) = manifest["search-workers"];
+builder.AddSearchWorkers(searchWorkersImage, searchWorkersDigest, searchDb, asb);
+
+var (paymentWorkersImage, paymentWorkersDigest) = manifest["payment-workers"];
+builder.AddPaymentWorkers(paymentWorkersImage, paymentWorkersDigest, paymentDb, asb);
+
 builder.AddStripeCli(paymentWeb);
 builder.Build().Run();
