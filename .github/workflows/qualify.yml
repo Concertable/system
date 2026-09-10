@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  GITHUB_PACKAGES_TOKEN: ${{ secrets.CONCERTABLE_PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
+  GITHUB_PACKAGES_TOKEN: ${{ secrets.CONCERTABLE_PACKAGES_TOKEN }}
 
 jobs:
   qualify:
@@ -34,9 +34,14 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      - name: Require the feed credential
+        # Without this the missing secret surfaces as a GHCR 403 on the pull, or NU1301 403 on the
+        # restore, either of which reads as a broken registry rather than an unset secret.
+        run: test -n "$GITHUB_PACKAGES_TOKEN" || { echo "CONCERTABLE_PACKAGES_TOKEN is not set on this repository."; exit 1; }
+
       - name: Log in to GHCR
         env:
-          TOKEN: ${{ secrets.CONCERTABLE_PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
+          TOKEN: ${{ secrets.CONCERTABLE_PACKAGES_TOKEN }}
         run: echo "$TOKEN" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
       # Pull before the suite so a missing or unreadable image fails as itself rather than as an

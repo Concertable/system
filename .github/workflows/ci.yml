@@ -23,7 +23,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  GITHUB_PACKAGES_TOKEN: ${{ secrets.CONCERTABLE_PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
+  GITHUB_PACKAGES_TOKEN: ${{ secrets.CONCERTABLE_PACKAGES_TOKEN }}
 
 jobs:
   build:
@@ -37,6 +37,11 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
+
+      - name: Require the feed credential
+        # Without this the missing secret surfaces minutes later as NU1301 403 on a Concertable.*
+        # restore, which reads as a broken feed rather than an unset secret.
+        run: test -n "$GITHUB_PACKAGES_TOKEN" || { echo "CONCERTABLE_PACKAGES_TOKEN is not set on this repository."; exit 1; }
 
       - name: Restore
         run: dotnet restore Concertable.System.slnx
