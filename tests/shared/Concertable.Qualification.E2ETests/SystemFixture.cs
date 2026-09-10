@@ -2,6 +2,9 @@ using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
 using Concertable.AppHost;
+using Concertable.Testing.E2E;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Xunit;
 
 namespace Concertable.Qualification.E2ETests;
@@ -9,9 +12,26 @@ namespace Concertable.Qualification.E2ETests;
 public sealed class SystemFixture : IAsyncLifetime
 {
     private static readonly TimeSpan BootTimeout = TimeSpan.FromMinutes(20);
+    private static readonly TimeSpan ProbeTimeout = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan ProbeInterval = TimeSpan.FromSeconds(2);
+
+    private readonly ILoggerFactory loggerFactory;
+    private readonly ILogger<SystemFixture> logger;
 
     private DistributedApplication? application;
+    private AspireResourceLogger? resourceLogger;
     private HttpClient? client;
+    private HttpClient? probeClient;
+
+    public SystemFixture()
+    {
+        this.loggerFactory = LoggerFactory.Create(builder => builder
+            .AddSimpleConsole(options => options.SingleLine = true)
+            .AddProvider(new FileLoggerProvider(
+                Path.Combine(AppContext.BaseDirectory, "qualification-diagnostics.log")))
+            .SetMinimumLevel(LogLevel.Information));
+        this.logger = this.loggerFactory.CreateLogger<SystemFixture>();
+    }
 
     public CompatibilityManifest Manifest { get; private set; } = null!;
 
@@ -53,13 +73,18 @@ public sealed class SystemFixture : IAsyncLifetime
         }
 
         this.application = await builder.BuildAsync();
+
+        // Started before StartAsync so a container that dies during boot is diagnosable. Without it a
+        // composition that never answers fails as a bare timeout with nothing said about why.
+        this.resourceLogger = new AspireResourceLogger(
+            this.application.ResourceNotifications,
+            this.application.Services.GetRequiredService<ResourceLoggerService>(),
+            this.logger);
+
         await this.application.StartAsync();
 
-        this.client = new HttpClient(new HttpClientHandler
-        {
-            ServerCertificateCustomValidationCallback = (message, _, _, _) =>
-                message.RequestUri?.IsLoopback == true,
-        });
+        this.client = CreateClient(timeout: null);
+        this.probeClient = CreateClient(ProbeTimeout);
 
         var endpoints = new Dictionary<string, Uri>(StringComparer.Ordinal);
         foreach (var (service, resourceName) in resourceNames)
@@ -71,15 +96,39 @@ public sealed class SystemFixture : IAsyncLifetime
         this.HttpServices = endpoints;
 
         using var cancellation = new CancellationTokenSource(BootTimeout);
-        await Task.WhenAll(endpoints.Values.Select(
-            endpoint => PollUntilHealthyAsync(new Uri(endpoint, "health"), cancellation.Token)));
+        var probes = await Task.WhenAll(endpoints.Select(
+            entry => PollUntilHealthyAsync(entry.Key, new Uri(entry.Value, "health"), cancellation.Token)));
+
+        if (probes.OfType<string>().ToList() is { Count: > 0 } unhealthy)
+            throw new TimeoutException(
+                $"The pinned composition never became healthy within {BootTimeout}. Last error per service: "
+                + string.Join("; ", unhealthy)
+                + ". Container output is in qualification-diagnostics.log.");
     }
 
     public async Task DisposeAsync()
     {
         this.client?.Dispose();
+        this.probeClient?.Dispose();
         if (this.application is not null)
             await this.application.DisposeAsync();
+        if (this.resourceLogger is not null)
+            await this.resourceLogger.DisposeAsync();
+        this.loggerFactory.Dispose();
+    }
+
+    private static HttpClient CreateClient(TimeSpan? timeout)
+    {
+        var created = new HttpClient(new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = (message, _, _, _) =>
+                message.RequestUri?.IsLoopback == true,
+        });
+
+        if (timeout is { } value)
+            created.Timeout = value;
+
+        return created;
     }
 
     private static Uri? TryGetHttpEndpoint(DistributedApplication application, string resourceName)
@@ -98,23 +147,50 @@ public sealed class SystemFixture : IAsyncLifetime
         }
     }
 
-    private async Task PollUntilHealthyAsync(Uri url, CancellationToken cancellationToken)
+    /// <summary>Polls one probe until it answers, returning null on success and the last error otherwise.
+    /// A resource whose port is proxied but whose backend is not listening accepts the connection and never
+    /// answers, so every attempt carries its own timeout and every failure is caught: letting the HttpClient
+    /// timeout escape as TaskCanceledException abandoned the whole boot wait after a single attempt and
+    /// reported it as a cancelled request rather than as an unhealthy service.</summary>
+    private async Task<string?> PollUntilHealthyAsync(string service, Uri url, CancellationToken cancellationToken)
     {
-        while (true)
+        var lastError = "never attempted";
+        while (!cancellationToken.IsCancellationRequested)
         {
-            cancellationToken.ThrowIfCancellationRequested();
             try
             {
-                using var response = await this.Client.GetAsync(url, cancellationToken);
+                using var response = await this.probeClient!.GetAsync(url, cancellationToken);
                 if (response.IsSuccessStatusCode)
-                    return;
+                    return null;
+
+                lastError = $"HTTP {(int)response.StatusCode}";
             }
-            catch (HttpRequestException)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
+                break;
+            }
+            catch (OperationCanceledException)
+            {
+                lastError = $"no response within {ProbeTimeout}";
+            }
+            catch (HttpRequestException exception)
+            {
+                lastError = exception.Message;
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
+            this.logger.QualificationProbeFailed(service, url.ToString(), lastError);
+
+            try
+            {
+                await Task.Delay(ProbeInterval, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
         }
+
+        return $"{service} ({url}) → {lastError}";
     }
 }
 
