@@ -37,9 +37,4 @@ internal static partial class Log
         string resource,
         string annotations);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "[Probe] stripped {Annotation} from {Resource}")]
-    internal static partial void QualificationAnnotationStripped(
-        this ILogger logger,
-        string resource,
-        string annotation);
 }
