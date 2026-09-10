@@ -5,6 +5,7 @@ using Concertable.AppHost;
 using Concertable.Testing.E2E;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 using Xunit;
 
 namespace Concertable.Qualification.E2ETests;
@@ -12,6 +13,14 @@ namespace Concertable.Qualification.E2ETests;
 public sealed class SystemFixture : IAsyncLifetime
 {
     private static readonly TimeSpan BootTimeout = TimeSpan.FromMinutes(20);
+
+    private static readonly string[] TerminalFailureStates =
+    [
+        KnownResourceStates.FailedToStart,
+        KnownResourceStates.Exited,
+        KnownResourceStates.RuntimeUnhealthy,
+    ];
+
     private static readonly TimeSpan ProbeTimeout = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan ProbeInterval = TimeSpan.FromSeconds(2);
 
@@ -46,6 +55,13 @@ public sealed class SystemFixture : IAsyncLifetime
         this.Manifest = CompatibilityManifest.Load(AppContext.BaseDirectory);
 
         var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_AppHost>();
+
+        // The orchestrator states a resource is FailedToStart but says why only through its own logger,
+        // which no resource log stream carries. Without this the reason a container never ran is lost.
+        builder.Services.AddLogging(logging => logging
+            .AddProvider(new FileLoggerProvider(
+                Path.Combine(AppContext.BaseDirectory, "apphost-diagnostics.log")))
+            .SetMinimumLevel(LogLevel.Information));
 
         // Resolved through the image rather than the resource name, which need not agree with the
         // manifest key: B2B's workers resource is "workers" while its image is b2b-workers.
@@ -96,14 +112,71 @@ public sealed class SystemFixture : IAsyncLifetime
         this.HttpServices = endpoints;
 
         using var cancellation = new CancellationTokenSource(BootTimeout);
-        var probes = await Task.WhenAll(endpoints.Select(
-            entry => PollUntilHealthyAsync(entry.Key, new Uri(entry.Value, "health"), cancellation.Token)));
+        using var stopWatching = CancellationTokenSource.CreateLinkedTokenSource(cancellation.Token);
+
+        // A resource that reaches a terminal state will never answer, so probing it for the rest of the
+        // boot timeout only delays the report: three runs spent twenty minutes each polling an Auth
+        // container that had already failed within a minute.
+        var failures = new ConcurrentDictionary<string, string>(StringComparer.Ordinal);
+        var watching = this.WatchForTerminalFailureAsync(
+            resourceNames, failures, cancellation, stopWatching.Token);
+
+        string?[] probes;
+        try
+        {
+            probes = await Task.WhenAll(endpoints.Select(
+                entry => PollUntilHealthyAsync(entry.Key, new Uri(entry.Value, "health"), cancellation.Token)));
+        }
+        finally
+        {
+            await stopWatching.CancelAsync();
+            await watching;
+        }
+
+        if (!failures.IsEmpty)
+            throw new InvalidOperationException(
+                "The pinned composition could not start: "
+                + string.Join("; ", failures.Select(failure => $"{failure.Key} → {failure.Value}"))
+                + ". The orchestrator's own output is in apphost-diagnostics.log; container output is in"
+                + " qualification-diagnostics.log.");
 
         if (probes.OfType<string>().ToList() is { Count: > 0 } unhealthy)
             throw new TimeoutException(
                 $"The pinned composition never became healthy within {BootTimeout}. Last error per service: "
                 + string.Join("; ", unhealthy)
                 + ". Container output is in qualification-diagnostics.log.");
+    }
+
+    private async Task WatchForTerminalFailureAsync(
+        IReadOnlyDictionary<string, string> resourceNames,
+        ConcurrentDictionary<string, string> failures,
+        CancellationTokenSource boot,
+        CancellationToken cancellationToken)
+    {
+        var services = resourceNames.ToDictionary(
+            entry => entry.Value, entry => entry.Key, StringComparer.Ordinal);
+
+        try
+        {
+            await foreach (var change in this.application!.ResourceNotifications.WatchAsync(cancellationToken))
+            {
+                if (!services.TryGetValue(change.Resource.Name, out var service))
+                    continue;
+
+                if (change.Snapshot.State?.Text is not { } state
+                    || !TerminalFailureStates.Contains(state, StringComparer.Ordinal))
+                    continue;
+
+                failures[service] = change.Snapshot.ExitCode is { } exitCode
+                    ? $"{state} (exit code {exitCode})"
+                    : state;
+
+                await boot.CancelAsync();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
     }
 
     public async Task DisposeAsync()
