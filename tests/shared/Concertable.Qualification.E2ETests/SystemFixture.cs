@@ -6,12 +6,15 @@ using Concertable.Testing.E2E;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Runtime.ExceptionServices;
 using Xunit;
 
 namespace Concertable.Qualification.E2ETests;
 
 public sealed class SystemFixture : IAsyncLifetime
 {
+    private const char LineFeed = (char)10;
+
     private static readonly TimeSpan BootTimeout = TimeSpan.FromMinutes(20);
 
     private static readonly string[] TerminalFailureStates =
@@ -92,14 +95,11 @@ public sealed class SystemFixture : IAsyncLifetime
                    .WithEnvironment("DOTNET_ENVIRONMENT", "E2E");
         }
 
-        // Registered after every subscriber the composition added, so it runs only once they all
-        // succeed. Whether it reports for a resource says which side of BeforeResourceStartedEvent
-        // that resource died on: an earlier subscriber throwing, or DCP failing to create it.
-        builder.Eventing.Subscribe<BeforeResourceStartedEvent>((@event, _) =>
-        {
-            this.logger.QualificationResourceStarting(@event.Resource.Name);
-            return Task.CompletedTask;
-        });
+        // The orchestrator marks a resource FailedToStart and discards the exception behind it, and
+        // that resource never reaches DCP, so nothing downstream can report the cause. A first-chance
+        // handler sees the throw itself. Narrowed to the orchestrator's own frames: everything else,
+        // including the transport retries the emulators produce by the hundred, is noise.
+        AppDomain.CurrentDomain.FirstChanceException += this.OnFirstChanceException;
 
         this.application = await builder.BuildAsync();
 
@@ -205,6 +205,20 @@ public sealed class SystemFixture : IAsyncLifetime
         }
     }
 
+    private void OnFirstChanceException(object? sender, FirstChanceExceptionEventArgs args)
+    {
+        var stack = args.Exception.StackTrace;
+        if (stack is null
+            || (!stack.Contains("DcpExecutor", StringComparison.Ordinal)
+                && !stack.Contains("ApplicationOrchestrator", StringComparison.Ordinal)))
+            return;
+
+        this.logger.QualificationOrchestratorThrew(
+            args.Exception.GetType().Name,
+            args.Exception.Message,
+            string.Join(" | ", stack.Split(LineFeed).Take(6).Select(frame => frame.Trim())));
+    }
+
     private async Task WatchForTerminalFailureAsync(
         IReadOnlyDictionary<string, string> resourceNames,
         ConcurrentDictionary<string, string> failures,
@@ -239,6 +253,7 @@ public sealed class SystemFixture : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
+        AppDomain.CurrentDomain.FirstChanceException -= this.OnFirstChanceException;
         this.client?.Dispose();
         this.probeClient?.Dispose();
         if (this.application is not null)
