@@ -20,7 +20,6 @@ asb.Topology().AddB2BTopology().AddCustomerTopology().AddSearchTopology().AddPay
 
 var (authImage, authDigest) = manifest["auth"];
 var auth = builder.AddAuth(authImage, authDigest, authDb, asb)
-                  .WithContainerRuntimeArgs("--user", "root")
                   .WithHttpsEndpoint(targetPort: AuthConstants.ContainerPort, name: "https");
 auth.WithSpaClients(SystemLocalSpaSurfaces.AuthClients);
 
