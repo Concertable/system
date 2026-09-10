@@ -37,8 +37,10 @@ internal static partial class Log
         string resource,
         string annotations);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "[Starting] {Resource} cleared every start subscriber")]
-    internal static partial void QualificationResourceStarting(
+    [LoggerMessage(Level = LogLevel.Error, Message = "[Throw] {Type}: {Message} :: {Frames}")]
+    internal static partial void QualificationOrchestratorThrew(
         this ILogger logger,
-        string resource);
+        string type,
+        string message,
+        string frames);
 }
