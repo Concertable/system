@@ -22,4 +22,12 @@ internal static partial class Log
         this ILogger logger,
         string resource,
         Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "[Mount] {Resource} {Source} -> {Target} sourceExists={Exists}")]
+    internal static partial void QualificationContainerMount(
+        this ILogger logger,
+        string resource,
+        string source,
+        string target,
+        bool exists);
 }
