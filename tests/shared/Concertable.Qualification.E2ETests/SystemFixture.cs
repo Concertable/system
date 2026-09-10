@@ -215,6 +215,15 @@ public sealed class SystemFixture : IAsyncLifetime
                         .Select(annotation => annotation.GetType().Name)
                         .OrderBy(name => name, StringComparer.Ordinal)));
 
+                foreach (var endpoint in resource.Annotations.OfType<EndpointAnnotation>())
+                    logger.QualificationResourceEndpoint(
+                        resourceName,
+                        endpoint.Name,
+                        endpoint.UriScheme,
+                        endpoint.TargetPort,
+                        endpoint.Port,
+                        endpoint.AllocatedEndpoint?.ToString() ?? "(unallocated)");
+
                 foreach (var mount in resource.Annotations.OfType<ContainerMountAnnotation>())
                     logger.QualificationContainerMount(
                         resourceName,
