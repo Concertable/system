@@ -39,7 +39,8 @@ public sealed class SystemFixture : IAsyncLifetime
             .AddProvider(new FileLoggerProvider(
                 Path.Combine(AppContext.BaseDirectory, "qualification-diagnostics.log")))
             .SetMinimumLevel(LogLevel.Information)
-            .AddFilter("Aspire.Hosting", LogLevel.Debug));
+            .AddFilter("Aspire.Hosting", LogLevel.Debug)
+            .AddFilter("Aspire.Hosting.Dcp", LogLevel.Trace));
         this.logger = this.loggerFactory.CreateLogger<SystemFixture>();
     }
 
@@ -63,7 +64,8 @@ public sealed class SystemFixture : IAsyncLifetime
             .AddProvider(new FileLoggerProvider(
                 Path.Combine(AppContext.BaseDirectory, "apphost-diagnostics.log")))
             .SetMinimumLevel(LogLevel.Information)
-            .AddFilter("Aspire.Hosting", LogLevel.Debug));
+            .AddFilter("Aspire.Hosting", LogLevel.Debug)
+            .AddFilter("Aspire.Hosting.Dcp", LogLevel.Trace));
 
         // Resolved through the image rather than the resource name, which need not agree with the
         // manifest key: B2B's workers resource is "workers" while its image is b2b-workers.
@@ -89,6 +91,15 @@ public sealed class SystemFixture : IAsyncLifetime
                    .WithEnvironment("ASPNETCORE_ENVIRONMENT", "E2E")
                    .WithEnvironment("DOTNET_ENVIRONMENT", "E2E");
         }
+
+        // Registered after every subscriber the composition added, so it runs only once they all
+        // succeed. Whether it reports for a resource says which side of BeforeResourceStartedEvent
+        // that resource died on: an earlier subscriber throwing, or DCP failing to create it.
+        builder.Eventing.Subscribe<BeforeResourceStartedEvent>((@event, _) =>
+        {
+            this.logger.QualificationResourceStarting(@event.Resource.Name);
+            return Task.CompletedTask;
+        });
 
         this.application = await builder.BuildAsync();
 
