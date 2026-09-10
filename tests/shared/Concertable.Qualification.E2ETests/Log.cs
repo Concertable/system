@@ -42,4 +42,14 @@ internal static partial class Log
         this ILogger logger,
         int count,
         string exception);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "[Endpoint] {Resource} {Name} scheme={Scheme} target={TargetPort} host={Port} allocated={Allocated}")]
+    internal static partial void QualificationResourceEndpoint(
+        this ILogger logger,
+        string resource,
+        string name,
+        string scheme,
+        int? targetPort,
+        int? port,
+        string allocated);
 }
