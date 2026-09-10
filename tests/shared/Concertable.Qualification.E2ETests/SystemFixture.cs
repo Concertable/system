@@ -277,11 +277,15 @@ public sealed class SystemFixture : IAsyncLifetime
         return created;
     }
 
-    private static Uri? TryGetHttpEndpoint(DistributedApplication application, string resourceName)
+    private static Uri? TryGetHttpEndpoint(DistributedApplication application, string resourceName) =>
+        TryGetEndpoint(application, resourceName, "https")
+        ?? TryGetEndpoint(application, resourceName, "http");
+
+    private static Uri? TryGetEndpoint(DistributedApplication application, string resourceName, string endpointName)
     {
         try
         {
-            return application.GetEndpoint(resourceName, "https");
+            return application.GetEndpoint(resourceName, endpointName);
         }
         catch (InvalidOperationException)
         {

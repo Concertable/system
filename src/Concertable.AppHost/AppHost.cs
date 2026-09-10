@@ -20,7 +20,7 @@ asb.Topology().AddB2BTopology().AddCustomerTopology().AddSearchTopology().AddPay
 
 var (authImage, authDigest) = manifest["auth"];
 var auth = builder.AddAuth(authImage, authDigest, authDb, asb)
-                  .WithHttpsEndpoint(targetPort: AuthConstants.ContainerPort, name: "https");
+                  .WithHttpEndpoint(targetPort: AuthConstants.ContainerPort, name: "http");
 auth.WithSpaClients(SystemLocalSpaSurfaces.AuthClients);
 
 var (paymentWebImage, paymentWebDigest) = manifest["payment-web"];
