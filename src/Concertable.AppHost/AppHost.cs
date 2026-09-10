@@ -27,7 +27,10 @@ const int ContainerPort = 8080;
 const string PrimaryEndpoint = "https";
 
 var (authImage, authDigest) = manifest["auth"];
+// Duende writes its developer signing key to /app/tempkey.jwk at startup, which the image's own
+// non-root user cannot write to.
 var auth = builder.AddAuth(authImage, authDigest, authDb, asb)
+                  .WithContainerRuntimeArgs("--user", "root")
                   .WithHttpEndpoint(targetPort: AuthConstants.ContainerPort, name: PrimaryEndpoint);
 auth.WithSpaClients(SystemLocalSpaSurfaces.AuthClients);
 
