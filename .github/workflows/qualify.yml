@@ -39,6 +39,15 @@ jobs:
         # restore, either of which reads as a broken registry rather than an unset secret.
         run: test -n "$GITHUB_PACKAGES_TOKEN" || { echo "CONCERTABLE_PACKAGES_TOKEN is not set on this repository."; exit 1; }
 
+      # Concertable.Auth.Hosting hands the Auth container the ASP.NET Core development
+      # certificate, so one has to exist on the runner. Without it Auth binds nothing on the
+      # port declared https, the proxy accepts the connection and never answers, and the whole
+      # composition reads as unhealthy for no stated reason.
+      - name: Provision the HTTPS developer certificate
+        run: |
+          dotnet dev-certs https --trust || true  # Linux trust exits 4; the certificate is still generated
+          echo "SSL_CERT_DIR=$HOME/.aspnet/dev-certs/trust:/etc/ssl/certs:/usr/lib/ssl/certs" >> "$GITHUB_ENV"
+
       - name: Log in to GHCR
         env:
           TOKEN: ${{ secrets.CONCERTABLE_PACKAGES_TOKEN }}
