@@ -30,4 +30,16 @@ internal static partial class Log
         string source,
         string target,
         bool exists);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "[Annotations] {Resource}: {Annotations}")]
+    internal static partial void QualificationResourceAnnotations(
+        this ILogger logger,
+        string resource,
+        string annotations);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "[Probe] stripped {Annotation} from {Resource}")]
+    internal static partial void QualificationAnnotationStripped(
+        this ILogger logger,
+        string resource,
+        string annotation);
 }

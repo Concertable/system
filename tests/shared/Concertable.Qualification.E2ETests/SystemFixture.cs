@@ -90,6 +90,20 @@ public sealed class SystemFixture : IAsyncLifetime
                    .WithEnvironment("DOTNET_ENVIRONMENT", "E2E");
         }
 
+        // PROBE, not a fix: Auth is the only resource carrying the developer-certificate annotation and
+        // the only one that fails, with no mount, no environment fault and no container. Strip it to
+        // establish whether that annotation is what fails the resource. Remove this block once answered.
+        foreach (var resource in byImage.Values.Where(candidate => candidate.Name == "auth"))
+        {
+            foreach (var annotation in resource.Annotations
+                         .Where(candidate => candidate.GetType().Name.Contains("Certificate", StringComparison.Ordinal))
+                         .ToList())
+            {
+                this.logger.QualificationAnnotationStripped(resource.Name, annotation.GetType().Name);
+                resource.Annotations.Remove(annotation);
+            }
+        }
+
         this.application = await builder.BuildAsync();
 
         // Started before StartAsync so a container that dies during boot is diagnosable. Without it a
@@ -173,6 +187,12 @@ public sealed class SystemFixture : IAsyncLifetime
                 var environment = await resource.GetEnvironmentVariableValuesAsync();
 #pragma warning restore CS0618
                 logger.QualificationEnvironmentResolved(resourceName, environment.Count);
+
+                logger.QualificationResourceAnnotations(
+                    resourceName,
+                    string.Join(", ", resource.Annotations
+                        .Select(annotation => annotation.GetType().Name)
+                        .OrderBy(name => name, StringComparer.Ordinal)));
 
                 foreach (var mount in resource.Annotations.OfType<ContainerMountAnnotation>())
                     logger.QualificationContainerMount(
