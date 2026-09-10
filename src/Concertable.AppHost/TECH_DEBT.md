@@ -12,6 +12,12 @@ hard-codes their container port. `AddPaymentWeb` already declares its own inside
 any image's port, and a service is meant to arrive composed through its published
 `Concertable.<Service>.Hosting` package.
 
+B2B, Customer and Search are already fixed at the producer, adding the constant and the declaration to
+each image overload with an `ImageCompositionTests` suite so the omission cannot recur. Drop the three
+local declarations here once that has been published and this repository has taken the new platform
+version. Auth keeps its declaration here until the same treatment reaches `AddAuth`, whose image
+overload has an endpoint but had it declared by the caller rather than the package.
+
 The endpoint name is the same problem one level down. `"https"` is retyped in `AddAuth`, `AddB2BWeb`,
 `AddCustomerWeb`, `AddSearchWeb`, `AddPaymentWeb`, here, and in the black-box suite, with nothing tying
 them together — which is how four of those packages came to never declare the endpoint the fifth
