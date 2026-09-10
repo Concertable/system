@@ -24,10 +24,11 @@ asb.Topology().AddB2BTopology().AddCustomerTopology().AddSearchTopology().AddPay
 // the resource never starts, reporting no reason. AddPaymentWeb already does this inside its own
 // package; these four still declare it here until their Hosting packages follow.
 const int ContainerPort = 8080;
+const string PrimaryEndpoint = "https";
 
 var (authImage, authDigest) = manifest["auth"];
 var auth = builder.AddAuth(authImage, authDigest, authDb, asb)
-                  .WithHttpEndpoint(targetPort: AuthConstants.ContainerPort, name: "https");
+                  .WithHttpEndpoint(targetPort: AuthConstants.ContainerPort, name: PrimaryEndpoint);
 auth.WithSpaClients(SystemLocalSpaSurfaces.AuthClients);
 
 var (paymentWebImage, paymentWebDigest) = manifest["payment-web"];
@@ -35,8 +36,8 @@ var paymentWeb = builder.AddPaymentWeb(paymentWebImage, paymentWebDigest, auth, 
 
 var (b2bWebImage, b2bWebDigest) = manifest["b2b-web"];
 var api = builder.AddB2BWeb(b2bWebImage, b2bWebDigest, b2bDb, auth, storage, blobs, asb, paymentWeb)
-                 .WithHttpEndpoint(targetPort: ContainerPort, name: "https");
-auth.WithEnvironment("Services__B2BApiUrl", api.GetEndpoint("https"));
+                 .WithHttpEndpoint(targetPort: ContainerPort, name: PrimaryEndpoint);
+auth.WithEnvironment("Services__B2BApiUrl", api.GetEndpoint(PrimaryEndpoint));
 auth.WithEnvironment("ServiceAuth__AuthClientId", "concertable-auth");
 
 var (b2bWorkersImage, b2bWorkersDigest) = manifest["b2b-workers"];
@@ -44,8 +45,8 @@ var workers = builder.AddB2BWorkers(b2bWorkersImage, b2bWorkersDigest, b2bDb, pa
 
 var (customerWebImage, customerWebDigest) = manifest["customer-web"];
 var customerWeb = builder.AddCustomerWeb(customerWebImage, customerWebDigest, auth, customerDb, asb, paymentWeb)
-                         .WithHttpEndpoint(targetPort: ContainerPort, name: "https");
-auth.WithEnvironment("Services__CustomerApiUrl", customerWeb.GetEndpoint("https"));
+                         .WithHttpEndpoint(targetPort: ContainerPort, name: PrimaryEndpoint);
+auth.WithEnvironment("Services__CustomerApiUrl", customerWeb.GetEndpoint(PrimaryEndpoint));
 
 // The payment image binds plaintext on the endpoint named "https", so every consumer of it must be
 // told to accept that rather than negotiating TLS against a cleartext port.
@@ -58,7 +59,7 @@ if (builder.ExecutionContext.IsRunMode)
 
 var (searchWebImage, searchWebDigest) = manifest["search-web"];
 builder.AddSearchWeb(searchWebImage, searchWebDigest, auth, searchDb)
-       .WithHttpEndpoint(targetPort: ContainerPort, name: "https");
+       .WithHttpEndpoint(targetPort: ContainerPort, name: PrimaryEndpoint);
 
 var (searchWorkersImage, searchWorkersDigest) = manifest["search-workers"];
 builder.AddSearchWorkers(searchWorkersImage, searchWorkersDigest, searchDb, asb);
