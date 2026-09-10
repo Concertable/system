@@ -38,7 +38,8 @@ public sealed class SystemFixture : IAsyncLifetime
             .AddSimpleConsole(options => options.SingleLine = true)
             .AddProvider(new FileLoggerProvider(
                 Path.Combine(AppContext.BaseDirectory, "qualification-diagnostics.log")))
-            .SetMinimumLevel(LogLevel.Information));
+            .SetMinimumLevel(LogLevel.Information)
+            .AddFilter("Aspire.Hosting", LogLevel.Debug));
         this.logger = this.loggerFactory.CreateLogger<SystemFixture>();
     }
 
@@ -61,7 +62,8 @@ public sealed class SystemFixture : IAsyncLifetime
         builder.Services.AddLogging(logging => logging
             .AddProvider(new FileLoggerProvider(
                 Path.Combine(AppContext.BaseDirectory, "apphost-diagnostics.log")))
-            .SetMinimumLevel(LogLevel.Information));
+            .SetMinimumLevel(LogLevel.Information)
+            .AddFilter("Aspire.Hosting", LogLevel.Debug));
 
         // Resolved through the image rather than the resource name, which need not agree with the
         // manifest key: B2B's workers resource is "workers" while its image is b2b-workers.
