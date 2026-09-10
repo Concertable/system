@@ -44,9 +44,15 @@ jobs:
       # port declared https, the proxy accepts the connection and never answers, and the whole
       # composition reads as unhealthy for no stated reason.
       - name: Provision the HTTPS developer certificate
+        # OpenSSL only honours the trust directory once it is already on SSL_CERT_DIR, so exporting it
+        # after asking for trust left the certificate generated but untrusted, and
+        # WithHttpsDeveloperCertificate refuses an untrusted one: Auth then reached FailedToStart with
+        # no stated reason and every service waiting on it followed.
         run: |
-          dotnet dev-certs https --trust || true  # Linux trust exits 4; the certificate is still generated
-          echo "SSL_CERT_DIR=$HOME/.aspnet/dev-certs/trust:/etc/ssl/certs:/usr/lib/ssl/certs" >> "$GITHUB_ENV"
+          export SSL_CERT_DIR="$HOME/.aspnet/dev-certs/trust:/etc/ssl/certs:/usr/lib/ssl/certs"
+          echo "SSL_CERT_DIR=$SSL_CERT_DIR" >> "$GITHUB_ENV"
+          dotnet dev-certs https --trust
+          dotnet dev-certs https --check --trust
 
       - name: Log in to GHCR
         env:
