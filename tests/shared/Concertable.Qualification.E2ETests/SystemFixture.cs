@@ -173,6 +173,13 @@ public sealed class SystemFixture : IAsyncLifetime
                 var environment = await resource.GetEnvironmentVariableValuesAsync();
 #pragma warning restore CS0618
                 logger.QualificationEnvironmentResolved(resourceName, environment.Count);
+
+                foreach (var mount in resource.Annotations.OfType<ContainerMountAnnotation>())
+                    logger.QualificationContainerMount(
+                        resourceName,
+                        mount.Source ?? "(none)",
+                        mount.Target,
+                        mount.Source is null || Path.Exists(mount.Source));
             }
             catch (Exception exception)
             {
