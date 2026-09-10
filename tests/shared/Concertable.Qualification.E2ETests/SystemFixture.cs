@@ -2,6 +2,9 @@ using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
 using Concertable.AppHost;
+using Concertable.B2B.Hosting;
+using Concertable.Customer.Hosting;
+using Concertable.E2E;
 using Concertable.Testing.E2E;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -16,6 +19,13 @@ public sealed class SystemFixture : IAsyncLifetime
     private const char LineFeed = (char)10;
 
     private readonly ConcurrentDictionary<string, int> firstChanceExceptions = new(StringComparer.Ordinal);
+
+    private static readonly Dictionary<string, string> ServiceClientSecrets = new(StringComparer.Ordinal)
+    {
+        [B2BConstants.WebResource] = Run.B2BServiceAuthSecret,
+        [B2BConstants.WorkersResource] = Run.B2BServiceAuthSecret,
+        [CustomerConstants.WebResource] = Run.CustomerServiceAuthSecret,
+    };
 
     private static readonly TimeSpan BootTimeout = TimeSpan.FromMinutes(20);
 
@@ -61,7 +71,12 @@ public sealed class SystemFixture : IAsyncLifetime
     {
         this.Manifest = CompatibilityManifest.Load(AppContext.BaseDirectory);
 
-        var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_AppHost>();
+        // Auth refuses to start without its service-client secrets, and AddSecrets forwards them only
+        // when the composition already holds a value. Supplying them as command-line configuration keeps
+        // the fixed E2E credentials in the harness rather than in the composition itself.
+        var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_AppHost>(
+            [.. Run.AuthEnvironmentVariables()
+                  .Select(setting => $"--{setting.Key.Replace("__", ":", StringComparison.Ordinal)}={setting.Value}")]);
 
         // The orchestrator states a resource is FailedToStart but says why only through its own logger,
         // which no resource log stream carries. Without this the reason a container never ran is lost.
@@ -92,15 +107,19 @@ public sealed class SystemFixture : IAsyncLifetime
 
             // The images expose /health only in the Development or E2E environment. Configuring the
             // container is deployment, not a change to the artefact under test.
-            builder.CreateResourceBuilder(resource)
+            var configured = builder.CreateResourceBuilder(resource)
                    .WithEnvironment("ASPNETCORE_ENVIRONMENT", "E2E")
                    .WithEnvironment("DOTNET_ENVIRONMENT", "E2E");
+
+            // Each service authenticates to Auth as its own client, so its secret has to be the one Auth
+            // was told to expect for it.
+            if (ServiceClientSecrets.GetValueOrDefault(resource.Name) is { } clientSecret)
+                configured.WithEnvironment("ServiceAuth__ClientSecret", clientSecret);
         }
 
         // The orchestrator marks a resource FailedToStart and discards the exception behind it, and
         // that resource never reaches DCP, so nothing downstream can report the cause. A first-chance
-        // handler sees the throw itself. Narrowed to the orchestrator's own frames: everything else,
-        // including the transport retries the emulators produce by the hundred, is noise.
+        // handler sees the throw itself.
         AppDomain.CurrentDomain.FirstChanceException += this.OnFirstChanceException;
 
         this.application = await builder.BuildAsync();
