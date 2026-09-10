@@ -37,10 +37,9 @@ internal static partial class Log
         string resource,
         string annotations);
 
-    [LoggerMessage(Level = LogLevel.Error, Message = "[Throw] {Type}: {Message} :: {Frames}")]
-    internal static partial void QualificationOrchestratorThrew(
+    [LoggerMessage(Level = LogLevel.Error, Message = "[Throw x{Count}] {Exception}")]
+    internal static partial void QualificationFirstChanceException(
         this ILogger logger,
-        string type,
-        string message,
-        string frames);
+        int count,
+        string exception);
 }

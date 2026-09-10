@@ -15,6 +15,8 @@ public sealed class SystemFixture : IAsyncLifetime
 {
     private const char LineFeed = (char)10;
 
+    private readonly ConcurrentDictionary<string, int> firstChanceExceptions = new(StringComparer.Ordinal);
+
     private static readonly TimeSpan BootTimeout = TimeSpan.FromMinutes(20);
 
     private static readonly string[] TerminalFailureStates =
@@ -120,7 +122,7 @@ public sealed class SystemFixture : IAsyncLifetime
         var endpoints = new Dictionary<string, Uri>(StringComparer.Ordinal);
         foreach (var (service, resourceName) in resourceNames)
         {
-            if (TryGetHttpEndpoint(this.application, resourceName) is { } endpoint)
+            if (FindHttpEndpoint(this.application, resourceName) is { } endpoint)
                 endpoints.Add(service, endpoint);
         }
 
@@ -149,11 +151,14 @@ public sealed class SystemFixture : IAsyncLifetime
         }
 
         if (!failures.IsEmpty)
+        {
+            this.LogFirstChanceExceptions();
             throw new InvalidOperationException(
                 "The pinned composition could not start: "
                 + string.Join("; ", failures.Select(failure => $"{failure.Key} → {failure.Value}"))
                 + ". The orchestrator's own output is in apphost-diagnostics.log; container output is in"
                 + " qualification-diagnostics.log.");
+        }
 
         if (probes.OfType<string>().ToList() is { Count: > 0 } unhealthy)
             throw new TimeoutException(
@@ -205,18 +210,25 @@ public sealed class SystemFixture : IAsyncLifetime
         }
     }
 
+    /// <summary>Counts every first-chance exception by type and origin, because filtering by frame missed
+    /// the one that matters: a first-chance stack reaches only the throw site, so an exception raised inside
+    /// the Kubernetes client that creates the DCP object carries none of the orchestrator's frames.
+    /// Deduplicating instead of logging each occurrence keeps the emulators' hundreds of transport retries
+    /// from burying it.</summary>
     private void OnFirstChanceException(object? sender, FirstChanceExceptionEventArgs args)
     {
-        var stack = args.Exception.StackTrace;
-        if (stack is null
-            || (!stack.Contains("DcpExecutor", StringComparison.Ordinal)
-                && !stack.Contains("ApplicationOrchestrator", StringComparison.Ordinal)))
-            return;
+        var origin = args.Exception.StackTrace?.Split(LineFeed).FirstOrDefault()?.Trim() ?? "(no stack)";
+        var key = $"{args.Exception.GetType().Name}: {Truncate(args.Exception.Message)} @ {origin}";
+        this.firstChanceExceptions.AddOrUpdate(key, 1, (_, count) => count + 1);
+    }
 
-        this.logger.QualificationOrchestratorThrew(
-            args.Exception.GetType().Name,
-            args.Exception.Message,
-            string.Join(" | ", stack.Split(LineFeed).Take(6).Select(frame => frame.Trim())));
+    private static string Truncate(string value) =>
+        value.Length <= 200 ? value : value[..200];
+
+    private void LogFirstChanceExceptions()
+    {
+        foreach (var (exception, count) in this.firstChanceExceptions.OrderByDescending(entry => entry.Value))
+            this.logger.QualificationFirstChanceException(count, exception);
     }
 
     private async Task WatchForTerminalFailureAsync(
@@ -277,11 +289,11 @@ public sealed class SystemFixture : IAsyncLifetime
         return created;
     }
 
-    private static Uri? TryGetHttpEndpoint(DistributedApplication application, string resourceName) =>
-        TryGetEndpoint(application, resourceName, "https")
-        ?? TryGetEndpoint(application, resourceName, "http");
+    private static Uri? FindHttpEndpoint(DistributedApplication application, string resourceName) =>
+        FindEndpoint(application, resourceName, "https")
+        ?? FindEndpoint(application, resourceName, "http");
 
-    private static Uri? TryGetEndpoint(DistributedApplication application, string resourceName, string endpointName)
+    private static Uri? FindEndpoint(DistributedApplication application, string resourceName, string endpointName)
     {
         try
         {
