@@ -73,27 +73,6 @@ jobs:
           cat images.txt
           xargs -r -n1 docker pull < images.txt
 
-      # Partitions an image fault from a composition fault. Auth reaches FailedToStart before any
-      # container output exists and the orchestrator records no reason, so prove the artefact runs on
-      # its own before blaming the composition that hosts it.
-      - name: Smoke the pinned Auth image on its own
-        run: |
-          image=$(grep -A2 '^  auth:' compatibility/local.yaml | sed -n 's/.*repository: *//p')
-          digest=$(grep -A2 '^  auth:' compatibility/local.yaml | sed -n 's/.*digest: *//p')
-          echo "smoking $image@$digest"
-          docker run -d --name auth-smoke -e ASPNETCORE_ENVIRONMENT=E2E -p 18080:8080 "$image@$digest"
-          for attempt in $(seq 1 20); do
-            code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:18080/health || true)
-            echo "attempt $attempt: HTTP ${code:-none}"
-            if [ "$code" = "200" ]; then break; fi
-            sleep 3
-          done
-          echo "--- state ---"
-          docker inspect --format '{{.State.Status}} exit={{.State.ExitCode}} err={{.State.Error}}' auth-smoke
-          echo "--- last 60 log lines ---"
-          docker logs --tail 60 auth-smoke 2>&1 || true
-          docker rm -f auth-smoke > /dev/null
-
       - name: Restore and build
         run: |
           dotnet restore Concertable.System.slnx
