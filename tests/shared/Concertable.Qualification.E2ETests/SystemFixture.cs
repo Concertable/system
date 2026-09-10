@@ -99,6 +99,8 @@ public sealed class SystemFixture : IAsyncLifetime
             this.application.Services.GetRequiredService<ResourceLoggerService>(),
             this.logger);
 
+        await LogEnvironmentResolutionAsync(resourceNames, byImage, this.logger);
+
         await this.application.StartAsync();
 
         this.client = CreateClient(timeout: null);
@@ -147,6 +149,36 @@ public sealed class SystemFixture : IAsyncLifetime
                 $"The pinned composition never became healthy within {BootTimeout}. Last error per service: "
                 + string.Join("; ", unhealthy)
                 + ". Container output is in qualification-diagnostics.log.");
+    }
+
+    /// <summary>Resolves each pinned resource's environment before the composition starts. A callback that
+    /// throws here fails the orchestrator's BeforeResourceStartedEvent instead, which records only
+    /// FailedToStart and discards the exception, leaving no reason anywhere for a container that never ran.
+    /// Diagnostic only: an endpoint that is legitimately unallocated this early must not fail the run.</summary>
+    private static async Task LogEnvironmentResolutionAsync(
+        IReadOnlyDictionary<string, string> resourceNames,
+        IReadOnlyDictionary<string, ServiceContainerResource> byImage,
+        ILogger logger)
+    {
+        var byName = byImage.Values.ToDictionary(resource => resource.Name, StringComparer.Ordinal);
+
+        foreach (var resourceName in resourceNames.Values)
+        {
+            if (!byName.TryGetValue(resourceName, out var resource))
+                continue;
+
+            try
+            {
+#pragma warning disable CS0618 // the replacement builder does not expose a resolve-and-throw path
+                var environment = await resource.GetEnvironmentVariableValuesAsync();
+#pragma warning restore CS0618
+                logger.QualificationEnvironmentResolved(resourceName, environment.Count);
+            }
+            catch (Exception exception)
+            {
+                logger.QualificationEnvironmentUnresolved(resourceName, exception);
+            }
+        }
     }
 
     private async Task WatchForTerminalFailureAsync(
