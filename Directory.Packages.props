@@ -2,25 +2,33 @@
 
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <ConcertableDotNetPlatformVersion>0.1.0-alpha.0.1364</ConcertableDotNetPlatformVersion>
+    <ConcertableDotNetPlatformVersion>0.2.0-alpha.0.4</ConcertableDotNetPlatformVersion>
+    <ConcertableAuthVersion>0.1.0-alpha.0.1384</ConcertableAuthVersion>
+    <ConcertableB2BContractsVersion>0.1.0-alpha.0.1384</ConcertableB2BContractsVersion>
+    <ConcertableCustomerVersion>0.1.0-alpha.0.1384</ConcertableCustomerVersion>
+    <ConcertablePaymentVersion>0.1.0-alpha.0.1384</ConcertablePaymentVersion>
+    <ConcertableSearchVersion>0.1.0-alpha.0.1384</ConcertableSearchVersion>
   </PropertyGroup>
 
   <!-- Nothing carves out of this repository, so versions live once at the root rather than per folder.
-       Keep ConcertableDotNetPlatformVersion equal to platform.packages in compatibility/local.yaml. -->
+       An id follows the train of whichever repository publishes it: platform ids follow platform-dotnet,
+       and each service's ids follow that service's own train. The trains advance independently, so
+       asking for one train's version on another train's id fails NU1101 on a version that id never
+       shipped. ReleaseTrainPinTests holds these equal to compatibility/local.yaml. -->
   <ItemGroup>
     <PackageVersion Include="Concertable.AppHost.Shared" Version="$(ConcertableDotNetPlatformVersion)" />
-    <PackageVersion Include="Concertable.Auth.Hosting" Version="$(ConcertableDotNetPlatformVersion)" />
-    <PackageVersion Include="Concertable.B2B.Hosting" Version="$(ConcertableDotNetPlatformVersion)" />
-    <PackageVersion Include="Concertable.B2B.TestKit" Version="$(ConcertableDotNetPlatformVersion)" />
-    <PackageVersion Include="Concertable.Customer.Hosting" Version="$(ConcertableDotNetPlatformVersion)" />
-    <PackageVersion Include="Concertable.Customer.TestKit" Version="$(ConcertableDotNetPlatformVersion)" />
     <PackageVersion Include="Concertable.Frontend.Hosting" Version="$(ConcertableDotNetPlatformVersion)" />
-    <PackageVersion Include="Concertable.Payment.Hosting" Version="$(ConcertableDotNetPlatformVersion)" />
-    <PackageVersion Include="Concertable.Payment.TestKit" Version="$(ConcertableDotNetPlatformVersion)" />
-    <PackageVersion Include="Concertable.Search.Hosting" Version="$(ConcertableDotNetPlatformVersion)" />
     <PackageVersion Include="Concertable.Seed.Identity" Version="$(ConcertableDotNetPlatformVersion)" />
     <PackageVersion Include="Concertable.Testing" Version="$(ConcertableDotNetPlatformVersion)" />
     <PackageVersion Include="Concertable.Testing.Architecture" Version="$(ConcertableDotNetPlatformVersion)" />
+    <PackageVersion Include="Concertable.Auth.Hosting" Version="$(ConcertableAuthVersion)" />
+    <PackageVersion Include="Concertable.B2B.Hosting" Version="$(ConcertableB2BContractsVersion)" />
+    <PackageVersion Include="Concertable.B2B.TestKit" Version="$(ConcertableB2BContractsVersion)" />
+    <PackageVersion Include="Concertable.Customer.Hosting" Version="$(ConcertableCustomerVersion)" />
+    <PackageVersion Include="Concertable.Customer.TestKit" Version="$(ConcertableCustomerVersion)" />
+    <PackageVersion Include="Concertable.Payment.Hosting" Version="$(ConcertablePaymentVersion)" />
+    <PackageVersion Include="Concertable.Payment.TestKit" Version="$(ConcertablePaymentVersion)" />
+    <PackageVersion Include="Concertable.Search.Hosting" Version="$(ConcertableSearchVersion)" />
   </ItemGroup>
 
   <ItemGroup>

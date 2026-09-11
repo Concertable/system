@@ -15,5 +15,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Concertable.Testing.Architecture" />
+    <PackageReference Include="YamlDotNet" />
   </ItemGroup>
 </Project>
