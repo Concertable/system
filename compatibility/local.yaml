@@ -10,33 +10,43 @@ version: 1
 # monorepo produced. Every image below was built from this one commit.
 source:
   repository: Concertable/concertable
-  commit: ea985630f8b8a617bafe8cb1aff4c505a93008fe
+  commit: d6f986c2570d994891767bcb1a10fd797d2b854e
 
+# One version cannot describe the composition, because the platform and each service publish on their
+# own train. Directory.Packages.props owns that rule and declares the trains; ReleaseTrainPinTests holds
+# these equal to it.
 platform:
-  packages: 0.1.0-alpha.0.1364
+  packages: 0.2.0-alpha.0.4
+
+services:
+  auth: 0.1.0-alpha.0.1384
+  b2b: 0.1.0-alpha.0.1384
+  customer: 0.1.0-alpha.0.1384
+  payment: 0.1.0-alpha.0.1384
+  search: 0.1.0-alpha.0.1384
 
 images:
   auth:
     repository: ghcr.io/concertable/auth
-    digest: sha256:f81ac9a56284e4af7b3b3e7224f21e4ec6a425935d751b088da0ca5402bbfe5b
+    digest: sha256:ebba879ffb8a0a6175c0074a01aff2ea5f6c3b127d3ef15bd48fbf79192aa1ed
   b2b-web:
     repository: ghcr.io/concertable/b2b-web
-    digest: sha256:83198251d51790861e4482c935067f3fada917bead36e7d00fae913e79281892
+    digest: sha256:98419990a0609b7f8bbbf99855dd67787600077a9c91c25646b029815d436a78
   b2b-workers:
     repository: ghcr.io/concertable/b2b-workers
-    digest: sha256:3505aa33dc413a65c95b63106e888db73d55ff866b7ab65afa1badb95aa7f18d
+    digest: sha256:6a9a0a692a74663746473a96d4fc3f019b84b9cb01075dd421741b27b6db6607
   customer-web:
     repository: ghcr.io/concertable/customer-web
-    digest: sha256:acafe9daa1e483bab3b4e6b139918de6adae1dee383ae2fe2f4cf640f3d8e132
+    digest: sha256:a0c678bf3005cab7fe3351eeadd8534bae1b11dc5468da0a39e3fa4c3c4a9c30
   payment-web:
     repository: ghcr.io/concertable/payment-web
-    digest: sha256:64d981ed5b4170fe85e19e7ba3b8eb8bf6d75f8102a241553116d2f5fe676290
+    digest: sha256:ae5caa66d430e53d79f80aad7e91a3fdda615df5a8e7736433dd8cc5882892e1
   payment-workers:
     repository: ghcr.io/concertable/payment-workers
-    digest: sha256:75846ff0ff756ffa80ff2db26bbe577e8dbb7d7aa14f1305b39f20a7662c95ec
+    digest: sha256:2802a5f8e6faee11c7c7b5c5aa85d4d6e8a14d3eea9d15408af6d3f5a54327c7
   search-web:
     repository: ghcr.io/concertable/search-web
-    digest: sha256:047fb78cca6dc1a42689df1ef2e7e43828786787f37f3fb92b23b60c8684ba92
+    digest: sha256:ad43bdbddbfe115fd81c0d0d89bc67906e7ea5e22ade39cb06a4bd131ac965a8
   search-workers:
     repository: ghcr.io/concertable/search-workers
-    digest: sha256:acc420be311b1910370588a74d2721751e2ccb0f0ff409251e4752058b08f992
+    digest: sha256:00a9ae9fe5fc93a90700961ac1f2771c61dc86bd511e8db13ac795a4155ca9f8

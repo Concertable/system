@@ -13,16 +13,20 @@ public sealed class CompatibilityManifest
     private CompatibilityManifest(
         string commit,
         string platformPackages,
+        IReadOnlyDictionary<string, string> servicePackages,
         IReadOnlyDictionary<string, ContainerImage> images)
     {
         this.Commit = commit;
         this.PlatformPackages = platformPackages;
+        this.ServicePackages = servicePackages;
         this.images = images;
     }
 
     public string Commit { get; }
 
     public string PlatformPackages { get; }
+
+    public IReadOnlyDictionary<string, string> ServicePackages { get; }
 
     public IEnumerable<string> ServiceNames => this.images.Keys;
 
@@ -50,6 +54,14 @@ public sealed class CompatibilityManifest
         var commit = Required(document.Source?.Commit, "source.commit");
         var platformPackages = Required(document.Platform?.Packages, "platform.packages");
 
+        if (document.Services is not { Count: > 0 })
+            throw new InvalidOperationException(
+                $"{DirectoryName}/{FileName} pins no service package trains. Each service publishes on its own train, so one version cannot describe the composition.");
+
+        var services = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var (service, version) in document.Services)
+            services.Add(service, Required(version, $"services.{service}"));
+
         if (document.Images is not { Count: > 0 })
             throw new InvalidOperationException($"{DirectoryName}/{FileName} pins no images.");
 
@@ -66,7 +78,7 @@ public sealed class CompatibilityManifest
             pinned.Add(service, new ContainerImage(repository, digest));
         }
 
-        return new CompatibilityManifest(commit, platformPackages, pinned);
+        return new CompatibilityManifest(commit, platformPackages, services, pinned);
     }
 
     private static string Locate(string appHostDirectory)
@@ -94,6 +106,8 @@ public sealed class CompatibilityManifest
         public SourceSection? Source { get; set; }
 
         public PlatformSection? Platform { get; set; }
+
+        public Dictionary<string, string?>? Services { get; set; }
 
         public Dictionary<string, ImageSection?>? Images { get; set; }
     }
