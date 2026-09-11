@@ -52,10 +52,4 @@ internal static partial class Log
         int? targetPort,
         int? port,
         string allocated);
-
-    [LoggerMessage(Level = LogLevel.Warning, Message = "[Probe] stripped {Annotation} from {Resource}")]
-    internal static partial void QualificationAnnotationStripped(
-        this ILogger logger,
-        string resource,
-        string annotation);
 }

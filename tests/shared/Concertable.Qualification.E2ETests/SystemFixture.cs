@@ -5,7 +5,6 @@ using Concertable.AppHost;
 using Concertable.B2B.Hosting;
 using Concertable.Customer.Hosting;
 using Concertable.E2E;
-using Concertable.Payment.Hosting;
 using Concertable.Testing.E2E;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -122,21 +121,6 @@ public sealed class SystemFixture : IAsyncLifetime
         // that resource never reaches DCP, so nothing downstream can report the cause. A first-chance
         // handler sees the throw itself.
         AppDomain.CurrentDomain.FirstChanceException += this.OnFirstChanceException;
-
-        // PROBE, not a fix: payment-web is the only pinned resource declaring two endpoints against one
-        // container port, and the only one Docker refuses to bind. Drop the duplicate to establish whether
-        // that is the cause. Remove this block once answered.
-        foreach (var resource in byImage.Values.Where(candidate => candidate.Name == PaymentConstants.WebResource))
-        {
-            foreach (var duplicate in resource.Annotations
-                         .OfType<EndpointAnnotation>()
-                         .Where(endpoint => endpoint.Name == "http")
-                         .ToList())
-            {
-                this.logger.QualificationAnnotationStripped(resource.Name, $"endpoint {duplicate.Name}");
-                resource.Annotations.Remove(duplicate);
-            }
-        }
 
         this.application = await builder.BuildAsync();
 

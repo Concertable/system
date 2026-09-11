@@ -18,12 +18,10 @@ var (storage, blobs) = builder.AddAzureStorage();
 var asb = builder.AddServiceBus();
 asb.Topology().AddB2BTopology().AddCustomerTopology().AddSearchTopology().AddPaymentTopology().AddAuthTopology().RunAsEmulator();
 
-// Every pinned image binds plaintext on its container port, but consumers resolve one another through
-// GetEndpoint("https"), so the endpoint carrying that traffic must be named "https" while staying HTTP.
-// Declaring it with WithHttpsEndpoint instead makes DCP fail to apply the container's configuration and
-// the resource never starts, reporting no reason. AddPaymentWeb already does this inside its own
-// package; these four still declare it here until their Hosting packages follow.
-const int ContainerPort = 8080;
+// AddAuth's image overload is the last one that does not declare its own endpoint. It binds plaintext on
+// its container port, but consumers resolve it through GetEndpoint("https"), so the endpoint carrying that
+// traffic must be named "https" while staying HTTP. Declaring it with WithHttpsEndpoint instead makes DCP
+// fail to apply the container's configuration and the resource never starts, reporting no reason.
 const string PrimaryEndpoint = "https";
 
 var (authImage, authDigest) = manifest["auth"];
@@ -38,8 +36,7 @@ var (paymentWebImage, paymentWebDigest) = manifest["payment-web"];
 var paymentWeb = builder.AddPaymentWeb(paymentWebImage, paymentWebDigest, auth, paymentDb, asb);
 
 var (b2bWebImage, b2bWebDigest) = manifest["b2b-web"];
-var api = builder.AddB2BWeb(b2bWebImage, b2bWebDigest, b2bDb, auth, storage, blobs, asb, paymentWeb)
-                 .WithHttpEndpoint(targetPort: ContainerPort, name: PrimaryEndpoint);
+var api = builder.AddB2BWeb(b2bWebImage, b2bWebDigest, b2bDb, auth, storage, blobs, asb, paymentWeb);
 auth.WithEnvironment("Services__B2BApiUrl", api.GetEndpoint(PrimaryEndpoint));
 auth.WithEnvironment("ServiceAuth__AuthClientId", "concertable-auth");
 
@@ -47,8 +44,7 @@ var (b2bWorkersImage, b2bWorkersDigest) = manifest["b2b-workers"];
 var workers = builder.AddB2BWorkers(b2bWorkersImage, b2bWorkersDigest, b2bDb, paymentWeb, auth);
 
 var (customerWebImage, customerWebDigest) = manifest["customer-web"];
-var customerWeb = builder.AddCustomerWeb(customerWebImage, customerWebDigest, auth, customerDb, asb, paymentWeb)
-                         .WithHttpEndpoint(targetPort: ContainerPort, name: PrimaryEndpoint);
+var customerWeb = builder.AddCustomerWeb(customerWebImage, customerWebDigest, auth, customerDb, asb, paymentWeb);
 auth.WithEnvironment("Services__CustomerApiUrl", customerWeb.GetEndpoint(PrimaryEndpoint));
 
 // The payment image binds plaintext on the endpoint named "https", so every consumer of it must be
@@ -61,8 +57,7 @@ if (builder.ExecutionContext.IsRunMode)
 }
 
 var (searchWebImage, searchWebDigest) = manifest["search-web"];
-builder.AddSearchWeb(searchWebImage, searchWebDigest, auth, searchDb)
-       .WithHttpEndpoint(targetPort: ContainerPort, name: PrimaryEndpoint);
+builder.AddSearchWeb(searchWebImage, searchWebDigest, auth, searchDb);
 
 var (searchWorkersImage, searchWorkersDigest) = manifest["search-workers"];
 builder.AddSearchWorkers(searchWorkersImage, searchWorkersDigest, searchDb, asb);
