@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <Sdk Name="Aspire.AppHost.Sdk" Version="13.3.2" />
 
@@ -8,6 +8,7 @@
     <Nullable>enable</Nullable>
     <IsTestProject>false</IsTestProject>
     <IsPackable>true</IsPackable>
+    <Description>Service-agnostic end-to-end testing harness: Aspire orchestration helpers, polling, health waiting, Respawn database reset, test token minting and Stripe customer resolution, shared by every Concertable service's E2E suite.</Description>
     <IsAspireHost>true</IsAspireHost>
     <CompositionValidationExclusion>E2E-only orchestration harness whose production project resources have dedicated composition coverage.</CompositionValidationExclusion>
   </PropertyGroup>
@@ -21,11 +22,11 @@
     <PackageReference Include="Concertable.Seed.Identity" />
     <PackageReference Include="Concertable.Testing" />
     <PackageReference Include="Microsoft.Data.SqlClient" />
+    <PackageReference Include="Microsoft.Playwright" />
+    <PackageReference Include="Reqnroll" />
     <PackageReference Include="Dapper" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Respawn" />
-    <PackageReference Include="Microsoft.Playwright" />
-    <PackageReference Include="Reqnroll" />
     <PackageReference Include="Stripe.net" />
     <PackageReference Include="xunit" />
   </ItemGroup>

@@ -1,11 +1,12 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>Concertable.E2E</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <IsPackable>false</IsPackable>
+    <IsPackable>true</IsPackable>
+    <Description>Shared end-to-end run description: the profile, endpoint set and run identity a Concertable service's E2E suite composes its fleet against.</Description>
     <IsTestProject>false</IsTestProject>
   </PropertyGroup>
 
