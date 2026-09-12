@@ -1,10 +1,32 @@
-<Project>
+﻿<Project>
 
   <PropertyGroup>
     <NuGetAudit>false</NuGetAudit>
     <NoWarn>$(NoWarn);NU1510</NoWarn>
-    <IsPackable Condition="'$(IsPackable)' == ''">false</IsPackable>
   </PropertyGroup>
+
+  <!-- Package publishing. Most of this repository is suites and harnesses that never ship, so
+       projects opt in with <IsPackable>true</IsPackable> and a solution-wide `dotnet pack`
+       produces only the shared testkits the service repositories consume. -->
+  <PropertyGroup>
+    <IsPackable Condition="'$(IsPackable)' == ''">false</IsPackable>
+    <Authors>Concertable</Authors>
+    <Company>Concertable</Company>
+    <RepositoryUrl>https://github.com/Concertable/system</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/Concertable/system</PackageProjectUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <!-- The monorepo published these ids up to 0.1.0-alpha.0.1371. MinVer counts height from this
+         repository's own history, which is far shorter, so a 0.1 floor would publish beneath the
+         feed high-water and consumers would never resolve the canonical build. -->
+    <MinVerMinimumMajorMinor>0.2</MinVerMinimumMajorMinor>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(IsPackable)' == 'true'">
+    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt"
