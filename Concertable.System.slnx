@@ -1,4 +1,4 @@
-<Solution>
+﻿<Solution>
   <Folder Name="/AppHost/">
     <Project Path="src/Concertable.AppHost/Concertable.AppHost.csproj" />
   </Folder>
@@ -12,8 +12,6 @@
     <Project Path="tests/shared/Concertable.AppHost.StartupTests/Concertable.AppHost.StartupTests.csproj" />
   </Folder>
   <Folder Name="/B2B/">
-    <Project Path="tests/b2b/Concertable.B2B.E2ETests/Concertable.B2B.E2ETests.csproj" />
-    <Project Path="tests/b2b/Concertable.B2B.E2ETests.Ui/Concertable.B2B.E2ETests.Ui.csproj" />
   </Folder>
   <Folder Name="/Customer/">
     <Project Path="tests/customer/Concertable.Customer.E2ETests/Concertable.Customer.E2ETests.csproj" />
