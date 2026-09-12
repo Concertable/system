@@ -11,14 +11,8 @@
     <Project Path="tests/shared/Concertable.AppHost.ArchitectureTests/Concertable.AppHost.ArchitectureTests.csproj" />
     <Project Path="tests/shared/Concertable.AppHost.StartupTests/Concertable.AppHost.StartupTests.csproj" />
   </Folder>
-  <Folder Name="/B2B/">
-  </Folder>
-  <Folder Name="/Customer/">
-  </Folder>
   <Folder Name="/Payment/">
     <Project Path="tests/payment/Concertable.Payment.E2ETests.Helpers/Concertable.Payment.E2ETests.Helpers.csproj" />
     <Project Path="tests/payment/Concertable.Payment.E2ETests.Helpers.UnitTests/Concertable.Payment.E2ETests.Helpers.UnitTests.csproj" />
-  </Folder>
-  <Folder Name="/Search/">
   </Folder>
 </Solution>
