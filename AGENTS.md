@@ -16,7 +16,7 @@ with zero scenarios run. Its own header says why each weaker check was rejected.
 
 ## Not yet converted
 
-`tests/shared/Concertable.Qualification.E2ETests` is the converted, image-backed suite. Treat it as
+`tests/shared/Concertable.System.E2ETests` is the converted, image-backed suite. Treat it as
 the shape the others move to.
 
 The API suites under `tests/b2b/` and `tests/customer/` still reach a service's E2E-only `/_e2e/*`
