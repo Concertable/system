@@ -80,7 +80,7 @@ jobs:
 
       - name: Qualify
         run: >
-          dotnet test tests/shared/Concertable.Qualification.E2ETests
+          dotnet test tests/shared/Concertable.System.E2ETests
           --configuration Release --no-build --logger "trx;LogFileName=qualify.trx"
 
       - name: Upload results

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace Concertable.Qualification.E2ETests;
+namespace Concertable.System.E2ETests;
 
 internal static partial class Log
 {
