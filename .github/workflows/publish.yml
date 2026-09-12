@@ -1,0 +1,96 @@
+name: Publish
+
+# The shared E2E testkits every service repository consumes. Nothing triggers this on its own — a v*
+# tag is the release act, and MinVer reads that same tag for the version. CI proves the pack on every
+# pull request without publishing.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type "publish" to release the packages built from this ref.
+        required: true
+        default: ''
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    name: Publish system testkits
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      # Read and write are separate credentials on purpose, and the write one is never defaulted to
+      # the read one: a missing write secret would silently resolve to a token with no write:packages
+      # and fail as a 403 at the push step, after the whole build, rather than as a named failure here.
+      GITHUB_PACKAGES_TOKEN: ${{ secrets.CONCERTABLE_PACKAGES_READ }}
+      PACKAGES_WRITE_TOKEN: ${{ secrets.CONCERTABLE_PACKAGES_WRITE }}
+
+    steps:
+      - name: Require an explicit confirmation for a manual run
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.confirm != 'publish'
+        run: |
+          echo '::error::Manual publication requires the confirm input to be exactly "publish".'
+          exit 1
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # MinVer derives the version from tag height, and a shallow clone yields a wrong version
+          # with no error — the feed would be the first place anyone saw it.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Require both feed credentials
+        # Checked before the build so an unset or misnamed secret is a named failure in five seconds
+        # rather than a 403 twenty minutes in.
+        run: |
+          test -n "$GITHUB_PACKAGES_TOKEN" || { echo '::error::CONCERTABLE_PACKAGES_READ is not set on this repository.'; exit 1; }
+          test -n "$PACKAGES_WRITE_TOKEN" || { echo '::error::CONCERTABLE_PACKAGES_WRITE is not set on this repository.'; exit 1; }
+
+      - name: Restore
+        run: dotnet restore Concertable.System.slnx
+
+      - name: Pack
+        run: >-
+          dotnet pack Concertable.System.slnx
+          --configuration Release
+          --no-restore
+          --output '${{ runner.temp }}/packages'
+
+      - name: Report what was packed
+        # The packable set is opt-in per project, so a csproj losing IsPackable would otherwise push
+        # nothing and succeed.
+        shell: bash
+        run: |
+          count=$(find '${{ runner.temp }}/packages' -name '*.nupkg' -not -name '*.symbols.nupkg' | wc -l)
+          echo "Packed $count package(s):"
+          find '${{ runner.temp }}/packages' -name '*.nupkg' -not -name '*.symbols.nupkg' -printf '  %f\n'
+          test "$count" -gt 0 || { echo '::error::No packages were produced.'; exit 1; }
+
+      - name: Publish packages
+        run: >-
+          dotnet nuget push '${{ runner.temp }}/packages/*.nupkg'
+          --source 'https://nuget.pkg.github.com/Concertable/index.json'
+          --api-key "$PACKAGES_WRITE_TOKEN"
+          --skip-duplicate
+
+      - name: Retain the published packages
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: system-packages
+          path: ${{ runner.temp }}/packages/*.nupkg
+          if-no-files-found: error

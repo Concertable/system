@@ -16,7 +16,7 @@ source:
 # own train. Directory.Packages.props owns that rule and declares the trains; ReleaseTrainPinTests holds
 # these equal to it.
 platform:
-  packages: 0.2.0-alpha.0.4
+  packages: 0.2.0-alpha.0.5
 
 services:
   auth: 0.1.0-alpha.0.1384

@@ -58,6 +58,14 @@ jobs:
             dotnet test "$project" --configuration Release --no-build
           done
 
+      - name: Pack
+        # The testkits are published from this repository, so a csproj that stops being packable
+        # must fail here rather than at a release that quietly pushes nothing.
+        run: |
+          dotnet pack Concertable.System.slnx --configuration Release --no-build --output "$RUNNER_TEMP/packages"
+          count=$(find "$RUNNER_TEMP/packages" -name '*.nupkg' -not -name '*.symbols.nupkg' | wc -l)
+          test "$count" -eq 3 || { echo "::error::Expected 3 packages, packed $count."; exit 1; }
+
       - name: Architecture and startup tiers
         run: |
           for project in \

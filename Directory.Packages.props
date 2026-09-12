@@ -1,8 +1,8 @@
-<Project>
+﻿<Project>
 
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <ConcertableDotNetPlatformVersion>0.2.0-alpha.0.4</ConcertableDotNetPlatformVersion>
+    <ConcertableDotNetPlatformVersion>0.2.0-alpha.0.5</ConcertableDotNetPlatformVersion>
     <ConcertableAuthVersion>0.1.0-alpha.0.1384</ConcertableAuthVersion>
     <ConcertableB2BContractsVersion>0.1.0-alpha.0.1384</ConcertableB2BContractsVersion>
     <ConcertableCustomerVersion>0.1.0-alpha.0.1384</ConcertableCustomerVersion>
@@ -57,6 +57,10 @@
   <ItemGroup>
     <GlobalPackageReference Include="Meziantou.Analyzer" Version="3.0.98" />
     <GlobalPackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="3.3.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <GlobalPackageReference Include="MinVer" Version="7.0.0" />
   </ItemGroup>
 
 </Project>
