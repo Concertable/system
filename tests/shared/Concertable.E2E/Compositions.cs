@@ -9,5 +9,5 @@ public static class Compositions
             + "calling this reach a service's E2E-only admin surface, which a production image does not "
             + "carry, so they need a black-box replacement (seed through the b2b-seeding-simulator "
             + "container, reset through the AppHost's own connection strings) before they can run here. "
-            + "Concertable.Qualification.E2ETests is the converted, image-backed suite.");
+            + "Concertable.System.E2ETests is the converted, image-backed suite.");
 }

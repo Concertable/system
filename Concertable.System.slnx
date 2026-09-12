@@ -7,7 +7,7 @@
   </Folder>
   <Folder Name="/Shared/">
     <Project Path="tests/shared/Concertable.E2E/Concertable.E2E.csproj" />
-    <Project Path="tests/shared/Concertable.Qualification.E2ETests/Concertable.Qualification.E2ETests.csproj" />
+    <Project Path="tests/shared/Concertable.System.E2ETests/Concertable.System.E2ETests.csproj" />
     <Project Path="tests/shared/Concertable.AppHost.ArchitectureTests/Concertable.AppHost.ArchitectureTests.csproj" />
     <Project Path="tests/shared/Concertable.AppHost.StartupTests/Concertable.AppHost.StartupTests.csproj" />
   </Folder>
