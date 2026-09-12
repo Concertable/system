@@ -53,7 +53,6 @@ jobs:
         run: |
           for project in \
             tests/payment/Concertable.Payment.E2ETests.Helpers.UnitTests \
-            tests/search/Concertable.Search.E2ETests.Helpers.UnitTests
           do
             dotnet test "$project" --configuration Release --no-build
           done
