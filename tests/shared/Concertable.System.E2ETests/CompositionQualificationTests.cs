@@ -2,7 +2,7 @@ using System.Net;
 using System.Text.Json;
 using Xunit;
 
-namespace Concertable.Qualification.E2ETests;
+namespace Concertable.System.E2ETests;
 
 [Collection(SystemCollection.Name)]
 public sealed class CompositionQualificationTests(SystemFixture system)

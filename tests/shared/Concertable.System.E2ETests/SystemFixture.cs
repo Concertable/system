@@ -12,7 +12,7 @@ using System.Collections.Concurrent;
 using System.Runtime.ExceptionServices;
 using Xunit;
 
-namespace Concertable.Qualification.E2ETests;
+namespace Concertable.System.E2ETests;
 
 public sealed class SystemFixture : IAsyncLifetime
 {
