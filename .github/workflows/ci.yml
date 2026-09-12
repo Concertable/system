@@ -52,7 +52,7 @@ jobs:
       - name: Unit tier
         run: |
           for project in \
-            tests/payment/Concertable.Payment.E2ETests.Helpers.UnitTests \
+            tests/payment/Concertable.Payment.E2ETests.Helpers.UnitTests
           do
             dotnet test "$project" --configuration Release --no-build
           done
