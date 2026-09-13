@@ -48,7 +48,7 @@ public sealed class CompositionQualificationTests(SystemFixture system)
     [Fact]
     public async Task ProtectedApi_RefusesAnAnonymousCaller()
     {
-        using var response = await system.Client.GetAsync(new Uri(system.HttpServices["b2b-web"], "api/Venue"));
+        using var response = await system.Client.GetAsync(new Uri(system.HttpServices["b2b-web"], "api/auth/me"));
 
         Assert.Contains(
             response.StatusCode,
