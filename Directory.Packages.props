@@ -7,7 +7,7 @@
     <ConcertableB2BContractsVersion>0.2.0-alpha.0.292</ConcertableB2BContractsVersion>
     <ConcertableCustomerVersion>0.2.0-alpha.0.338</ConcertableCustomerVersion>
     <ConcertablePaymentVersion>0.2.0-alpha.0.372</ConcertablePaymentVersion>
-    <ConcertableSearchVersion>0.2.0-alpha.0.322</ConcertableSearchVersion>
+    <ConcertableSearchVersion>0.2.0-alpha.0.323</ConcertableSearchVersion>
   </PropertyGroup>
 
   <!-- Nothing carves out of this repository, so versions live once at the root rather than per folder.
