@@ -19,34 +19,34 @@ platform:
   packages: 0.2.0-alpha.0.5
 
 services:
-  auth: 0.1.0-alpha.0.1384
-  b2b: 0.1.0-alpha.0.1384
-  customer: 0.1.0-alpha.0.1384
-  payment: 0.1.0-alpha.0.1384
-  search: 0.1.0-alpha.0.1384
+  auth: 0.2.0-alpha.0.297
+  b2b: 0.2.0-alpha.0.292
+  customer: 0.2.0-alpha.0.338
+  payment: 0.2.0-alpha.0.372
+  search: 0.2.0-alpha.0.322
 
 images:
   auth:
     repository: ghcr.io/concertable/auth
-    digest: sha256:ebba879ffb8a0a6175c0074a01aff2ea5f6c3b127d3ef15bd48fbf79192aa1ed
+    digest: sha256:d888cb59d806241611eb36a5d1eeb293d472cd94e4a89bf6dab6b9b23c0c5f82
   b2b-web:
     repository: ghcr.io/concertable/b2b-web
-    digest: sha256:98419990a0609b7f8bbbf99855dd67787600077a9c91c25646b029815d436a78
+    digest: sha256:159c390a156ae41a402d039d6d167bbc6f6d0a3ff4339768c2cbf2196f189b08
   b2b-workers:
     repository: ghcr.io/concertable/b2b-workers
-    digest: sha256:6a9a0a692a74663746473a96d4fc3f019b84b9cb01075dd421741b27b6db6607
+    digest: sha256:ac2a2faf65945f3816e0211fb2015031a3eb5d5a249a6e180a0327d5565fcb94
   customer-web:
     repository: ghcr.io/concertable/customer-web
-    digest: sha256:a0c678bf3005cab7fe3351eeadd8534bae1b11dc5468da0a39e3fa4c3c4a9c30
+    digest: sha256:f415fb7f7130c1d20aeb976eeeef58efcc5c46531381b8490d0c8439d796aac3
   payment-web:
     repository: ghcr.io/concertable/payment-web
-    digest: sha256:ae5caa66d430e53d79f80aad7e91a3fdda615df5a8e7736433dd8cc5882892e1
+    digest: sha256:24503f1c17bce5a67b4544455ee3886e76c6711f1eed57b5c6c74d2c45febdbd
   payment-workers:
     repository: ghcr.io/concertable/payment-workers
-    digest: sha256:2802a5f8e6faee11c7c7b5c5aa85d4d6e8a14d3eea9d15408af6d3f5a54327c7
+    digest: sha256:5b31c52965054dce47c1cd8a1d1feabd976222f31be28bd8d185c281d014e52f
   search-web:
     repository: ghcr.io/concertable/search-web
-    digest: sha256:ad43bdbddbfe115fd81c0d0d89bc67906e7ea5e22ade39cb06a4bd131ac965a8
+    digest: sha256:f941a019cca6727c1a6c61379040dcf144104e7aff236ff2a1f2dc351ef15c56
   search-workers:
     repository: ghcr.io/concertable/search-workers
-    digest: sha256:00a9ae9fe5fc93a90700961ac1f2771c61dc86bd511e8db13ac795a4155ca9f8
+    digest: sha256:cdad6a95a3f851c72ad42c35fe20b9c41f24be54ebb8aa40100047a419fefa4a
