@@ -23,7 +23,7 @@ services:
   b2b: 0.2.0-alpha.0.292
   customer: 0.2.0-alpha.0.338
   payment: 0.2.0-alpha.0.372
-  search: 0.2.0-alpha.0.323
+  search: 0.2.0-alpha.0.324
 
 images:
   auth:
@@ -46,7 +46,7 @@ images:
     digest: sha256:09b1d4d0f9bf175f61dcaafde0d06b7eb7f8a710e0e775d4b385957b9e865cfc
   search-web:
     repository: ghcr.io/concertable/search-web
-    digest: sha256:8f37024db38b75bae398d8679aed1c427fcc419512c2de063eaa119927d5deae
+    digest: sha256:1d71e4cfd92eb4f143ef107b5ff4c9879935ab27ceba288b8687d15553708393
   search-workers:
     repository: ghcr.io/concertable/search-workers
-    digest: sha256:ebcd3415d62f54b22a15238c27adb0a87b9e2522ac3877b8e9fb540d7c7bc81e
+    digest: sha256:c0c7d64a4b2702a0186963472ab8bf4030c2cba873748eb8fdb6be9905c84d11
