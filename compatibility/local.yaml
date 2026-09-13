@@ -31,22 +31,22 @@ images:
     digest: sha256:d888cb59d806241611eb36a5d1eeb293d472cd94e4a89bf6dab6b9b23c0c5f82
   b2b-web:
     repository: ghcr.io/concertable/b2b-web
-    digest: sha256:159c390a156ae41a402d039d6d167bbc6f6d0a3ff4339768c2cbf2196f189b08
+    digest: sha256:4e03fe2cb9db931c9d318c38fde4e8ad921a5523e43a185f5dcea9807f51c1d9
   b2b-workers:
     repository: ghcr.io/concertable/b2b-workers
     digest: sha256:ac2a2faf65945f3816e0211fb2015031a3eb5d5a249a6e180a0327d5565fcb94
   customer-web:
     repository: ghcr.io/concertable/customer-web
-    digest: sha256:f415fb7f7130c1d20aeb976eeeef58efcc5c46531381b8490d0c8439d796aac3
+    digest: sha256:0a24c4b6a30923453b1996eb5e582231714875152e62e503ece9911d3a9f5427
   payment-web:
     repository: ghcr.io/concertable/payment-web
-    digest: sha256:0842844e22486d7518cf80428ef95336bff86fc71a3cdd22da36284b7908cf57
+    digest: sha256:2c7a9b30291d4adb9d94dcf0d047b86809ad487d1c7848ffc340b226497d578d
   payment-workers:
     repository: ghcr.io/concertable/payment-workers
     digest: sha256:09b1d4d0f9bf175f61dcaafde0d06b7eb7f8a710e0e775d4b385957b9e865cfc
   search-web:
     repository: ghcr.io/concertable/search-web
-    digest: sha256:1d71e4cfd92eb4f143ef107b5ff4c9879935ab27ceba288b8687d15553708393
+    digest: sha256:5bfb93f03c875d2adb5bbd18499f2ff11ef9a71902cd7f62811cb0d7876976cb
   search-workers:
     repository: ghcr.io/concertable/search-workers
     digest: sha256:c0c7d64a4b2702a0186963472ab8bf4030c2cba873748eb8fdb6be9905c84d11
