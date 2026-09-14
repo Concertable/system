@@ -8,7 +8,6 @@ param(
 $repoRoot = Split-Path $PSScriptRoot -Parent
 Set-Location $repoRoot
 [Environment]::CurrentDirectory = $repoRoot
-$localPlatform = Join-Path $PSScriptRoot 'local-platform.ps1'
 
 $authProjects = @(
     "api/Concertable.Auth/tests/Concertable.Auth.UnitTests/Concertable.Auth.UnitTests.csproj"
@@ -60,7 +59,7 @@ function Invoke-UnitProject([string]$csproj, [string[]]$extra) {
     Write-Host ""
     Write-Host "=== $name ===" -ForegroundColor Cyan
     $cmdArgs = @($csproj, '--logger', 'console;verbosity=normal') + $extra
-    & $localPlatform test @cmdArgs 2>&1 | Tee-Object -FilePath $logPath | Out-Host
+    & dotnet test @cmdArgs 2>&1 | Tee-Object -FilePath $logPath | Out-Host
     return $LASTEXITCODE
 }
 
@@ -89,44 +88,30 @@ function Find-ByModule([string]$module) {
 
 switch ($cmd) {
     "run" {
-        & $localPlatform prepare
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         $exit = Invoke-Projects 'All unit tests' $allProjects $rest
         exit $exit
     }
     "auth" {
-        & $localPlatform prepare
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         $exit = Invoke-Projects 'Auth unit tests' $authProjects $rest
         exit $exit
     }
     "b2b" {
-        & $localPlatform prepare
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         $exit = Invoke-Projects 'B2B unit tests' $b2bProjects $rest
         exit $exit
     }
     "customer" {
-        & $localPlatform prepare
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         $exit = Invoke-Projects 'Customer unit tests' $customerProjects $rest
         exit $exit
     }
     "search" {
-        & $localPlatform prepare
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         $exit = Invoke-Projects 'Search unit tests' $searchProjects $rest
         exit $exit
     }
     "payment" {
-        & $localPlatform prepare
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         $exit = Invoke-Projects 'Payment unit tests' $paymentProjects $rest
         exit $exit
     }
     "shared" {
-        & $localPlatform prepare
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         $exit = Invoke-Projects 'Shared unit tests' $sharedProjects $rest
         exit $exit
     }
@@ -158,8 +143,6 @@ switch ($cmd) {
         if ($cmd) {
             $matches = Find-ByModule $cmd
             if ($matches.Count -gt 0) {
-                & $localPlatform prepare
-                if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
                 $exit = Invoke-Projects "Module: $cmd" $matches $rest
                 exit $exit
             }

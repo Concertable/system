@@ -9,7 +9,6 @@ param(
 $repoRoot = Split-Path $PSScriptRoot -Parent
 Set-Location $repoRoot
 [Environment]::CurrentDirectory = $repoRoot
-$localPlatform = Join-Path $PSScriptRoot 'local-platform.ps1'
 
 $b2bUi      = Join-Path $repoRoot "api/Concertable.B2B/tests/E2ETests/Concertable.B2B.E2ETests.Ui"
 $customerUi = Join-Path $repoRoot "api/Concertable.Customer/tests/E2ETests/Concertable.Customer.E2ETests.Ui"
@@ -36,7 +35,7 @@ function Invoke-PrettyTest([string]$suite, [string]$csproj, [string[]]$extra, [s
         '--logger', 'trx;LogFileName=run.trx',
         '--logger', 'console;verbosity=normal'
     ) + $extra
-    & $localPlatform test @testArgs *> $log
+    & dotnet test @testArgs *> $log
     $processExitCode = $LASTEXITCODE
 
     if (-not (Test-Path $trx)) {
@@ -180,7 +179,7 @@ function Assert-PlaywrightBrowsers {
     # has to be built before it can be reached. Both UI suites pin the same version, so one install
     # covers both, and the install is a no-op once the build is present.
     $csproj = "$b2bUi/Concertable.B2B.E2ETests.Ui.csproj"
-    & $localPlatform build $csproj @quiet
+    & dotnet build $csproj @quiet
     if ($LASTEXITCODE -ne 0) {
         Remove-Item Env:\HEADLESS -ErrorAction SilentlyContinue
         exit $LASTEXITCODE
@@ -228,8 +227,6 @@ function Invoke-UiCommand([string]$cmd) {
         Assert-DockerHealthy
         Assert-PinnedImagesPullable
         Assert-HostCapacity
-        & $localPlatform prepare
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         Assert-SpaDependencies
         Assert-SpaPackagesBuilt
         Assert-PlaywrightBrowsers
@@ -263,8 +260,6 @@ function Invoke-ApiCommand([string]$cmd) {
         Assert-DockerHealthy
         Assert-PinnedImagesPullable
         Assert-HostCapacity
-        & $localPlatform prepare
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     }
     switch ($cmd) {
         "run" {
