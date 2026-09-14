@@ -8,7 +8,6 @@ param(
 $repoRoot = Split-Path $PSScriptRoot -Parent
 Set-Location $repoRoot
 [Environment]::CurrentDirectory = $repoRoot
-$localPlatform = Join-Path $PSScriptRoot 'local-platform.ps1'
 
 $authProjects = @(
     "api/Concertable.Auth/tests/Concertable.Auth.IntegrationTests/Concertable.Auth.IntegrationTests.csproj"
@@ -51,7 +50,7 @@ function Invoke-IntegrationProject([string]$csproj, [string[]]$extra) {
     Write-Host ""
     Write-Host "=== $name ===" -ForegroundColor Cyan
     $cmdArgs = @($csproj, '--logger', 'console;verbosity=normal') + $extra
-    & $localPlatform test @cmdArgs 2>&1 | Tee-Object -FilePath $logPath | Out-Host
+    & dotnet test @cmdArgs 2>&1 | Tee-Object -FilePath $logPath | Out-Host
     return $LASTEXITCODE
 }
 
@@ -80,38 +79,26 @@ function Find-ByModule([string]$module) {
 
 switch ($cmd) {
     "run" {
-        & $localPlatform prepare
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         $exit = Invoke-Projects 'All integration tests' $allProjects $rest
         exit $exit
     }
     "auth" {
-        & $localPlatform prepare
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         $exit = Invoke-Projects 'Auth integration tests' $authProjects $rest
         exit $exit
     }
     "b2b" {
-        & $localPlatform prepare
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         $exit = Invoke-Projects 'B2B integration tests' $b2bProjects $rest
         exit $exit
     }
     "customer" {
-        & $localPlatform prepare
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         $exit = Invoke-Projects 'Customer integration tests' $customerProjects $rest
         exit $exit
     }
     "search" {
-        & $localPlatform prepare
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         $exit = Invoke-Projects 'Search integration tests' $searchProjects $rest
         exit $exit
     }
     "payment" {
-        & $localPlatform prepare
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         $exit = Invoke-Projects 'Payment integration tests' $paymentProjects $rest
         exit $exit
     }
@@ -137,8 +124,6 @@ switch ($cmd) {
         if ($cmd) {
             $matches = Find-ByModule $cmd
             if ($matches.Count -gt 0) {
-                & $localPlatform prepare
-                if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
                 $exit = Invoke-Projects "Module: $cmd" $matches $rest
                 exit $exit
             }
