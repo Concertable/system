@@ -84,3 +84,21 @@ jobs:
 
       - name: Manifest and package pin agree
         run: python .github/scripts/check_pins.py
+
+  ci-complete:
+    # Renaming this is a merge-blocking change: it is the exact context the shared ruleset requires.
+    name: ci-complete
+    if: ${{ always() }}
+    needs:
+      - build
+      - pins
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Require every gating job to pass
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          for result in $RESULTS; do
+            test "$result" = "success" || { echo "::error::A gating job reported '$result'."; exit 1; }
+          done
