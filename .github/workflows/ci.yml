@@ -84,3 +84,17 @@ jobs:
 
       - name: Manifest and package pin agree
         run: python .github/scripts/check_pins.py
+
+  ci-complete:
+    # Renaming this is a merge-blocking change: it is the exact context the shared ruleset requires.
+    name: ci-complete
+    if: ${{ always() }}
+    needs:
+      - build
+      - pins
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - uses: Concertable/pipeline/.github/actions/require-jobs-green@13e26afd6f35855a78d3c554e097522e8476c04e
+        with:
+          results: ${{ join(needs.*.result, ' ') }}
