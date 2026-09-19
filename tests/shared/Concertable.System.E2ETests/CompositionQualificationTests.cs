@@ -63,7 +63,7 @@ public sealed class CompositionQualificationTests(SystemFixture system)
     [
         B2BMigrations.Name,
         B2BSeedingSimulator.Name,
-        B2BWorkers.Name,
+        "b2b-workers",
         "payment-workers",
         "search-workers",
     ];
