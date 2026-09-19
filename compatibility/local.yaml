@@ -2,7 +2,8 @@
 #
 # src/Concertable.AppHost reads this file and fails composition if an image is missing, so this is
 # the only place a pin is edited and no second list can drift from what actually runs. Renovate
-# raises the digest and package bumps here (checkpoint 9C).
+# raises the package trains below; the image digests are still raised by hand, for the reason in
+# TECH_DEBT.md.
 
 version: 1
 
