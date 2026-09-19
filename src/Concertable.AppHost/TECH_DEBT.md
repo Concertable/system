@@ -29,3 +29,20 @@ that is not an http scheme, which is why `Concertable.Payment.Client` reads
 `services:payment-web:grpc:0`.
 
 Both are one producer change plus a publish and a re-pin here.
+
+## Four services still publish composition identities from a catch-all constants class
+
+B2B retired `B2BConstants` in its PostgreSQL cut-over, so its identities now come from focused types —
+`B2BDatabase.Name`, `B2BWeb.Name`, `B2BWorkers.Name`, `B2BMigrations.Name`, `B2BSeedingSimulator.Name`.
+Payment, Search, Customer and Auth never followed, so this composition and its black-box fixture read
+`B2BMigrations.Name` on one line and `PaymentConstants.MigrationsResource`,
+`SearchConstants.MigrationsResource`, `CustomerConstants.WebResource` and `AuthConstants.Database` on the
+next. A catch-all carrying a database name, a resource name, a port and an environment-variable name says
+nothing about which of those a caller is asking for, and it is the shape B2B deliberately deleted rather
+than a second valid convention.
+
+Each service owns its own, so this is four producer changes plus a publish and a re-pin here.
+
+**Resolves when:** no `*Constants` type remains in a `Concertable.<Service>.Hosting` package, every
+composition identity is a focused type, and this repository's `AppHost.cs` and `SystemFixture` name only
+those.
