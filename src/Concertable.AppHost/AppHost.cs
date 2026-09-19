@@ -9,13 +9,13 @@ var builder = StrictDistributedApplication.CreateBuilder(args);
 var manifest = CompatibilityManifest.Load(builder.AppHostDirectory);
 
 var sql = builder.AddSystemSqlServer();
-var postgres = builder.AddPostgresContainer("concertable-b2b-postgres-data")
+var postgres = builder.AddPostgresContainer("concertable-system-postgres-data")
     .WithPostGis()
     .WithArgs("-c", "max_prepared_transactions=100");
 var b2bDb = postgres.AddDatabase(B2BDatabase.Name);
+var searchDb = postgres.AddDatabase(SearchConstants.Database);
 var authDb = sql.AddDatabase(AuthConstants.Database);
 var customerDb = sql.AddDatabase(CustomerConstants.Database);
-var searchDb = sql.AddDatabase(SearchConstants.Database);
 var paymentDb = sql.AddDatabase(PaymentConstants.Database);
 var (storage, blobs) = builder.AddAzureStorage();
 var asb = builder.AddServiceBus();
@@ -68,10 +68,14 @@ if (builder.ExecutionContext.IsRunMode)
 }
 
 var (searchWebImage, searchWebDigest) = manifest["search-web"];
-builder.AddSearchWeb(searchWebImage, searchWebDigest, auth, searchDb);
+var (searchMigrationsImage, searchMigrationsDigest) = manifest["search-migrations"];
+var searchMigrations = builder.AddSearchMigrations(searchMigrationsImage, searchMigrationsDigest, searchDb);
+builder.AddSearchWeb(searchWebImage, searchWebDigest, auth, searchDb)
+    .WaitForCompletion(searchMigrations);
 
 var (searchWorkersImage, searchWorkersDigest) = manifest["search-workers"];
-builder.AddSearchWorkers(searchWorkersImage, searchWorkersDigest, searchDb, asb);
+builder.AddSearchWorkers(searchWorkersImage, searchWorkersDigest, searchDb, asb)
+    .WaitForCompletion(searchMigrations);
 
 var (paymentWorkersImage, paymentWorkersDigest) = manifest["payment-workers"];
 builder.AddPaymentWorkers(paymentWorkersImage, paymentWorkersDigest, paymentDb, asb);
