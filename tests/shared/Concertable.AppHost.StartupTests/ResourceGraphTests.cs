@@ -1,6 +1,7 @@
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
+using Concertable.B2B.Hosting;
 using Concertable.Testing.Architecture;
 using Xunit;
 
@@ -46,6 +47,18 @@ public sealed class ResourceGraphTests
     {
         using var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Concertable_AppHost>();
         Assert.DoesNotContain(builder.Resources, resource => resource.Name == "concertable-dev");
+        var postgres = Assert.IsType<PostgresServerResource>(
+            builder.Resources.Single(resource => resource.Name == "postgres"));
+        var postgresImage = postgres.Annotations.OfType<ContainerImageAnnotation>().Last();
+        Assert.Equal("postgis/postgis", postgresImage.Image);
+        Assert.Equal("17-3.5", postgresImage.Tag);
+        AssertCommandLineArgs(postgres, "-c", "max_prepared_transactions=100");
+        Assert.IsType<PostgresDatabaseResource>(
+            builder.Resources.Single(resource => resource.Name == B2BDatabase.Name));
+        AssertWaitsFor(builder, B2BMigrations.Name, B2BDatabase.Name, WaitType.WaitUntilHealthy);
+        AssertWaitsFor(builder, B2BWeb.Name, B2BMigrations.Name, WaitType.WaitForCompletion);
+        AssertWaitsFor(builder, B2BWorkers.Name, B2BMigrations.Name, WaitType.WaitForCompletion);
+        Assert.Contains(builder.Resources, resource => resource.Name == B2BSeedingSimulator.Name);
         var auth = builder.Resources.Single(resource => resource.Name == "auth");
         var authEnvironment = await GetRawEnvironmentAsync(auth, CancellationToken.None);
         Assert.DoesNotContain("Auth__PublicUrl", authEnvironment.Keys);
@@ -118,5 +131,32 @@ public sealed class ResourceGraphTests
         foreach (var annotation in resource.Annotations.OfType<EnvironmentCallbackAnnotation>().ToArray())
             await annotation.Callback(context);
         return environment;
+    }
+
+    private static void AssertCommandLineArgs(IResource resource, params object[] expected)
+    {
+        var args = new List<object>();
+        foreach (var annotation in resource.Annotations.OfType<CommandLineArgsCallbackAnnotation>())
+            annotation.Callback(new CommandLineArgsCallbackContext(args, resource, CancellationToken.None))
+                .GetAwaiter()
+                .GetResult();
+
+        Assert.Equal(expected, args);
+    }
+
+    private static void AssertWaitsFor(
+        IDistributedApplicationBuilder builder,
+        string resourceName,
+        string dependencyName,
+        WaitType waitType)
+    {
+        var resource = builder.Resources.Single(candidate => candidate.Name == resourceName);
+        var wait = Assert.Single(
+            resource.Annotations.OfType<WaitAnnotation>(),
+            annotation => annotation.Resource.Name == dependencyName);
+
+        Assert.Equal(waitType, wait.WaitType);
+        if (waitType == WaitType.WaitForCompletion)
+            Assert.Equal(0, wait.ExitCode);
     }
 }
