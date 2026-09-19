@@ -22,8 +22,8 @@ public sealed class SystemFixture : IAsyncLifetime
 
     private static readonly Dictionary<string, string> ServiceClientSecrets = new(StringComparer.Ordinal)
     {
-        [B2BConstants.WebResource] = Run.B2BServiceAuthSecret,
-        [B2BConstants.WorkersResource] = Run.B2BServiceAuthSecret,
+        [B2BWeb.Name] = Run.B2BServiceAuthSecret,
+        [B2BWorkers.Name] = Run.B2BServiceAuthSecret,
         [CustomerConstants.WebResource] = Run.CustomerServiceAuthSecret,
     };
 

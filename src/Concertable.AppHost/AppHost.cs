@@ -8,8 +8,11 @@ using Concertable.Search.Hosting;
 var builder = StrictDistributedApplication.CreateBuilder(args);
 var manifest = CompatibilityManifest.Load(builder.AppHostDirectory);
 
-var sql = builder.AddSqlServerContainer();
-var b2bDb = sql.AddDatabase(B2BConstants.Database);
+var sql = builder.AddSystemSqlServer();
+var postgres = builder.AddPostgresContainer("concertable-b2b-postgres-data")
+    .WithPostGis()
+    .WithArgs("-c", "max_prepared_transactions=100");
+var b2bDb = postgres.AddDatabase(B2BDatabase.Name);
 var authDb = sql.AddDatabase(AuthConstants.Database);
 var customerDb = sql.AddDatabase(CustomerConstants.Database);
 var searchDb = sql.AddDatabase(SearchConstants.Database);
@@ -35,13 +38,21 @@ auth.WithSpaClients(SystemLocalSpaSurfaces.AuthClients);
 var (paymentWebImage, paymentWebDigest) = manifest["payment-web"];
 var paymentWeb = builder.AddPaymentWeb(paymentWebImage, paymentWebDigest, auth, paymentDb, asb);
 
+var (b2bMigrationsImage, b2bMigrationsDigest) = manifest["b2b-migrations"];
+var b2bMigrations = builder.AddB2BMigrations(b2bMigrationsImage, b2bMigrationsDigest, b2bDb);
+
 var (b2bWebImage, b2bWebDigest) = manifest["b2b-web"];
-var api = builder.AddB2BWeb(b2bWebImage, b2bWebDigest, b2bDb, auth, storage, blobs, asb, paymentWeb);
+var api = builder.AddB2BWeb(b2bWebImage, b2bWebDigest, b2bDb, auth, storage, blobs, asb, paymentWeb)
+    .WaitForCompletion(b2bMigrations);
 auth.WithEnvironment("Services__B2BApiUrl", api.GetEndpoint(PrimaryEndpoint));
 auth.WithEnvironment("ServiceAuth__AuthClientId", "concertable-auth");
 
 var (b2bWorkersImage, b2bWorkersDigest) = manifest["b2b-workers"];
-var workers = builder.AddB2BWorkers(b2bWorkersImage, b2bWorkersDigest, b2bDb, paymentWeb, auth);
+var workers = builder.AddB2BWorkers(b2bWorkersImage, b2bWorkersDigest, b2bDb, paymentWeb, auth)
+    .WaitForCompletion(b2bMigrations);
+
+var (b2bSeedingSimulatorImage, b2bSeedingSimulatorDigest) = manifest["b2b-seeding-simulator"];
+builder.AddB2BSeedingSimulator(b2bSeedingSimulatorImage, b2bSeedingSimulatorDigest, asb);
 
 var (customerWebImage, customerWebDigest) = manifest["customer-web"];
 var customerWeb = builder.AddCustomerWeb(customerWebImage, customerWebDigest, auth, customerDb, asb, paymentWeb);
