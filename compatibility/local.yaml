@@ -16,13 +16,13 @@ source:
 # own train. Directory.Packages.props owns that rule and declares the trains; ReleaseTrainPinTests holds
 # these equal to it.
 platform:
-  packages: 0.2.0-alpha.0.12
+  packages: 0.2.0-alpha.0.13
 
 services:
   auth: 0.2.0-alpha.0.297
   b2b: 0.2.0-alpha.0.302
   customer: 0.2.0-alpha.0.338
-  payment: 0.2.0-alpha.0.372
+  payment: 0.2.0-alpha.0.381
   search: 0.2.0-alpha.0.330
 
 images:
@@ -44,12 +44,15 @@ images:
   customer-web:
     repository: ghcr.io/concertable/customer-web
     digest: sha256:0a24c4b6a30923453b1996eb5e582231714875152e62e503ece9911d3a9f5427
+  payment-migrations:
+    repository: ghcr.io/concertable/payment-migrations
+    digest: sha256:b22e1a0d498e01d12b49e0bc911f3e4c7e44a0d5e3c4d5c8917e854e1fccdc96
   payment-web:
     repository: ghcr.io/concertable/payment-web
-    digest: sha256:2c7a9b30291d4adb9d94dcf0d047b86809ad487d1c7848ffc340b226497d578d
+    digest: sha256:13bc1a58a647e01618822935985097e3c667b3ddb365def899ba83cf5d5b574f
   payment-workers:
     repository: ghcr.io/concertable/payment-workers
-    digest: sha256:09b1d4d0f9bf175f61dcaafde0d06b7eb7f8a710e0e775d4b385957b9e865cfc
+    digest: sha256:586f87d0866bcf325622793379f15f4b94abdd34091907ca94b4e15fa5b2ab64
   search-web:
     repository: ghcr.io/concertable/search-web
     digest: sha256:f345c7e05209d4a72f7aee23f311867327fbc9b8b5daec7323506c3ef517d50a

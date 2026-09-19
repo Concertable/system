@@ -8,15 +8,15 @@ using Concertable.Search.Hosting;
 var builder = StrictDistributedApplication.CreateBuilder(args);
 var manifest = CompatibilityManifest.Load(builder.AppHostDirectory);
 
-var sql = builder.AddSystemSqlServer();
+var sql = builder.AddSqlServerContainer("concertable-system-sql-data");
 var postgres = builder.AddPostgresContainer("concertable-system-postgres-data")
     .WithPostGis()
     .WithArgs("-c", "max_prepared_transactions=100");
 var b2bDb = postgres.AddDatabase(B2BDatabase.Name);
 var searchDb = postgres.AddDatabase(SearchConstants.Database);
+var paymentDb = postgres.AddDatabase(PaymentConstants.Database);
 var authDb = sql.AddDatabase(AuthConstants.Database);
 var customerDb = sql.AddDatabase(CustomerConstants.Database);
-var paymentDb = sql.AddDatabase(PaymentConstants.Database);
 var (storage, blobs) = builder.AddAzureStorage();
 var asb = builder.AddServiceBus();
 asb.Topology().AddB2BTopology().AddCustomerTopology().AddSearchTopology().AddPaymentTopology().AddAuthTopology().RunAsEmulator();
@@ -35,8 +35,12 @@ var auth = builder.AddAuth(authImage, authDigest, authDb, asb)
                   .WithHttpEndpoint(targetPort: AuthConstants.ContainerPort, name: PrimaryEndpoint);
 auth.WithSpaClients(SystemLocalSpaSurfaces.AuthClients);
 
+var (paymentMigrationsImage, paymentMigrationsDigest) = manifest["payment-migrations"];
+var paymentMigrations = builder.AddPaymentMigrations(paymentMigrationsImage, paymentMigrationsDigest, paymentDb);
+
 var (paymentWebImage, paymentWebDigest) = manifest["payment-web"];
-var paymentWeb = builder.AddPaymentWeb(paymentWebImage, paymentWebDigest, auth, paymentDb, asb);
+var paymentWeb = builder.AddPaymentWeb(paymentWebImage, paymentWebDigest, auth, paymentDb, asb)
+    .WaitForCompletion(paymentMigrations);
 
 var (b2bMigrationsImage, b2bMigrationsDigest) = manifest["b2b-migrations"];
 var b2bMigrations = builder.AddB2BMigrations(b2bMigrationsImage, b2bMigrationsDigest, b2bDb);
@@ -78,7 +82,8 @@ builder.AddSearchWorkers(searchWorkersImage, searchWorkersDigest, searchDb, asb)
     .WaitForCompletion(searchMigrations);
 
 var (paymentWorkersImage, paymentWorkersDigest) = manifest["payment-workers"];
-builder.AddPaymentWorkers(paymentWorkersImage, paymentWorkersDigest, paymentDb, asb);
+builder.AddPaymentWorkers(paymentWorkersImage, paymentWorkersDigest, paymentDb, asb)
+    .WaitForCompletion(paymentMigrations);
 
 builder.AddStripeCli(paymentWeb);
 builder.Build().Run();
