@@ -36,6 +36,12 @@ public sealed class SystemFixture : IAsyncLifetime
         KnownResourceStates.RuntimeUnhealthy,
     ];
 
+    private static readonly string[] SuccessfulCompletionResources =
+    [
+        B2BMigrations.Name,
+        B2BSeedingSimulator.Name,
+    ];
+
     private static readonly TimeSpan ProbeTimeout = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan ProbeInterval = TimeSpan.FromSeconds(2);
 
@@ -158,15 +164,30 @@ public sealed class SystemFixture : IAsyncLifetime
             resourceNames, failures, cancellation, stopWatching.Token);
 
         string?[] probes;
+        (string Resource, string? Failure)[] completions;
         try
         {
-            probes = await Task.WhenAll(endpoints.Select(
+            var probeTask = Task.WhenAll(endpoints.Select(
                 entry => PollUntilHealthyAsync(entry.Key, new Uri(entry.Value, "health"), cancellation.Token)));
+            var completionTask = Task.WhenAll(SuccessfulCompletionResources.Select(
+                resource => this.WaitForSuccessfulCompletionAsync(resource, cancellation.Token)));
+            await Task.WhenAll(probeTask, completionTask);
+            probes = await probeTask;
+            completions = await completionTask;
         }
         finally
         {
             await stopWatching.CancelAsync();
             await watching;
+        }
+
+        if (failures.IsEmpty)
+        {
+            foreach (var (resource, failure) in completions)
+            {
+                if (failure is not null)
+                    failures[resource] = failure;
+            }
         }
 
         if (!failures.IsEmpty)
@@ -279,6 +300,11 @@ public sealed class SystemFixture : IAsyncLifetime
                     || !TerminalFailureStates.Contains(state, StringComparer.Ordinal))
                     continue;
 
+                if (state == KnownResourceStates.Exited
+                    && change.Snapshot.ExitCode == 0
+                    && SuccessfulCompletionResources.Contains(change.Resource.Name, StringComparer.Ordinal))
+                    continue;
+
                 failures[service] = change.Snapshot.ExitCode is { } exitCode
                     ? $"{state} (exit code {exitCode})"
                     : state;
@@ -289,6 +315,32 @@ public sealed class SystemFixture : IAsyncLifetime
         catch (OperationCanceledException)
         {
         }
+    }
+
+    private async Task<(string Resource, string? Failure)> WaitForSuccessfulCompletionAsync(
+        string resource,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await this.application!.ResourceNotifications.WaitForResourceAsync(
+                resource,
+                KnownResourceStates.Exited,
+                cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return (resource, $"did not complete within {BootTimeout}");
+        }
+
+        if (!this.application.ResourceNotifications.TryGetCurrentState(resource, out var current))
+            return (resource, "completed without a current resource snapshot");
+
+        return current.Snapshot.ExitCode == 0
+            ? (resource, null)
+            : (resource, current.Snapshot.ExitCode is { } exitCode
+                ? $"{KnownResourceStates.Exited} (exit code {exitCode})"
+                : $"{KnownResourceStates.Exited} without an exit code");
     }
 
     public async Task DisposeAsync()
