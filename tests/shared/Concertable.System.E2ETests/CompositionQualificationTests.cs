@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using Concertable.B2B.Hosting;
 using Xunit;
 
 namespace Concertable.System.E2ETests;
@@ -8,11 +9,11 @@ namespace Concertable.System.E2ETests;
 public sealed class CompositionQualificationTests(SystemFixture system)
 {
     [Fact]
-    public void EveryPinnedService_ExposesAnEndpoint()
+    public void EveryPinnedImage_HasAKnownRuntimeRole()
     {
         Assert.Equal(
             system.Manifest.ServiceNames.Order(),
-            system.HttpServices.Keys.Concat(WorkerServices).Order());
+            system.HttpServices.Keys.Concat(NonHttpServices).Order());
     }
 
     [Theory]
@@ -58,6 +59,12 @@ public sealed class CompositionQualificationTests(SystemFixture system)
     public static TheoryData<string> HttpServiceNames() =>
         new("auth", "b2b-web", "customer-web", "payment-web", "search-web");
 
-    private static readonly string[] WorkerServices =
-        ["b2b-workers", "payment-workers", "search-workers"];
+    private static readonly string[] NonHttpServices =
+    [
+        B2BMigrations.Name,
+        B2BSeedingSimulator.Name,
+        "b2b-workers",
+        "payment-workers",
+        "search-workers",
+    ];
 }
