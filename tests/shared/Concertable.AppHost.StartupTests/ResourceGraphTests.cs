@@ -2,6 +2,7 @@ using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
 using Concertable.B2B.Hosting;
+using Concertable.Search.Hosting;
 using Concertable.Testing.Architecture;
 using Xunit;
 
@@ -55,9 +56,26 @@ public sealed class ResourceGraphTests
         AssertCommandLineArgs(postgres, "-c", "max_prepared_transactions=100");
         Assert.IsType<PostgresDatabaseResource>(
             builder.Resources.Single(resource => resource.Name == B2BDatabase.Name));
+        Assert.IsType<PostgresDatabaseResource>(
+            builder.Resources.Single(resource => resource.Name == SearchConstants.Database));
         AssertWaitsFor(builder, B2BMigrations.Name, B2BDatabase.Name, WaitType.WaitUntilHealthy);
         AssertWaitsFor(builder, B2BWeb.Name, B2BMigrations.Name, WaitType.WaitForCompletion);
         AssertWaitsFor(builder, B2BWorkers.Name, B2BMigrations.Name, WaitType.WaitForCompletion);
+        AssertWaitsFor(
+            builder,
+            SearchConstants.MigrationsResource,
+            SearchConstants.Database,
+            WaitType.WaitUntilHealthy);
+        AssertWaitsFor(
+            builder,
+            SearchConstants.WebResource,
+            SearchConstants.MigrationsResource,
+            WaitType.WaitForCompletion);
+        AssertWaitsFor(
+            builder,
+            SearchConstants.WorkersResource,
+            SearchConstants.MigrationsResource,
+            WaitType.WaitForCompletion);
         Assert.Contains(builder.Resources, resource => resource.Name == B2BSeedingSimulator.Name);
         var auth = builder.Resources.Single(resource => resource.Name == "auth");
         var authEnvironment = await GetRawEnvironmentAsync(auth, CancellationToken.None);

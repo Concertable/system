@@ -5,6 +5,7 @@ using Concertable.AppHost;
 using Concertable.B2B.Hosting;
 using Concertable.Customer.Hosting;
 using Concertable.E2E;
+using Concertable.Search.Hosting;
 using Concertable.Testing.E2E;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -40,6 +41,7 @@ public sealed class SystemFixture : IAsyncLifetime
     [
         B2BMigrations.Name,
         B2BSeedingSimulator.Name,
+        SearchConstants.MigrationsResource,
     ];
 
     private static readonly TimeSpan ProbeTimeout = TimeSpan.FromSeconds(10);
