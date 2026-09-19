@@ -2,9 +2,9 @@
 
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <ConcertableDotNetPlatformVersion>0.2.0-alpha.0.5</ConcertableDotNetPlatformVersion>
+    <ConcertableDotNetPlatformVersion>0.2.0-alpha.0.12</ConcertableDotNetPlatformVersion>
     <ConcertableAuthVersion>0.2.0-alpha.0.297</ConcertableAuthVersion>
-    <ConcertableB2BContractsVersion>0.2.0-alpha.0.292</ConcertableB2BContractsVersion>
+    <ConcertableB2BContractsVersion>0.2.0-alpha.0.302</ConcertableB2BContractsVersion>
     <ConcertableCustomerVersion>0.2.0-alpha.0.338</ConcertableCustomerVersion>
     <ConcertablePaymentVersion>0.2.0-alpha.0.372</ConcertablePaymentVersion>
     <ConcertableSearchVersion>0.2.0-alpha.0.324</ConcertableSearchVersion>
@@ -40,7 +40,7 @@
     <PackageVersion Include="coverlet.collector" Version="6.0.0" />
     <PackageVersion Include="Dapper" Version="2.1.72" />
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.0.0" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.3" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.4" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="10.0.8" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageVersion Include="Microsoft.Playwright" Version="1.59.0" />
