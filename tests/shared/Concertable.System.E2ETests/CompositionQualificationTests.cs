@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using Concertable.Auth.Hosting;
 using Concertable.B2B.Hosting;
 using Concertable.Payment.Hosting;
 using Concertable.Search.Hosting;
@@ -63,6 +64,7 @@ public sealed class CompositionQualificationTests(SystemFixture system)
 
     private static readonly string[] NonHttpServices =
     [
+        AuthConstants.MigrationsResource,
         B2BMigrations.Name,
         B2BSeedingSimulator.Name,
         PaymentConstants.MigrationsResource,

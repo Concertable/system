@@ -2,6 +2,7 @@ using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
 using Concertable.AppHost;
+using Concertable.Auth.Hosting;
 using Concertable.B2B.Hosting;
 using Concertable.Customer.Hosting;
 using Concertable.E2E;
@@ -40,6 +41,7 @@ public sealed class SystemFixture : IAsyncLifetime
 
     private static readonly string[] SuccessfulCompletionResources =
     [
+        AuthConstants.MigrationsResource,
         B2BMigrations.Name,
         B2BSeedingSimulator.Name,
         PaymentConstants.MigrationsResource,
