@@ -7,12 +7,6 @@
 
 version: 1
 
-# Until each service publishes its own release train, the system qualifies against artefacts the
-# monorepo produced. Every image below was built from this one commit.
-source:
-  repository: Concertable/concertable
-  commit: d6f986c2570d994891767bcb1a10fd797d2b854e
-
 # One version cannot describe the composition, because the platform and each service publish on their
 # own train. Directory.Packages.props owns that rule and declares the trains; ReleaseTrainPinTests holds
 # these equal to it.

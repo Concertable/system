@@ -58,5 +58,5 @@ in `src/Concertable.AppHost/Directory.Packages.props`.
 
 Extracted from the `Concertable/concertable` monorepo with `git filter-repo` 2.47.0 against the path
 map in that repo's `eng/repository-split/map.yaml`, preserving the full history of every path it
-claims. The images and packages currently pinned were produced by that monorepo; each service takes
-over publishing its own as it is promoted to its own repository.
+claims. Every image and package now pinned is published by the service's own repository; no monorepo
+artefact remains in the composition.
