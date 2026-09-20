@@ -15,7 +15,7 @@ var postgres = builder.AddPostgresContainer("concertable-system-postgres-data")
 var b2bDb = postgres.AddDatabase(B2BDatabase.Name);
 var searchDb = postgres.AddDatabase(SearchConstants.Database);
 var paymentDb = postgres.AddDatabase(PaymentConstants.Database);
-var authDb = sql.AddDatabase(AuthConstants.Database);
+var authDb = postgres.AddDatabase(AuthConstants.Database);
 var customerDb = sql.AddDatabase(CustomerConstants.Database);
 var (storage, blobs) = builder.AddAzureStorage();
 var asb = builder.AddServiceBus();
@@ -27,10 +27,13 @@ asb.Topology().AddB2BTopology().AddCustomerTopology().AddSearchTopology().AddPay
 // fail to apply the container's configuration and the resource never starts, reporting no reason.
 const string PrimaryEndpoint = "https";
 
+var (authMigrationsImage, authMigrationsDigest) = manifest["auth-migrations"];
+var authMigrations = builder.AddAuthMigrations(authMigrationsImage, authMigrationsDigest, authDb);
+
 var (authImage, authDigest) = manifest["auth"];
 // Duende writes its developer signing key to /app/tempkey.jwk at startup, which the image's own
 // non-root user cannot write to.
-var auth = builder.AddAuth(authImage, authDigest, authDb, asb)
+var auth = builder.AddAuth(authImage, authDigest, authDb, authMigrations, asb)
                   .WithContainerRuntimeArgs("--user", "root")
                   .WithHttpEndpoint(targetPort: AuthConstants.ContainerPort, name: PrimaryEndpoint);
 auth.WithSpaClients(SystemLocalSpaSurfaces.AuthClients);

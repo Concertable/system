@@ -17,10 +17,10 @@ source:
 # own train. Directory.Packages.props owns that rule and declares the trains; ReleaseTrainPinTests holds
 # these equal to it.
 platform:
-  packages: 0.2.0-alpha.0.13
+  packages: 0.2.0-alpha.0.14
 
 services:
-  auth: 0.2.0-alpha.0.297
+  auth: 0.2.0-alpha.0.305
   b2b: 0.2.0-alpha.0.302
   customer: 0.2.0-alpha.0.338
   payment: 0.2.0-alpha.0.381
@@ -29,7 +29,10 @@ services:
 images:
   auth:
     repository: ghcr.io/concertable/auth
-    digest: sha256:d888cb59d806241611eb36a5d1eeb293d472cd94e4a89bf6dab6b9b23c0c5f82
+    digest: sha256:cbd7c429da9d9dd2cc674177760690c53d1414e8057e368eefc3631dfcb62be6
+  auth-migrations:
+    repository: ghcr.io/concertable/auth-migrations
+    digest: sha256:090b1bb80dc7b708508a03883cdfb8e8805b36918589e6d14f2f350cc61c5dcb
   b2b-migrations:
     repository: ghcr.io/concertable/b2b-migrations
     digest: sha256:92191f359112826d5a0876b390c6084021bfbd13a1b13760291a37d3f6106c11
