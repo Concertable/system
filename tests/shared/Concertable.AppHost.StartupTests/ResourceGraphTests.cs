@@ -1,6 +1,7 @@
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
+using Concertable.Auth.Hosting;
 using Concertable.B2B.Hosting;
 using Concertable.Payment.Hosting;
 using Concertable.Search.Hosting;
@@ -61,6 +62,8 @@ public sealed class ResourceGraphTests
             builder.Resources.Single(resource => resource.Name == SearchConstants.Database));
         Assert.IsType<PostgresDatabaseResource>(
             builder.Resources.Single(resource => resource.Name == PaymentConstants.Database));
+        Assert.IsType<PostgresDatabaseResource>(
+            builder.Resources.Single(resource => resource.Name == AuthConstants.Database));
         AssertWaitsFor(builder, B2BMigrations.Name, B2BDatabase.Name, WaitType.WaitUntilHealthy);
         AssertWaitsFor(builder, B2BWeb.Name, B2BMigrations.Name, WaitType.WaitForCompletion);
         AssertWaitsFor(builder, B2BWorkers.Name, B2BMigrations.Name, WaitType.WaitForCompletion);
@@ -94,8 +97,18 @@ public sealed class ResourceGraphTests
             PaymentConstants.WorkersResource,
             PaymentConstants.MigrationsResource,
             WaitType.WaitForCompletion);
+        AssertWaitsFor(
+            builder,
+            AuthConstants.MigrationsResource,
+            AuthConstants.Database,
+            WaitType.WaitUntilHealthy);
+        AssertWaitsFor(
+            builder,
+            AuthConstants.Resource,
+            AuthConstants.MigrationsResource,
+            WaitType.WaitForCompletion);
         Assert.Contains(builder.Resources, resource => resource.Name == B2BSeedingSimulator.Name);
-        var auth = builder.Resources.Single(resource => resource.Name == "auth");
+        var auth = builder.Resources.Single(resource => resource.Name == AuthConstants.Resource);
         var authEnvironment = await GetRawEnvironmentAsync(auth, CancellationToken.None);
         Assert.DoesNotContain("Auth__PublicUrl", authEnvironment.Keys);
         await using var app = await builder.BuildAsync();
@@ -111,7 +124,7 @@ public sealed class ResourceGraphTests
         Assert.Equal(surfaces.Count, surfaces.Select(surface => surface.HttpsPort).Distinct().Count());
         await using var app = await builder.BuildAsync();
 
-        var auth = builder.Resources.Single(resource => resource.Name == "auth");
+        var auth = builder.Resources.Single(resource => resource.Name == AuthConstants.Resource);
         var environment = await GetRawEnvironmentAsync(auth, CancellationToken.None);
         Assert.Equal("true", environment["Auth__SpaClients__RestrictToEnabledClients"]);
         Assert.Equal(
