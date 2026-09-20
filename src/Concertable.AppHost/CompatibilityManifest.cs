@@ -11,18 +11,14 @@ public sealed class CompatibilityManifest
     private readonly IReadOnlyDictionary<string, ContainerImage> images;
 
     private CompatibilityManifest(
-        string commit,
         string platformPackages,
         IReadOnlyDictionary<string, string> servicePackages,
         IReadOnlyDictionary<string, ContainerImage> images)
     {
-        this.Commit = commit;
         this.PlatformPackages = platformPackages;
         this.ServicePackages = servicePackages;
         this.images = images;
     }
-
-    public string Commit { get; }
 
     public string PlatformPackages { get; }
 
@@ -51,7 +47,6 @@ public sealed class CompatibilityManifest
         if (document.Version != 1)
             throw new InvalidOperationException($"Unsupported {FileName} version '{document.Version}'; expected 1.");
 
-        var commit = Required(document.Source?.Commit, "source.commit");
         var platformPackages = Required(document.Platform?.Packages, "platform.packages");
 
         if (document.Services is not { Count: > 0 })
@@ -78,7 +73,7 @@ public sealed class CompatibilityManifest
             pinned.Add(service, new ContainerImage(repository, digest));
         }
 
-        return new CompatibilityManifest(commit, platformPackages, services, pinned);
+        return new CompatibilityManifest(platformPackages, services, pinned);
     }
 
     private static string Locate(string appHostDirectory)
@@ -103,20 +98,11 @@ public sealed class CompatibilityManifest
     {
         public int Version { get; set; }
 
-        public SourceSection? Source { get; set; }
-
         public PlatformSection? Platform { get; set; }
 
         public Dictionary<string, string?>? Services { get; set; }
 
         public Dictionary<string, ImageSection?>? Images { get; set; }
-    }
-
-    private sealed class SourceSection
-    {
-        public string? Repository { get; set; }
-
-        public string? Commit { get; set; }
     }
 
     private sealed class PlatformSection
