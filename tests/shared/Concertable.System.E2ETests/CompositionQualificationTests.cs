@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using Concertable.Auth.Hosting;
 using Concertable.B2B.Hosting;
+using Concertable.Customer.Hosting;
 using Concertable.Payment.Hosting;
 using Concertable.Search.Hosting;
 using Xunit;
@@ -67,6 +68,7 @@ public sealed class CompositionQualificationTests(SystemFixture system)
         AuthConstants.MigrationsResource,
         B2BMigrations.Name,
         B2BSeedingSimulator.Name,
+        CustomerConstants.MigrationsResource,
         PaymentConstants.MigrationsResource,
         SearchConstants.MigrationsResource,
         "b2b-workers",
