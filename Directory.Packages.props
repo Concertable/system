@@ -33,10 +33,10 @@
 
   <ItemGroup>
     <PackageVersion Include="Appium.WebDriver" Version="5.2.0" />
-    <PackageVersion Include="Aspire.Hosting.DevTunnels" Version="13.3.2" />
+    <PackageVersion Include="Aspire.Hosting.DevTunnels" Version="13.5.4" />
     <PackageVersion Include="Aspire.Hosting.NodeJs" Version="9.5.2" />
-    <PackageVersion Include="Aspire.Hosting.SqlServer" Version="13.3.2" />
-    <PackageVersion Include="Aspire.Hosting.Testing" Version="13.3.2" />
+    <PackageVersion Include="Aspire.Hosting.SqlServer" Version="13.5.4" />
+    <PackageVersion Include="Aspire.Hosting.Testing" Version="13.5.4" />
     <PackageVersion Include="coverlet.collector" Version="6.0.0" />
     <PackageVersion Include="Dapper" Version="2.1.72" />
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.0.0" />
