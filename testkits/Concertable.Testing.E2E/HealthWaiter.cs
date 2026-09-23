@@ -1,5 +1,3 @@
-using Dapper;
-using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 
 namespace Concertable.Testing.E2E;
@@ -41,27 +39,6 @@ public sealed class HealthWaiter : IDisposable
         await Task.WhenAll(spaUrls.Select(url => PollUntilSuccessAsync(url, cts.Token)));
 
         logger.SpasAreServing();
-    }
-
-    public async Task WaitForPayoutAccountsAsync(string paymentConnectionString, int expectedCount, TimeSpan timeout)
-    {
-        await using var connection = new SqlConnection(paymentConnectionString);
-        await connection.OpenAsync();
-
-        using var cts = new CancellationTokenSource(timeout);
-        while (!cts.IsCancellationRequested)
-        {
-            var count = await connection.QuerySingleAsync<int>(
-                "SELECT COUNT(*) FROM payment.PayoutAccounts WHERE StripeAccountId IS NOT NULL");
-
-            if (count >= expectedCount)
-                return;
-
-            try { await Task.Delay(TimeSpan.FromSeconds(2), cts.Token); }
-            catch (OperationCanceledException) { break; }
-        }
-
-        throw new TimeoutException("Timed out waiting for PayoutAccounts to be provisioned.");
     }
 
     private async Task PollUntilSuccessAsync(string url, CancellationToken cancellationToken = default)

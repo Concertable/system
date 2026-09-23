@@ -15,7 +15,7 @@
     <PackageReference Include="Concertable.Payment.Hosting" />
     <PackageReference Include="Concertable.Payment.TestKit" />
     <PackageReference Include="Dapper" />
-    <PackageReference Include="Respawn" />
+    <PackageReference Include="Npgsql" />
     <PackageReference Include="Microsoft.Playwright" />
     <PackageReference Include="Stripe.net" />
   </ItemGroup>
