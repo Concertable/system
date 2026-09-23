@@ -43,7 +43,7 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.4" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="10.0.8" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
-    <PackageVersion Include="Microsoft.Playwright" Version="1.59.0" />
+    <PackageVersion Include="Microsoft.Playwright" Version="1.62.0" />
     <PackageVersion Include="Reqnroll" Version="3.3.4" />
     <PackageVersion Include="Reqnroll.Microsoft.Extensions.DependencyInjection" Version="3.3.4" />
     <PackageVersion Include="Reqnroll.xUnit" Version="3.3.4" />
