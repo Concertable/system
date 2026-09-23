@@ -8,7 +8,6 @@ using Concertable.Search.Hosting;
 var builder = StrictDistributedApplication.CreateBuilder(args);
 var manifest = CompatibilityManifest.Load(builder.AppHostDirectory);
 
-var sql = builder.AddSqlServerContainer("concertable-system-sql-data");
 var postgres = builder.AddPostgresContainer("concertable-system-postgres-data")
     .WithPostGis()
     .WithArgs("-c", "max_prepared_transactions=100");
@@ -16,7 +15,7 @@ var b2bDb = postgres.AddDatabase(B2BDatabase.Name);
 var searchDb = postgres.AddDatabase(SearchConstants.Database);
 var paymentDb = postgres.AddDatabase(PaymentConstants.Database);
 var authDb = postgres.AddDatabase(AuthConstants.Database);
-var customerDb = sql.AddDatabase(CustomerConstants.Database);
+var customerDb = postgres.AddDatabase(CustomerConstants.Database);
 var (storage, blobs) = builder.AddAzureStorage();
 var asb = builder.AddServiceBus();
 asb.Topology().AddB2BTopology().AddCustomerTopology().AddSearchTopology().AddPaymentTopology().AddAuthTopology().RunAsEmulator();
@@ -61,8 +60,15 @@ var workers = builder.AddB2BWorkers(b2bWorkersImage, b2bWorkersDigest, b2bDb, pa
 var (b2bSeedingSimulatorImage, b2bSeedingSimulatorDigest) = manifest["b2b-seeding-simulator"];
 builder.AddB2BSeedingSimulator(b2bSeedingSimulatorImage, b2bSeedingSimulatorDigest, asb);
 
+var (customerMigrationsImage, customerMigrationsDigest) = manifest["customer-migrations"];
+var customerMigrations = builder.AddCustomerMigrations(
+    customerMigrationsImage,
+    customerMigrationsDigest,
+    customerDb);
+
 var (customerWebImage, customerWebDigest) = manifest["customer-web"];
-var customerWeb = builder.AddCustomerWeb(customerWebImage, customerWebDigest, auth, customerDb, asb, paymentWeb);
+var customerWeb = builder.AddCustomerWeb(
+    customerWebImage, customerWebDigest, auth, customerDb, customerMigrations, asb, paymentWeb);
 auth.WithEnvironment("Services__CustomerApiUrl", customerWeb.GetEndpoint(PrimaryEndpoint));
 
 // The payment image binds plaintext on the endpoint named "https", so every consumer of it must be

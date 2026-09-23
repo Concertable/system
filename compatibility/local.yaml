@@ -16,7 +16,7 @@ platform:
 services:
   auth: 0.2.0-alpha.0.305
   b2b: 0.2.0-alpha.0.302
-  customer: 0.2.0-alpha.0.338
+  customer: 0.2.0-alpha.0.345
   payment: 0.2.0-alpha.0.381
   search: 0.2.0-alpha.0.330
 
@@ -39,9 +39,12 @@ images:
   b2b-workers:
     repository: ghcr.io/concertable/b2b-workers
     digest: sha256:85a10ca0807faad78c3f265f98a418d2d342d08dc729829cffe09b89c6ef4f81
+  customer-migrations:
+    repository: ghcr.io/concertable/customer-migrations
+    digest: sha256:fea8c64f303639a1750d355a62f189dbe4df76b7f2919f3bfbff22916e304a9d
   customer-web:
     repository: ghcr.io/concertable/customer-web
-    digest: sha256:0a24c4b6a30923453b1996eb5e582231714875152e62e503ece9911d3a9f5427
+    digest: sha256:81f467c88cf8229d99c757bd3e4406241ecb5de9db018e234bbd8e0395a86018
   payment-migrations:
     repository: ghcr.io/concertable/payment-migrations
     digest: sha256:b22e1a0d498e01d12b49e0bc911f3e4c7e44a0d5e3c4d5c8917e854e1fccdc96
