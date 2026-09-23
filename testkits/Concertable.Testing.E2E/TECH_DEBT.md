@@ -60,7 +60,7 @@ The B2B/Customer AppHosts add the Vite SPAs (`AddVenueSpa`/`AddArtistSpa`/`AddBu
 
 **Resolves when:**
 
-- The API E2E composition (each suite's `AddE2EStack`) strips the `NodeAppResource` SPA resources, so the headless API stack doesn't launch frontends at all — mirroring how `AddEphemeralSql` tailors the dev AppHost for testing.
+- The API E2E composition (each suite's `AddE2EStack`) strips the `NodeAppResource` SPA resources, so the headless API stack doesn't launch frontends at all — the same shape as any other helper that tailors the dev AppHost for testing.
 
 ### WORKAROUND — 12-minute E2E health wait covers slow demo-user seeding
 

@@ -129,20 +129,6 @@ public static class DistributedApplicationBuilderExtensions
                 return Task.CompletedTask;
             }));
         }
-
-        internal void AddEphemeralSql()
-        {
-            var sql = builder.Resources
-                .OfType<SqlServerServerResource>()
-                .Single();
-
-            var volume = sql.Annotations
-                .OfType<ContainerMountAnnotation>()
-                .FirstOrDefault();
-
-            if (volume is not null)
-                sql.Annotations.Remove(volume);
-        }
     }
 
     extension(IDistributedApplicationBuilder builder)

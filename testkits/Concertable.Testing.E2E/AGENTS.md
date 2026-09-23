@@ -5,7 +5,7 @@
 This library holds only what **every** E2E suite needs, with no knowledge of any data service:
 
 - Pins for **adapter services** (`PinAuthService`, `PinPaymentWeb`, `PinPaymentWorkers`, `PinStripeCli`) — Auth and Payment are adapters present in every host by architecture, so their pins are legitimately shared.
-- Generic infra (`AddEphemeralSql`, `HealthWaiter`, `PollingService`, `TestTokenMinter`, `AspireResourceLogger`, the MSBuild tasks).
+- Generic infra (`HealthWaiter`, `PollingService`, `TestTokenMinter`, `AspireResourceLogger`, the MSBuild tasks).
 
 Things that must **never** be added here:
 

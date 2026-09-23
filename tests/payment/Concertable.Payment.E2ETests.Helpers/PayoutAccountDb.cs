@@ -1,5 +1,5 @@
 using Dapper;
-using Microsoft.Data.SqlClient;
+using Npgsql;
 
 namespace Concertable.Payment.E2ETests.Helpers;
 
@@ -19,25 +19,25 @@ public sealed class PayoutAccountDb
 
     public async Task<IReadOnlyCollection<Guid>> GetPayableOwnerIdsAsync(CancellationToken ct = default)
     {
-        await using var connection = new SqlConnection(connectionString);
+        await using var connection = new NpgsqlConnection(connectionString);
         await connection.OpenAsync(ct);
 
         return (await connection.QueryAsync<Guid>(
             """
-            SELECT OwnerId FROM payment.PayoutAccounts
-            WHERE StripeAccountId IS NOT NULL AND StripeCustomerId IS NOT NULL
+            SELECT "OwnerId" FROM payment."PayoutAccounts"
+            WHERE "StripeAccountId" IS NOT NULL AND "StripeCustomerId" IS NOT NULL
             """)).ToList();
     }
 
     public async Task<IReadOnlyCollection<Guid>> GetChargeableOwnerIdsAsync(CancellationToken ct = default)
     {
-        await using var connection = new SqlConnection(connectionString);
+        await using var connection = new NpgsqlConnection(connectionString);
         await connection.OpenAsync(ct);
 
         return (await connection.QueryAsync<Guid>(
             """
-            SELECT OwnerId FROM payment.PayoutAccounts
-            WHERE StripeCustomerId IS NOT NULL
+            SELECT "OwnerId" FROM payment."PayoutAccounts"
+            WHERE "StripeCustomerId" IS NOT NULL
             """)).ToList();
     }
 }
