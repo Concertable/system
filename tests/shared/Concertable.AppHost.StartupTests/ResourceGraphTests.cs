@@ -3,6 +3,7 @@ using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
 using Concertable.Auth.Hosting;
 using Concertable.B2B.Hosting;
+using Concertable.Customer.Hosting;
 using Concertable.Payment.Hosting;
 using Concertable.Search.Hosting;
 using Concertable.Testing.Architecture;
@@ -64,6 +65,9 @@ public sealed class ResourceGraphTests
             builder.Resources.Single(resource => resource.Name == PaymentConstants.Database));
         Assert.IsType<PostgresDatabaseResource>(
             builder.Resources.Single(resource => resource.Name == AuthConstants.Database));
+        Assert.IsType<PostgresDatabaseResource>(
+            builder.Resources.Single(resource => resource.Name == CustomerConstants.Database));
+        Assert.DoesNotContain(builder.Resources, resource => resource is SqlServerServerResource);
         AssertWaitsFor(builder, B2BMigrations.Name, B2BDatabase.Name, WaitType.WaitUntilHealthy);
         AssertWaitsFor(builder, B2BWeb.Name, B2BMigrations.Name, WaitType.WaitForCompletion);
         AssertWaitsFor(builder, B2BWorkers.Name, B2BMigrations.Name, WaitType.WaitForCompletion);
@@ -106,6 +110,16 @@ public sealed class ResourceGraphTests
             builder,
             AuthConstants.Resource,
             AuthConstants.MigrationsResource,
+            WaitType.WaitForCompletion);
+        AssertWaitsFor(
+            builder,
+            CustomerConstants.MigrationsResource,
+            CustomerConstants.Database,
+            WaitType.WaitUntilHealthy);
+        AssertWaitsFor(
+            builder,
+            CustomerConstants.WebResource,
+            CustomerConstants.MigrationsResource,
             WaitType.WaitForCompletion);
         Assert.Contains(builder.Resources, resource => resource.Name == B2BSeedingSimulator.Name);
         var auth = builder.Resources.Single(resource => resource.Name == AuthConstants.Resource);

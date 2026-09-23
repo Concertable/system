@@ -44,6 +44,7 @@ public sealed class SystemFixture : IAsyncLifetime
         AuthConstants.MigrationsResource,
         B2BMigrations.Name,
         B2BSeedingSimulator.Name,
+        CustomerConstants.MigrationsResource,
         PaymentConstants.MigrationsResource,
         SearchConstants.MigrationsResource,
     ];
