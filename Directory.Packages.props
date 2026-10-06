@@ -47,7 +47,7 @@
     <PackageVersion Include="Reqnroll" Version="3.3.4" />
     <PackageVersion Include="Reqnroll.Microsoft.Extensions.DependencyInjection" Version="3.3.4" />
     <PackageVersion Include="Reqnroll.xUnit" Version="3.3.4" />
-    <PackageVersion Include="Stripe.net" Version="47.3.0" />
+    <PackageVersion Include="Stripe.net" Version="47.4.0" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.0.2" />
     <PackageVersion Include="YamlDotNet" Version="18.1.0" />
