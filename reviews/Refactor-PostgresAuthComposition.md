@@ -5,13 +5,13 @@
 > irreversible or ambiguous finding: record its durable disposition, take the safe path, and keep going.
 
 **Review status:** `complete`
-**Reviewed up to commit:** `c84f00f26e822aa936f46af69a8afee682f8b702`  `(2026-09-20)`
+**Reviewed up to commit:** `07b3b33073342e8126e77f6dab069b136902fb02`  `(2026-09-20)`
 **Judgment:** `approved`
 
 ## Review pass — 2026-09-20 — composition
 
-**Candidate base:** `ff3453fd45ed34f5bed44a4cd6d711a67acf19be`
-**Candidate head:** `c84f00f26e822aa936f46af69a8afee682f8b702`
+**Candidate base:** `4f17dc0631d8737f95a05227d92c44a90f39dcdb`
+**Candidate head:** `07b3b33073342e8126e77f6dab069b136902fb02`
 **Candidate branch:** `Refactor/PostgresAuthComposition`
 **Candidate scope:** `all`
 **Candidate paths:** `Directory.Packages.props`, `compatibility/local.yaml`,
