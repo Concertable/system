@@ -10,7 +10,7 @@
 
 ## Review pass — 2026-09-20 — composition
 
-**Candidate base:** `a8066aec00dfe39d4f6bf7fe3632c21be4536d7c`
+**Candidate base:** `3a5cb2e958e8b7154479f223976499e1959113a8`
 **Candidate head:** `656b0f8`
 **Candidate branch:** `Chore/AuthCompositionFollowUp`
 **Candidate scope:** `all`
