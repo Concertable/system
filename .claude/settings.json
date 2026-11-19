@@ -25,6 +25,7 @@
     "efcore@tj-agents": true,
     "engineering@tj-agents": true,
     "github-actions@tj-agents": true,
+    "github@tj-agents": true,
     "personal@tj-agents": true,
     "workflow@tj-agents": true
   },

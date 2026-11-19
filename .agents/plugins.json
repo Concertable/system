@@ -18,6 +18,7 @@
     "efcore@tj-agents",
     "engineering@tj-agents",
     "github-actions@tj-agents",
+    "github@tj-agents",
     "personal@tj-agents",
     "workflow@tj-agents"
   ]
